@@ -219,12 +219,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       // Track signup event
       trackUserSignup('email');
       
-      // Register for push notifications
-      try {
-        await registerForPushNotificationsAsync(userCredential.user.uid);
-      } catch (error) {
-        console.log('Push notification registration failed:', error);
-      }
+      // Register for push notifications (non-blocking)
+      registerForPushNotificationsAsync(userCredential.user.uid).catch((error) => {
+        console.log('Push notification registration failed (non-blocking):', error);
+      });
       
       // Send email verification
       if (!userCredential.user.emailVerified) {

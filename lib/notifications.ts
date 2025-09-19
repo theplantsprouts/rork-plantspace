@@ -1,5 +1,3 @@
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { savePushToken } from '@/lib/firebase';
 import Constants from 'expo-constants';
@@ -7,9 +5,16 @@ import Constants from 'expo-constants';
 // Check if running in Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
 
-// Disable notifications completely in Expo Go to prevent errors
+// Only import and use expo-notifications if not in Expo Go
+let Notifications: any = null;
+let Device: any = null;
+
 if (!isExpoGo && Platform.OS !== 'web') {
   try {
+    Notifications = require('expo-notifications');
+    Device = require('expo-device');
+    
+    // Set notification handler
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -20,7 +25,9 @@ if (!isExpoGo && Platform.OS !== 'web') {
       }),
     });
   } catch (error) {
-    console.log('Notification handler setup failed:', error);
+    console.log('Expo notifications not available:', error);
+    Notifications = null;
+    Device = null;
   }
 }
 
@@ -32,7 +39,7 @@ export interface NotificationData {
 
 export const registerForPushNotificationsAsync = async (userId?: string): Promise<string | null> => {
   // Skip notifications in Expo Go or web
-  if (isExpoGo || Platform.OS === 'web') {
+  if (isExpoGo || Platform.OS === 'web' || !Notifications || !Device) {
     console.log('Push notifications not supported in Expo Go or web. Use a development build for mobile.');
     return null;
   }
@@ -88,7 +95,7 @@ export const registerForPushNotificationsAsync = async (userId?: string): Promis
 };
 
 export const sendLocalNotification = async (notification: NotificationData) => {
-  if (isExpoGo || Platform.OS === 'web') {
+  if (isExpoGo || Platform.OS === 'web' || !Notifications) {
     console.log('Local notifications not supported in Expo Go or web:', notification.title);
     return;
   }
@@ -109,9 +116,9 @@ export const sendLocalNotification = async (notification: NotificationData) => {
 
 export const scheduledNotification = async (
   notification: NotificationData,
-  trigger: Notifications.NotificationTriggerInput
+  trigger: any
 ) => {
-  if (isExpoGo) {
+  if (isExpoGo || !Notifications) {
     console.log('Scheduled notifications not fully supported in Expo Go:', notification.title);
     return null;
   }
@@ -133,6 +140,11 @@ export const scheduledNotification = async (
 };
 
 export const cancelNotification = async (notificationId: string) => {
+  if (!Notifications) {
+    console.log('Notifications not available');
+    return;
+  }
+  
   try {
     await Notifications.cancelScheduledNotificationAsync(notificationId);
   } catch (error) {
@@ -141,6 +153,11 @@ export const cancelNotification = async (notificationId: string) => {
 };
 
 export const cancelAllNotifications = async () => {
+  if (!Notifications) {
+    console.log('Notifications not available');
+    return;
+  }
+  
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch (error) {
@@ -150,9 +167,9 @@ export const cancelAllNotifications = async () => {
 
 // Notification listeners
 export const addNotificationReceivedListener = (
-  listener: (notification: Notifications.Notification) => void
+  listener: (notification: any) => void
 ) => {
-  if (isExpoGo || Platform.OS === 'web') {
+  if (isExpoGo || Platform.OS === 'web' || !Notifications) {
     console.log('Notification listeners not supported in Expo Go or web');
     return { remove: () => {} };
   }
@@ -166,9 +183,9 @@ export const addNotificationReceivedListener = (
 };
 
 export const addNotificationResponseReceivedListener = (
-  listener: (response: Notifications.NotificationResponse) => void
+  listener: (response: any) => void
 ) => {
-  if (isExpoGo || Platform.OS === 'web') {
+  if (isExpoGo || Platform.OS === 'web' || !Notifications) {
     console.log('Notification response listeners not supported in Expo Go or web');
     return { remove: () => {} };
   }
@@ -183,7 +200,7 @@ export const addNotificationResponseReceivedListener = (
 
 // Badge management
 export const setBadgeCount = async (count: number) => {
-  if (Platform.OS === 'ios') {
+  if (Platform.OS === 'ios' && Notifications) {
     try {
       await Notifications.setBadgeCountAsync(count);
     } catch (error) {
@@ -193,7 +210,7 @@ export const setBadgeCount = async (count: number) => {
 };
 
 export const getBadgeCount = async (): Promise<number> => {
-  if (Platform.OS === 'ios') {
+  if (Platform.OS === 'ios' && Notifications) {
     try {
       return await Notifications.getBadgeCountAsync();
     } catch (error) {
