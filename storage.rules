@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow authenticated users to upload images
+    match /images/{userId}/{imageId} {
+      allow read: if true; // Public read access for images
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to upload post images
+    match /posts/{userId}/{imageId} {
+      allow read: if true; // Public read access for post images
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to upload profile avatars
+    match /avatars/{userId}/{imageId} {
+      allow read: if true; // Public read access for avatars
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Fallback rule for development - REMOVE IN PRODUCTION!
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
