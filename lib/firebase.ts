@@ -268,23 +268,31 @@ export const subscribeToUserPosts = (userId: string, callback: (posts: Post[]) =
   );
   
   return onSnapshot(q, async (snapshot) => {
-    const posts: Post[] = [];
-    
-    for (const docSnap of snapshot.docs) {
-      const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+    try {
+      const posts: Post[] = [];
       
-      // Fetch author profile
-      if (postData.author_id) {
-        const authorProfile = await getProfile(postData.author_id);
-        if (authorProfile) {
-          postData.author = authorProfile;
+      for (const docSnap of snapshot.docs) {
+        const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+        
+        // Fetch author profile
+        if (postData.author_id) {
+          const authorProfile = await getProfile(postData.author_id);
+          if (authorProfile) {
+            postData.author = authorProfile;
+          }
         }
+        
+        posts.push(postData);
       }
       
-      posts.push(postData);
+      callback(posts);
+    } catch (error) {
+      console.error('Error in subscribeToUserPosts:', error);
+      callback([]);
     }
-    
-    callback(posts);
+  }, (error) => {
+    console.error('Firestore subscription error:', error);
+    callback([]);
   });
 };
 
@@ -293,23 +301,31 @@ export const subscribeToAllPosts = (callback: (posts: Post[]) => void) => {
   const q = query(postsRef, orderBy('created_at', 'desc'), limit(20));
   
   return onSnapshot(q, async (snapshot) => {
-    const posts: Post[] = [];
-    
-    for (const docSnap of snapshot.docs) {
-      const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+    try {
+      const posts: Post[] = [];
       
-      // Fetch author profile
-      if (postData.author_id) {
-        const authorProfile = await getProfile(postData.author_id);
-        if (authorProfile) {
-          postData.author = authorProfile;
+      for (const docSnap of snapshot.docs) {
+        const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+        
+        // Fetch author profile
+        if (postData.author_id) {
+          const authorProfile = await getProfile(postData.author_id);
+          if (authorProfile) {
+            postData.author = authorProfile;
+          }
         }
+        
+        posts.push(postData);
       }
       
-      posts.push(postData);
+      callback(posts);
+    } catch (error) {
+      console.error('Error in subscribeToAllPosts:', error);
+      callback([]);
     }
-    
-    callback(posts);
+  }, (error) => {
+    console.error('Firestore subscription error:', error);
+    callback([]);
   });
 };
 

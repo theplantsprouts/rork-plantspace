@@ -2,17 +2,23 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { savePushToken } from '@/lib/firebase';
+import Constants from 'expo-constants';
 
-// Configure notification behavior
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Check if running in Expo Go
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Configure notification behavior only if not in Expo Go
+if (!isExpoGo) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 export interface NotificationData {
   title: string;
@@ -21,32 +27,38 @@ export interface NotificationData {
 }
 
 export const registerForPushNotificationsAsync = async (userId?: string): Promise<string | null> => {
-  let token: string | null = null;
-
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
+  // Skip notifications in Expo Go
+  if (isExpoGo) {
+    console.log('Push notifications not supported in Expo Go. Use a development build instead.');
+    return null;
   }
 
-  if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+  let token: string | null = null;
+
+  try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
     }
-    
-    if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
-      return null;
-    }
-    
-    try {
+
+    if (Device.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        console.log('Failed to get push token for push notification!');
+        return null;
+      }
+      
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: '969912616990', // Your Firebase project number
       });
@@ -58,17 +70,22 @@ export const registerForPushNotificationsAsync = async (userId?: string): Promis
       }
       
       console.log('Push token registered:', token);
-    } catch (error) {
-      console.error('Error getting push token:', error);
+    } else {
+      console.log('Must use physical device for Push Notifications');
     }
-  } else {
-    console.log('Must use physical device for Push Notifications');
+  } catch (error) {
+    console.error('Error getting push token:', error);
   }
 
   return token;
 };
 
 export const sendLocalNotification = async (notification: NotificationData) => {
+  if (isExpoGo) {
+    console.log('Local notifications not fully supported in Expo Go:', notification.title);
+    return;
+  }
+
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -87,6 +104,11 @@ export const scheduledNotification = async (
   notification: NotificationData,
   trigger: Notifications.NotificationTriggerInput
 ) => {
+  if (isExpoGo) {
+    console.log('Scheduled notifications not fully supported in Expo Go:', notification.title);
+    return null;
+  }
+
   try {
     const id = await Notifications.scheduleNotificationAsync({
       content: {
@@ -123,12 +145,20 @@ export const cancelAllNotifications = async () => {
 export const addNotificationReceivedListener = (
   listener: (notification: Notifications.Notification) => void
 ) => {
+  if (isExpoGo) {
+    console.log('Notification listeners not fully supported in Expo Go');
+    return { remove: () => {} };
+  }
   return Notifications.addNotificationReceivedListener(listener);
 };
 
 export const addNotificationResponseReceivedListener = (
   listener: (response: Notifications.NotificationResponse) => void
 ) => {
+  if (isExpoGo) {
+    console.log('Notification response listeners not fully supported in Expo Go');
+    return { remove: () => {} };
+  }
   return Notifications.addNotificationResponseReceivedListener(listener);
 };
 
