@@ -113,16 +113,33 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   const login = useCallback(async (email: string, password: string) => {
     if (!email?.trim() || !password?.trim()) throw new Error("Invalid credentials");
     try {
+      console.log('Attempting login for:', email);
       const response = await loginMutation.mutateAsync({ email, password });
+      console.log('Login successful, storing token');
       setToken(response.token);
       setUser(response.user);
       await storeToken(response.token);
     } catch (error: any) {
       console.error('Login error:', error);
+      
+      // Handle different types of errors
+      if (error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
+      }
+      
+      if (error?.message?.includes('timeout')) {
+        throw new Error('Request timed out. Please try again.');
+      }
+      
+      if (error?.data?.code === 'UNAUTHORIZED') {
+        throw new Error('Invalid email or password. Please try again.');
+      }
+      
       if (error?.message) {
         throw new Error(error.message);
       }
-      throw new Error('Login failed. Please check your credentials.');
+      
+      throw new Error('Login failed. Please check your credentials and try again.');
     }
   }, [loginMutation]);
 
@@ -130,15 +147,32 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     if (!email?.trim() || !password?.trim()) throw new Error("Invalid credentials");
     if (password.length < 6) throw new Error("Password must be at least 6 characters");
     try {
+      console.log('Attempting registration for:', email);
       const response = await registerMutation.mutateAsync({ email, password });
+      console.log('Registration successful, storing token');
       setToken(response.token);
       setUser(response.user);
       await storeToken(response.token);
     } catch (error: any) {
       console.error('Registration error:', error);
+      
+      // Handle different types of errors
+      if (error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
+      }
+      
+      if (error?.message?.includes('timeout')) {
+        throw new Error('Request timed out. Please try again.');
+      }
+      
+      if (error?.data?.code === 'CONFLICT') {
+        throw new Error('An account with this email already exists. Please try logging in instead.');
+      }
+      
       if (error?.message) {
         throw new Error(error.message);
       }
+      
       throw new Error('Registration failed. Please try again.');
     }
   }, [registerMutation]);

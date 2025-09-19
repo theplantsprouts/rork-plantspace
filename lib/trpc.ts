@@ -12,15 +12,23 @@ const getBaseUrl = () => {
     return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   }
 
-  // Fallback for development - use the tunnel URL from the start script
+  // Development fallback - try multiple sources
   if (__DEV__) {
-    // This should match the tunnel URL from your development server
+    // For web development
+    if (Platform.OS === 'web') {
+      // Try to use the current origin, but fallback to tunnel URL if needed
+      try {
+        return window.location.origin;
+      } catch {
+        return "https://l1v04hq0ysnd54scxcbqm.rork.com";
+      }
+    }
+    // For mobile development - use the tunnel URL from the start script
     return "https://l1v04hq0ysnd54scxcbqm.rork.com";
   }
 
-  throw new Error(
-    "No base url found, please set EXPO_PUBLIC_RORK_API_BASE_URL"
-  );
+  // Production fallback
+  return "https://l1v04hq0ysnd54scxcbqm.rork.com";
 };
 
 export const trpcClient = trpc.createClient({
@@ -52,20 +60,33 @@ export const trpcClient = trpc.createClient({
           const headers = {
             ...options?.headers,
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             ...(token && { Authorization: `Bearer ${token}` }),
           };
           
           console.log('Request headers:', { ...headers, Authorization: token ? 'Bearer [REDACTED]' : 'None' });
           
+          // Add timeout and better error handling
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
           const response = await fetch(url, {
             ...options,
             headers,
+            signal: controller.signal,
           });
+          
+          clearTimeout(timeoutId);
           
           console.log(`Response status: ${response.status} ${response.statusText}`);
           
           if (!response.ok) {
-            const errorText = await response.text();
+            let errorText = '';
+            try {
+              errorText = await response.text();
+            } catch {
+              errorText = 'Unable to read error response';
+            }
             console.error(`HTTP ${response.status}: ${response.statusText}`, errorText);
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
@@ -73,6 +94,14 @@ export const trpcClient = trpc.createClient({
           return response;
         } catch (error) {
           console.error('Network request failed:', error);
+          if (error instanceof Error) {
+            if (error.name === 'AbortError') {
+              throw new Error('Request timeout - please check your connection');
+            }
+            if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
+              throw new Error('Network error - please check your internet connection and try again');
+            }
+          }
           throw error;
         }
       },
