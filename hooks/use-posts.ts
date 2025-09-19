@@ -335,7 +335,7 @@ export function usePosts() {
   const getSmartRecommendations = async (userInterests: string[] = [], followedUsers: string[] = []) => {
     const recommendations = await getRecommendations(allPosts, {
       userInterests,
-      followedUsers: followedUsers as any, // Type compatibility fix
+      followedUsers: followedUsers.map(id => parseInt(id, 10)), // Convert string IDs to numbers
       recentActivity: []
     });
     setRecommendedPosts(recommendations);

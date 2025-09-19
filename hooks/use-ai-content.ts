@@ -23,11 +23,11 @@ interface RecommendationRequest {
 
 export function useAIContent() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [moderationHistory, setModerationHistory] = useState<Array<{
-    postId: number;
+  const [moderationHistory, setModerationHistory] = useState<{
+    postId: string;
     result: AIAnalysisResult;
     timestamp: string;
-  }>>([]);
+  }[]>([]);
 
   const analyzeContent = useCallback(async (request: ContentModerationRequest): Promise<AIAnalysisResult> => {
     setIsAnalyzing(true);
@@ -92,7 +92,7 @@ export function useAIContent() {
       
       try {
         analysisResult = JSON.parse(data.completion);
-      } catch (parseError) {
+      } catch {
         console.warn('Failed to parse AI response, using fallback analysis');
         analysisResult = fallbackAnalysis(request.content);
       }
@@ -152,7 +152,7 @@ export function useAIContent() {
           score += 0.2;
         }
         
-        if (request.followedUsers.includes(post.user.id)) {
+        if (request.followedUsers.includes(parseInt(post.user.id, 10))) {
           score += 0.3;
         }
         
