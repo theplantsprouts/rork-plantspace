@@ -11,12 +11,12 @@ export const useRealTimePosts = () => {
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
     let isActive = true;
     let retryCount = 0;
     const maxRetries = 3;
 
-    const setupListener = (user: User) => {
+    const setupListener = async (user: User) => {
       if (!isActive || !user) return;
       
       console.log('Setting up real-time posts listener for authenticated user');
@@ -24,6 +24,10 @@ export const useRealTimePosts = () => {
       setError(null);
 
       try {
+        // Ensure auth token is ready
+        await user.getIdToken(true);
+        console.log('Auth token verified for real-time listener');
+        
         unsubscribe = subscribeToAllPosts(
           (newPosts) => {
             if (!isActive) return;
@@ -109,12 +113,12 @@ export const useRealTimePosts = () => {
       
       if (user) {
         console.log('User authenticated, setting up real-time listener');
-        // Add a small delay to ensure Firebase auth token is ready
+        // Add a delay to ensure Firebase auth token is ready
         setTimeout(() => {
           if (isActive) {
             setupListener(user);
           }
-        }, 1000);
+        }, 2000); // Increased delay
       } else {
         console.log('User not authenticated');
         setError('Please log in to view posts');

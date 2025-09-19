@@ -90,8 +90,22 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     try {
       console.log('Creating profile for user:', userId);
       
-      // Wait a bit to ensure Firebase auth token is ready
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Ensure Firebase auth token is ready by checking current user
+      const currentUser = auth.currentUser;
+      if (!currentUser || currentUser.uid !== userId) {
+        console.log('Waiting for auth state to be ready...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
+      // Wait for auth token to be fully ready
+      if (currentUser) {
+        try {
+          await currentUser.getIdToken(true); // Force refresh token
+          console.log('Auth token refreshed successfully');
+        } catch (tokenError) {
+          console.warn('Token refresh failed, continuing anyway:', tokenError);
+        }
+      }
       
       const profileData = {
         email,
@@ -116,33 +130,42 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
       
-      // If it's a permission error, retry once after a longer delay
+      // If it's a permission error, retry with token refresh
       if (error.code === 'permission-denied') {
-        console.log('Permission denied, retrying after delay...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('Permission denied, refreshing token and retrying...');
         
         try {
-          const profileData = {
-            email,
-            created_at: serverTimestamp(),
-            followers: 0,
-            following: 0,
-          };
-          
-          await setDoc(doc(db, 'profiles', userId), profileData);
-          
-          console.log('Profile created successfully on retry for user:', userId);
-          
-          return {
-            id: userId,
-            email,
-            created_at: new Date().toISOString(),
-            followers: 0,
-            following: 0,
-          };
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            await currentUser.getIdToken(true); // Force refresh token
+            console.log('Token refreshed, retrying profile creation...');
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const profileData = {
+              email,
+              created_at: serverTimestamp(),
+              followers: 0,
+              following: 0,
+            };
+            
+            await setDoc(doc(db, 'profiles', userId), profileData);
+            
+            console.log('Profile created successfully on retry for user:', userId);
+            
+            return {
+              id: userId,
+              email,
+              created_at: new Date().toISOString(),
+              followers: 0,
+              following: 0,
+            };
+          } else {
+            throw new Error('User not authenticated');
+          }
         } catch (retryError) {
           console.error('Retry failed:', retryError);
-          throw retryError;
+          throw new Error('Failed to create profile. Please try logging out and back in.');
         }
       }
       
@@ -327,6 +350,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     try {
       console.log('Updating profile with Firebase');
       
+      // Ensure auth token is ready
+      await currentFirebaseUser.getIdToken(true);
+      console.log('Auth token verified for profile update');
+      
       const profileRef = doc(db, 'profiles', currentFirebaseUser.uid);
       await updateDoc(profileRef, {
         name: data.name.trim(),
@@ -348,6 +375,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.log('Profile completion successful');
     } catch (error: any) {
       console.error('Profile completion error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      
+      if (error.code === 'permission-denied') {
+        throw new Error('Permission denied. Please try logging out and back in.');
+      }
+      
       throw new Error(error?.message || 'Failed to complete profile. Please try again.');
     }
   }, []);
