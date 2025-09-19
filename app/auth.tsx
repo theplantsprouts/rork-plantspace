@@ -13,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Sprout, Leaf, Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
-import { useOffline } from "@/hooks/use-offline";
+
 
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
@@ -32,7 +32,6 @@ export default function LoginScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   
   const { login, register } = useAuth();
-  const { isOnline } = useOffline();
 
 
 
@@ -174,7 +173,7 @@ export default function LoginScreen() {
                         : `🌱 ${PlantTerminology.create}`
                     }
                     onPress={handleSubmit}
-                    disabled={loading || !isOnline}
+                    disabled={loading}
                     size="large"
                     testID="submit-button"
                     style={styles.materialButtonStyle}

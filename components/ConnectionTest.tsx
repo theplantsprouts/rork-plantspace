@@ -21,8 +21,11 @@ export const ConnectionTest: React.FC<ConnectionTestProps> = ({ onClose }) => {
       } catch (error) {
         console.log('Failed to get window.location.origin:', error);
       }
+      // Web fallback to localhost in development
+      return __DEV__ ? "http://localhost:3000" : "https://l1v04hq0ysnd54scxcbqm.rork.com";
     }
-    return "https://l1v04hq0ysnd54scxcbqm.rork.com";
+    // Mobile fallback - use localhost in development
+    return __DEV__ ? "http://localhost:3000" : "https://l1v04hq0ysnd54scxcbqm.rork.com";
   };
 
   const runTest = useCallback(async () => {

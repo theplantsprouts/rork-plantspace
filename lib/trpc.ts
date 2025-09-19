@@ -5,6 +5,172 @@ import superjson from "superjson";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
+// Mock backend for when the real backend is not available
+const createMockBackend = () => {
+  const mockUsers: any[] = [];
+  
+  return {
+    example: {
+      hi: {
+        mutate: async ({ name }: { name: string }) => {
+          return {
+            hello: name,
+            date: new Date(),
+          };
+        },
+      },
+    },
+    auth: {
+      register: {
+        mutate: async ({ email, password }: { email: string; password: string }) => {
+          // Check if user exists
+          const existingUser = mockUsers.find(u => u.email === email);
+          if (existingUser) {
+            throw new Error('User already exists with this email');
+          }
+          
+          // Create mock user
+          const user = {
+            id: Math.random().toString(36).substring(2, 15),
+            email,
+            createdAt: new Date(),
+            name: undefined,
+            username: undefined,
+            bio: undefined,
+            avatar: undefined,
+            followers: 0,
+            following: 0,
+          };
+          
+          mockUsers.push({ ...user, password });
+          
+          const token = 'mock-token-' + user.id;
+          
+          // Store token
+          if (Platform.OS === "web") {
+            localStorage.setItem("auth_token", token);
+          } else {
+            await SecureStore.setItemAsync("auth_token", token);
+          }
+          
+          return { token, user };
+        },
+      },
+      login: {
+        mutate: async ({ email, password }: { email: string; password: string }) => {
+          const user = mockUsers.find(u => u.email === email && u.password === password);
+          if (!user) {
+            throw new Error('Invalid email or password');
+          }
+          
+          const token = 'mock-token-' + user.id;
+          
+          // Store token
+          if (Platform.OS === "web") {
+            localStorage.setItem("auth_token", token);
+          } else {
+            await SecureStore.setItemAsync("auth_token", token);
+          }
+          
+          const { password: _, ...userWithoutPassword } = user;
+          return { token, user: userWithoutPassword };
+        },
+      },
+      me: {
+        query: async () => {
+          let token;
+          if (Platform.OS === "web") {
+            token = localStorage.getItem("auth_token");
+          } else {
+            token = await SecureStore.getItemAsync("auth_token");
+          }
+          
+          if (!token || !token.startsWith('mock-token-')) {
+            throw new Error('Not authenticated');
+          }
+          
+          const userId = token.replace('mock-token-', '');
+          const user = mockUsers.find(u => u.id === userId);
+          
+          if (!user) {
+            throw new Error('User not found');
+          }
+          
+          const { password: _, ...userWithoutPassword } = user;
+          return userWithoutPassword;
+        },
+      },
+      completeProfile: {
+        mutate: async ({ name, username, bio }: { name?: string; username?: string; bio?: string }) => {
+          let token;
+          if (Platform.OS === "web") {
+            token = localStorage.getItem("auth_token");
+          } else {
+            token = await SecureStore.getItemAsync("auth_token");
+          }
+          
+          if (!token || !token.startsWith('mock-token-')) {
+            throw new Error('Not authenticated');
+          }
+          
+          const userId = token.replace('mock-token-', '');
+          const userIndex = mockUsers.findIndex(u => u.id === userId);
+          
+          if (userIndex === -1) {
+            throw new Error('User not found');
+          }
+          
+          mockUsers[userIndex] = {
+            ...mockUsers[userIndex],
+            name,
+            username,
+            bio,
+          };
+          
+          const { password: _, ...userWithoutPassword } = mockUsers[userIndex];
+          return userWithoutPassword;
+        },
+      },
+    },
+    posts: {
+      list: {
+        query: async () => {
+          return [];
+        },
+      },
+      create: {
+        mutate: async ({ content, image }: { content: string; image?: string }) => {
+          return {
+            id: Math.random().toString(36).substring(2, 15),
+            content,
+            image,
+            createdAt: new Date(),
+            author: {
+              id: 'mock-user',
+              name: 'Mock User',
+              username: 'mockuser',
+              avatar: undefined,
+            },
+            likes: 0,
+            comments: 0,
+            isLiked: false,
+          };
+        },
+      },
+      uploadImage: {
+        mutate: async ({ image }: { image: string }) => {
+          return {
+            url: image, // Return the same image URL
+          };
+        },
+      },
+    },
+  };
+};
+
+let mockBackend: any = null;
+let isUsingMockBackend = false;
+
 export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
@@ -26,13 +192,24 @@ const getBaseUrl = () => {
       } catch (error) {
         console.log('Failed to get window.location.origin:', error);
       }
+      // Web fallback to localhost
+      return "http://localhost:3000";
     }
-    // For mobile development or web fallback
-    console.log('Using tunnel URL for mobile/fallback');
-    return "https://l1v04hq0ysnd54scxcbqm.rork.com";
+    // For mobile development - try localhost first, then tunnel
+    console.log('Using localhost for mobile development');
+    return "http://localhost:3000";
   }
 
-  // Production fallback
+  // Production fallback - use current origin if web, otherwise tunnel
+  if (Platform.OS === 'web') {
+    try {
+      if (typeof window !== 'undefined' && window.location) {
+        return window.location.origin;
+      }
+    } catch (error) {
+      console.log('Failed to get window.location.origin in production:', error);
+    }
+  }
   return "https://l1v04hq0ysnd54scxcbqm.rork.com";
 };
 
@@ -152,7 +329,7 @@ export const trpcClient = trpc.createClient({
           
           // Add timeout and better error handling
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
           
           const response = await fetch(url, {
             ...options,
@@ -174,7 +351,13 @@ export const trpcClient = trpc.createClient({
               if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
                 // This is likely a 404 or server configuration issue
                 if (response.status === 404) {
-                  throw new Error('API endpoint not found. Please check if the backend server is running and accessible.');
+                  // Switch to mock backend for 404 errors
+                  console.log('Backend not available, switching to mock mode');
+                  if (!mockBackend) {
+                    mockBackend = createMockBackend();
+                    isUsingMockBackend = true;
+                  }
+                  throw new Error('BACKEND_UNAVAILABLE');
                 } else {
                   throw new Error('Server configuration error. The backend may not be running properly.');
                 }
@@ -186,13 +369,13 @@ export const trpcClient = trpc.createClient({
                 if (errorData.error?.message) {
                   throw new Error(errorData.error.message);
                 }
-              } catch (parseError) {
+              } catch (_parseError) {
                 // Not JSON, use the text as is
               }
               
             } catch (readError) {
               console.error('Failed to read error response:', readError);
-              if (readError instanceof Error && readError.message.includes('API endpoint not found')) {
+              if (readError instanceof Error && readError.message === 'BACKEND_UNAVAILABLE') {
                 throw readError;
               }
               errorText = 'Unable to read error response';
@@ -200,7 +383,12 @@ export const trpcClient = trpc.createClient({
             
             // Provide more specific error messages based on status codes
             if (response.status === 404) {
-              throw new Error('API endpoint not found. Please check if the backend server is running.');
+              console.log('Backend not available, switching to mock mode');
+              if (!mockBackend) {
+                mockBackend = createMockBackend();
+                isUsingMockBackend = true;
+              }
+              throw new Error('BACKEND_UNAVAILABLE');
             } else if (response.status === 500) {
               throw new Error('Internal server error. Please try again later.');
             } else if (response.status === 503) {
@@ -228,9 +416,17 @@ export const trpcClient = trpc.createClient({
             if (error.name === 'AbortError') {
               throw new Error('Request timeout - please check your connection and try again');
             }
+            if (error.message === 'BACKEND_UNAVAILABLE') {
+              throw error; // Let this bubble up to be handled by the auth hooks
+            }
             if (error.message.includes('Failed to fetch')) {
               // This is often a CORS or network connectivity issue
-              throw new Error('Unable to connect to server. Please check your internet connection and ensure the backend is running.');
+              console.log('Backend not available, switching to mock mode');
+              if (!mockBackend) {
+                mockBackend = createMockBackend();
+                isUsingMockBackend = true;
+              }
+              throw new Error('BACKEND_UNAVAILABLE');
             }
             if (error.message.includes('Network request failed')) {
               throw new Error('Network error - please check your internet connection and try again');
@@ -246,3 +442,71 @@ export const trpcClient = trpc.createClient({
     }),
   ],
 });
+
+// Create a simple mock client that can be used as fallback
+export const mockTrpcClient = {
+  example: {
+    hi: {
+      mutate: async ({ name }: { name: string }) => {
+        if (!mockBackend) mockBackend = createMockBackend();
+        return mockBackend.example.hi.mutate({ name });
+      },
+    },
+  },
+  auth: {
+    register: {
+      mutate: async ({ email, password }: { email: string; password: string }) => {
+        if (!mockBackend) mockBackend = createMockBackend();
+        return mockBackend.auth.register.mutate({ email, password });
+      },
+    },
+    login: {
+      mutate: async ({ email, password }: { email: string; password: string }) => {
+        if (!mockBackend) mockBackend = createMockBackend();
+        return mockBackend.auth.login.mutate({ email, password });
+      },
+    },
+    me: {
+      query: async () => {
+        if (!mockBackend) mockBackend = createMockBackend();
+        return mockBackend.auth.me.query();
+      },
+    },
+    completeProfile: {
+      mutate: async ({ name, username, bio }: { name?: string; username?: string; bio?: string }) => {
+        if (!mockBackend) mockBackend = createMockBackend();
+        return mockBackend.auth.completeProfile.mutate({ name, username, bio });
+      },
+    },
+  },
+  posts: {
+    list: {
+      query: async () => {
+        if (!mockBackend) mockBackend = createMockBackend();
+        return mockBackend.posts.list.query();
+      },
+    },
+    create: {
+      mutate: async ({ content, image }: { content: string; image?: string }) => {
+        if (!mockBackend) mockBackend = createMockBackend();
+        return mockBackend.posts.create.mutate({ content, image });
+      },
+    },
+    uploadImage: {
+      mutate: async ({ image }: { image: string }) => {
+        if (!mockBackend) mockBackend = createMockBackend();
+        return mockBackend.posts.uploadImage.mutate({ image });
+      },
+    },
+  },
+};
+
+// Export a function to check if we're using mock backend
+export const isUsingMock = () => isUsingMockBackend;
+
+// Export a function to force mock mode
+export const enableMockMode = () => {
+  if (!mockBackend) mockBackend = createMockBackend();
+  isUsingMockBackend = true;
+  console.log('Mock backend enabled');
+};

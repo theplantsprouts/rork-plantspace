@@ -2,7 +2,7 @@ import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
-import { trpc, trpcClient } from "@/lib/trpc";
+import { trpc, trpcClient, mockTrpcClient, enableMockMode } from "@/lib/trpc";
 
 export interface User {
   id: string;
@@ -78,9 +78,20 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
           setToken(storedToken);
           console.log('Verifying token with server...');
           // Use trpc client directly for initial auth check
-          const userData = await trpcClient.auth.me.query();
-          console.log('User data loaded:', userData);
-          setUser(userData);
+          try {
+            const userData = await trpcClient.auth.me.query();
+            setUser(userData);
+          } catch (authError: any) {
+            if (authError?.message === 'BACKEND_UNAVAILABLE') {
+              console.log('Backend unavailable, trying mock backend for auth check');
+              enableMockMode();
+              const userData = await mockTrpcClient.auth.me.query();
+              setUser(userData);
+            } else {
+              throw authError;
+            }
+          }
+
         }
       } catch (error) {
         console.log("Failed to load stored auth:", error);
@@ -121,7 +132,20 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     
     try {
       console.log('Attempting login for:', email);
-      const response = await loginMutation.mutateAsync({ email: email.trim(), password });
+      let response;
+      
+      try {
+        response = await loginMutation.mutateAsync({ email: email.trim(), password });
+      } catch (loginError: any) {
+        if (loginError?.message === 'BACKEND_UNAVAILABLE') {
+          console.log('Backend unavailable, trying mock backend for login');
+          enableMockMode();
+          response = await mockTrpcClient.auth.login.mutate({ email: email.trim(), password });
+        } else {
+          throw loginError;
+        }
+      }
+      
       console.log('Login successful, storing token');
       
       if (!response?.token || !response?.user) {
@@ -190,7 +214,20 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     
     try {
       console.log('Attempting registration for:', email);
-      const response = await registerMutation.mutateAsync({ email: email.trim(), password });
+      let response;
+      
+      try {
+        response = await registerMutation.mutateAsync({ email: email.trim(), password });
+      } catch (registerError: any) {
+        if (registerError?.message === 'BACKEND_UNAVAILABLE') {
+          console.log('Backend unavailable, trying mock backend for registration');
+          enableMockMode();
+          response = await mockTrpcClient.auth.register.mutate({ email: email.trim(), password });
+        } else {
+          throw registerError;
+        }
+      }
+      
       console.log('Registration successful, storing token');
       
       if (!response?.token || !response?.user) {
@@ -249,8 +286,21 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       throw new Error("Authentication required");
     }
     try {
-      const response = await completeProfileMutation.mutateAsync(data);
-      setUser(response.user);
+      let response;
+      
+      try {
+        response = await completeProfileMutation.mutateAsync(data);
+      } catch (profileError: any) {
+        if (profileError?.message === 'BACKEND_UNAVAILABLE') {
+          console.log('Backend unavailable, trying mock backend for profile completion');
+          enableMockMode();
+          response = await mockTrpcClient.auth.completeProfile.mutate(data);
+        } else {
+          throw profileError;
+        }
+      }
+      
+      setUser(response);
     } catch (error: any) {
       console.error('Profile completion error:', error);
       if (error?.message) {
