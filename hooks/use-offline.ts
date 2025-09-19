@@ -72,7 +72,13 @@ export const [OfflineProvider, useOffline] = createContextHook<OfflineContextTyp
   }, []);
 
   const cachePost = useCallback((post: any) => {
+    if (!post || !post.id) return;
     setCachedPosts(prev => {
+      // Check if post already exists to prevent unnecessary updates
+      const existingIndex = prev.findIndex(p => p.id === post.id);
+      if (existingIndex >= 0 && JSON.stringify(prev[existingIndex]) === JSON.stringify(post)) {
+        return prev; // No change needed
+      }
       const updated = [post, ...prev.filter(p => p.id !== post.id)];
       setCachedData(updated);
       return updated;

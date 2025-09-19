@@ -259,7 +259,7 @@ export function usePosts() {
           setPosts(mockPosts);
         }
       } catch (error) {
-        console.log('Failed to load posts from Supabase:', error);
+        console.error('Error fetching posts:', error);
         console.log('Falling back to mock data');
         setPosts(mockPosts);
       } finally {

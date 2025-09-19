@@ -40,12 +40,14 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (posts.length > 0) {
-      // Cache posts for offline use
-      posts.forEach(cachePost);
-    } else if (!isOnline && cachedPosts.length > 0) {
-      // Use cached posts when offline
+      // Cache posts for offline use (only cache new posts)
+      posts.forEach(post => {
+        if (!cachedPosts.find(cached => cached.id === post.id)) {
+          cachePost(post);
+        }
+      });
     }
-  }, [posts, isOnline, cachedPosts, cachePost]);
+  }, [posts.length]); // Only depend on posts length to avoid infinite loops
 
   const handleCreatePost = useCallback(() => {
     if (!user) {
