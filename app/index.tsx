@@ -14,10 +14,14 @@ export default function Index() {
     return user ? isProfileComplete(user) : false;
   }, [user]);
 
-  console.log('Index.tsx - isLoading:', isLoading, 'user:', user ? 'Present' : 'None');
+  console.log('Index.tsx - isLoading:', isLoading, 'user:', user ? `Present (${user.id})` : 'None');
   
   if (user) {
-    console.log('Index.tsx - Profile complete:', profileComplete);
+    console.log('Index.tsx - Profile complete:', profileComplete, 'user data:', {
+      hasName: !!user.name,
+      hasUsername: !!user.username,
+      hasBio: !!user.bio
+    });
   }
 
   if (isLoading) {

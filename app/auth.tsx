@@ -208,15 +208,7 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </GlassCard>
               
-              {/* Debug info for development */}
-              {__DEV__ && (
-                <GlassCard style={[styles.switchCard, { marginTop: 16 }]}>
-                  <Text style={[styles.switchText, { fontSize: 12, opacity: 0.7 }]}>
-                    🔧 Debug: Firebase Auth Ready
-                    {isLogin ? ' | Try creating an account first if you don\'t have one' : ' | Account will be created in Firebase'}
-                  </Text>
-                </GlassCard>
-              )}
+
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
