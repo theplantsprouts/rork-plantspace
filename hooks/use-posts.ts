@@ -1,18 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAIContent } from './use-ai-content';
 import { useAuth } from './use-auth';
-import { db, storage } from '@/lib/firebase';
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  query, 
-  orderBy, 
-  serverTimestamp,
-  doc,
-  getDoc
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useRealTimePosts } from './use-realtime';
+import { createPost, uploadImage } from '@/lib/firebase';
+import { trackPostCreated, trackPostViewed, trackPostLiked, trackPostShared } from '@/lib/analytics';
 
 export interface User {
   id: string;
@@ -52,53 +43,7 @@ export interface Post {
   recommendationScore?: number;
 }
 
-// Helper function to convert Firebase post to our Post interface
-const convertFirebasePost = async (firebasePost: any): Promise<Post> => {
-  // Get user profile
-  let userProfile = {
-    id: firebasePost.author_id,
-    name: 'Unknown User',
-    username: '@unknown',
-    avatar: undefined,
-    followers: 0,
-    following: 0,
-  };
-  
-  try {
-    const profileDoc = await getDoc(doc(db, 'profiles', firebasePost.author_id));
-    if (profileDoc.exists()) {
-      const profileData = profileDoc.data();
-      userProfile = {
-        id: profileDoc.id,
-        name: profileData.name || 'Unknown User',
-        username: profileData.username || '@unknown',
-        avatar: profileData.avatar,
-        followers: profileData.followers || 0,
-        following: profileData.following || 0,
-      };
-    }
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
-  }
-  
-  return {
-    id: firebasePost.id,
-    user: userProfile,
-    content: firebasePost.content,
-    image: firebasePost.image,
-    timestamp: formatTimestamp(firebasePost.created_at?.toDate?.()?.toISOString() || new Date().toISOString()),
-    likes: firebasePost.likes || 0,
-    comments: firebasePost.comments || 0,
-    shares: firebasePost.shares || 0,
-    isLiked: false, // Would need to check user's likes
-    isShared: false,
-    moderationStatus: 'approved',
-    isAgricultureRelated: true,
-    aiScore: 0.9,
-    aiTags: firebasePost.aiTags || [],
-    recommendationScore: 0.8,
-  };
-};
+
 
 // Helper function to format timestamp
 const formatTimestamp = (timestamp: string): string => {
@@ -266,100 +211,62 @@ const mockPosts: Post[] = [
 ];
 
 export function usePosts() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [recommendedPosts, setRecommendedPosts] = useState<Post[]>([]);
   const { getRecommendations, getContentInsights } = useAIContent();
   const { user } = useAuth();
-
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        console.log('Loading posts from Firebase...');
-        
-        // Try to load posts from Firebase
-        const postsQuery = query(
-          collection(db, 'posts'),
-          orderBy('created_at', 'desc')
-        );
-        
-        const querySnapshot = await getDocs(postsQuery);
-        const firebasePosts: any[] = [];
-        
-        querySnapshot.forEach((doc) => {
-          firebasePosts.push({ id: doc.id, ...doc.data() });
-        });
-        
-        if (firebasePosts.length > 0) {
-          console.log('Loaded posts from Firebase:', firebasePosts.length);
-          const convertedPosts = await Promise.all(
-            firebasePosts.map(convertFirebasePost)
-          );
-          setPosts([...convertedPosts, ...mockPosts]); // Combine with mock data
-        } else {
-          console.log('No posts in Firebase, using mock data');
-          setPosts(mockPosts);
-        }
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-        console.log('Falling back to mock data');
-        setPosts(mockPosts);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPosts();
-  }, []);
+  
+  // Use real-time posts hook
+  const { posts: realTimePosts, loading: isLoading, error, refresh } = useRealTimePosts();
+  
+  // Convert Firebase posts to our Post interface
+  const posts = realTimePosts.map(firebasePost => ({
+    id: firebasePost.id,
+    user: {
+      id: firebasePost.author?.id || firebasePost.author_id,
+      name: firebasePost.author?.name || 'Unknown User',
+      username: firebasePost.author?.username || '@unknown',
+      avatar: firebasePost.author?.avatar,
+      followers: firebasePost.author?.followers || 0,
+      following: firebasePost.author?.following || 0,
+    },
+    content: firebasePost.content,
+    image: firebasePost.image,
+    timestamp: formatTimestamp(firebasePost.created_at),
+    likes: firebasePost.likes || 0,
+    comments: firebasePost.comments || 0,
+    shares: 0, // Not implemented yet
+    isLiked: false, // Would need to check user's likes
+    isShared: false,
+    moderationStatus: 'approved' as const,
+    isAgricultureRelated: true,
+    aiScore: 0.9,
+    aiTags: [],
+    recommendationScore: 0.8,
+  }));
+  
+  // Combine with mock posts if no real posts
+  const allPosts = posts.length > 0 ? [...posts, ...mockPosts] : mockPosts;
 
   const toggleLike = (postId: string) => {
-    setPosts(prevPosts => 
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          const isLiked = !post.isLiked;
-          return {
-            ...post,
-            isLiked,
-            likes: isLiked ? post.likes + 1 : post.likes - 1
-          };
-        }
-        return post;
-      })
-    );
+    const post = allPosts.find(p => p.id === postId);
+    if (post) {
+      trackPostLiked(postId, post.user.id);
+    }
+    // Note: In a real app, you'd update the like in Firebase here
+    console.log('Like toggled for post:', postId);
   };
 
   const toggleShare = (postId: string) => {
-    setPosts(prevPosts => 
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          const isShared = !post.isShared;
-          return {
-            ...post,
-            isShared,
-            shares: isShared ? post.shares + 1 : post.shares - 1
-          };
-        }
-        return post;
-      })
-    );
+    const post = allPosts.find(p => p.id === postId);
+    if (post) {
+      trackPostShared(postId, 'app_share');
+    }
+    // Note: In a real app, you'd update the share count in Firebase here
+    console.log('Share toggled for post:', postId);
   };
 
-  const uploadImageToFirebase = async (imageUri: string): Promise<string> => {
-    try {
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      
-      const filename = `posts/${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      const storageRef = ref(storage, filename);
-      
-      await uploadBytes(storageRef, blob);
-      const downloadURL = await getDownloadURL(storageRef);
-      
-      return downloadURL;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      throw error;
-    }
+  const trackPostView = (postId: string, authorId: string) => {
+    trackPostViewed(postId, authorId);
   };
 
   const addPost = async (content: string, image?: string) => {
@@ -371,104 +278,62 @@ export function usePosts() {
       console.log('Creating post with Firebase...');
       
       // Upload image if provided
-      let imageUrl = image;
+      let imageUrl: string | null = image || null;
       if (image && !image.startsWith('http')) {
         console.log('Uploading image...');
-        imageUrl = await uploadImageToFirebase(image);
+        imageUrl = await uploadImage(image, 'posts');
       }
       
-      // Create post in Firebase
-      const postData = {
-        content,
-        image: imageUrl,
-        author_id: user.id,
-        created_at: serverTimestamp(),
-        likes: 0,
-        comments: 0,
-        shares: 0,
-        aiTags: [],
-      };
+      // Create post using Firebase function
+      const newFirebasePost = await createPost(content, imageUrl || undefined);
       
-      const docRef = await addDoc(collection(db, 'posts'), postData);
+      if (newFirebasePost) {
+        // Track post creation
+        trackPostCreated(newFirebasePost.id, !!imageUrl);
+        
+        const newPost: Post = {
+          id: newFirebasePost.id,
+          user: {
+            id: user.id,
+            name: user.name || 'You',
+            username: user.username || '@you',
+            avatar: user.avatar,
+            followers: user.followers || 0,
+            following: user.following || 0,
+          },
+          content: newFirebasePost.content,
+          image: newFirebasePost.image,
+          timestamp: 'now',
+          likes: newFirebasePost.likes,
+          comments: newFirebasePost.comments,
+          shares: 0,
+          isLiked: false,
+          isShared: false,
+          moderationStatus: 'approved',
+          isAgricultureRelated: true,
+          aiScore: 0.9,
+          aiTags: [],
+          recommendationScore: 0.8,
+        };
+        
+        console.log('Post created successfully');
+        return newPost;
+      }
       
-      const newPost: Post = {
-        id: docRef.id,
-        user: {
-          id: user.id,
-          name: user.name || 'You',
-          username: user.username || '@you',
-          avatar: user.avatar,
-          followers: user.followers || 0,
-          following: user.following || 0,
-        },
-        content,
-        image: imageUrl,
-        timestamp: 'now',
-        likes: 0,
-        comments: 0,
-        shares: 0,
-        isLiked: false,
-        isShared: false,
-        moderationStatus: 'approved',
-        isAgricultureRelated: true,
-        aiScore: 0.9,
-        aiTags: [],
-        recommendationScore: 0.8,
-      };
-      
-      setPosts(prevPosts => [newPost, ...prevPosts]);
-      console.log('Post created successfully');
-      return newPost;
+      throw new Error('Failed to create post');
     } catch (error) {
       console.error('Error creating post:', error);
-      
-      // Fallback to local post creation
-      const newPost: Post = {
-        id: Date.now().toString(),
-        user: {
-          id: user.id,
-          name: user.name || 'You',
-          username: user.username || '@you',
-          avatar: user.avatar,
-          followers: user.followers || 0,
-          following: user.following || 0,
-        },
-        content,
-        image,
-        timestamp: 'now',
-        likes: 0,
-        comments: 0,
-        shares: 0,
-        isLiked: false,
-        isShared: false,
-        moderationStatus: 'pending',
-        isAgricultureRelated: false,
-        aiScore: 0,
-        aiTags: [],
-        recommendationScore: 0,
-      };
-      
-      setPosts(prevPosts => [newPost, ...prevPosts]);
-      return newPost;
+      throw error;
     }
   };
 
   const addComment = (postId: string, content: string) => {
-    setPosts(prevPosts => 
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            comments: post.comments + 1
-          };
-        }
-        return post;
-      })
-    );
+    // Note: In a real app, you'd create the comment in Firebase here
+    console.log('Comment added to post:', postId, content);
   };
 
   const getSmartRecommendations = async (userInterests: string[] = [], followedUsers: string[] = []) => {
-    const recommendations = await getRecommendations(posts, {
+    const recommendations = await getRecommendations(allPosts, {
       userInterests,
       followedUsers: followedUsers as any, // Type compatibility fix
       recentActivity: []
@@ -480,26 +345,29 @@ export function usePosts() {
   const getFilteredPosts = (filter: 'all' | 'agriculture' | 'approved' | 'pending') => {
     switch (filter) {
       case 'agriculture':
-        return posts.filter(post => post.isAgricultureRelated);
+        return allPosts.filter(post => post.isAgricultureRelated);
       case 'approved':
-        return posts.filter(post => post.moderationStatus === 'approved');
+        return allPosts.filter(post => post.moderationStatus === 'approved');
       case 'pending':
-        return posts.filter(post => post.moderationStatus === 'pending');
+        return allPosts.filter(post => post.moderationStatus === 'pending');
       default:
-        return posts;
+        return allPosts;
     }
   };
 
-  const insights = getContentInsights(posts);
+  const insights = getContentInsights(allPosts);
 
   return {
-    posts,
+    posts: allPosts,
     recommendedPosts,
     isLoading,
+    error,
+    refresh,
     toggleLike,
     toggleShare,
     addPost,
     addComment,
+    trackPostView,
     getSmartRecommendations,
     getFilteredPosts,
     insights,

@@ -16,6 +16,8 @@ import {
   updateDoc, 
   serverTimestamp 
 } from 'firebase/firestore';
+import { registerForPushNotificationsAsync } from '@/lib/notifications';
+import { trackUserLogin, trackUserSignup, trackUserLogout, trackProfileUpdated } from '@/lib/analytics';
 
 export interface User {
   id: string;
@@ -163,6 +165,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       console.log('Login successful with Firebase');
       
+      // Track login event
+      trackUserLogin('email');
+      
       // The auth state change listener will handle setting the user
     } catch (error: any) {
       console.error('Login error:', error);
@@ -210,6 +215,16 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       console.log('Registration successful with Firebase');
       console.log('User created:', userCredential.user.uid);
+      
+      // Track signup event
+      trackUserSignup('email');
+      
+      // Register for push notifications
+      try {
+        await registerForPushNotificationsAsync(userCredential.user.uid);
+      } catch (error) {
+        console.log('Push notification registration failed:', error);
+      }
       
       // Send email verification
       if (!userCredential.user.emailVerified) {
@@ -273,6 +288,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         setUser(updatedProfile);
       }
       
+      // Track profile update
+      trackProfileUpdated(['name', 'username', 'bio', ...(data.avatar ? ['avatar'] : [])]);
+      
       console.log('Profile completion successful');
     } catch (error: any) {
       console.error('Profile completion error:', error);
@@ -283,6 +301,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   const logout = useCallback(async () => {
     try {
       console.log('Signing out from Firebase');
+      
+      // Track logout event
+      trackUserLogout();
+      
       await signOut(auth);
       
       // Clear local state (auth state change listener will also handle this)

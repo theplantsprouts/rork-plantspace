@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc, query, orderBy, limit, startAfter, DocumentSnapshot, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc, query, orderBy, limit, startAfter, DocumentSnapshot, Timestamp, onSnapshot, where } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAnalytics, logEvent, Analytics } from 'firebase/analytics';
 import { Platform } from 'react-native';
 
 const firebaseConfig = {
@@ -19,6 +20,18 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Initialize Analytics (web only)
+let analytics: Analytics | null = null;
+if (Platform.OS === 'web') {
+  try {
+    analytics = getAnalytics(app);
+  } catch (error) {
+    console.log('Analytics not available:', error);
+  }
+}
+
+export { analytics };
 
 // Database types
 export interface Profile {
@@ -242,6 +255,100 @@ export const uploadImage = async (uri: string, folder: string = 'images'): Promi
   } catch (error) {
     console.error('Error uploading image:', error);
     return null;
+  }
+};
+
+// Real-time listeners
+export const subscribeToUserPosts = (userId: string, callback: (posts: Post[]) => void) => {
+  const postsRef = collection(db, 'posts');
+  const q = query(
+    postsRef, 
+    where('author_id', '==', userId),
+    orderBy('created_at', 'desc')
+  );
+  
+  return onSnapshot(q, async (snapshot) => {
+    const posts: Post[] = [];
+    
+    for (const docSnap of snapshot.docs) {
+      const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+      
+      // Fetch author profile
+      if (postData.author_id) {
+        const authorProfile = await getProfile(postData.author_id);
+        if (authorProfile) {
+          postData.author = authorProfile;
+        }
+      }
+      
+      posts.push(postData);
+    }
+    
+    callback(posts);
+  });
+};
+
+export const subscribeToAllPosts = (callback: (posts: Post[]) => void) => {
+  const postsRef = collection(db, 'posts');
+  const q = query(postsRef, orderBy('created_at', 'desc'), limit(20));
+  
+  return onSnapshot(q, async (snapshot) => {
+    const posts: Post[] = [];
+    
+    for (const docSnap of snapshot.docs) {
+      const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+      
+      // Fetch author profile
+      if (postData.author_id) {
+        const authorProfile = await getProfile(postData.author_id);
+        if (authorProfile) {
+          postData.author = authorProfile;
+        }
+      }
+      
+      posts.push(postData);
+    }
+    
+    callback(posts);
+  });
+};
+
+// Analytics functions
+export const logAnalyticsEvent = (eventName: string, parameters?: Record<string, any>) => {
+  if (analytics && Platform.OS === 'web') {
+    logEvent(analytics, eventName, parameters);
+  }
+  console.log(`Analytics Event: ${eventName}`, parameters);
+};
+
+// Push notification token storage
+export const savePushToken = async (userId: string, token: string) => {
+  try {
+    const docRef = doc(db, 'push_tokens', userId);
+    await setDoc(docRef, {
+      token,
+      updated_at: new Date().toISOString(),
+      platform: Platform.OS,
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error saving push token:', error);
+  }
+};
+
+export const getPushTokens = async (userIds: string[]): Promise<string[]> => {
+  try {
+    const tokens: string[] = [];
+    for (const userId of userIds) {
+      const docRef = doc(db, 'push_tokens', userId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        tokens.push(docSnap.data().token);
+      }
+    }
+    return tokens;
+  } catch (error) {
+    console.error('Error fetching push tokens:', error);
+    return [];
   }
 };
 
