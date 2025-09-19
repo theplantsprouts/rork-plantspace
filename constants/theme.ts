@@ -20,7 +20,7 @@ export const PlantTheme = {
     backgroundEnd: '#F1F8E9',
     
     // Glass morphism
-    glassBackground: 'rgba(255, 255, 255, 0.3)',
+    glassBackground: 'rgba(255, 255, 255, 0.08)',
     glassBorder: 'rgba(255, 255, 255, 0.25)',
     glassShadow: 'rgba(0, 0, 0, 0.15)',
     

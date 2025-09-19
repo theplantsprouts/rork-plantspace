@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   insightCard: {
     flex: 1,
-    backgroundColor: PlantTheme.colors.glassBackground,
+    backgroundColor: 'transparent',
     borderRadius: PlantTheme.borderRadius.md,
     padding: 12,
     alignItems: 'center',

@@ -71,14 +71,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
+    backgroundColor: 'transparent',
     ...(Platform.OS === 'android' && {
-      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
       elevation: 2,
       shadowColor: 'transparent',
     }),
   },
   webGlassContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     backdropFilter: 'blur(15px)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
   } as ViewStyle,

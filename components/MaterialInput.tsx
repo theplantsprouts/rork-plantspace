@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
     borderRadius: PlantTheme.borderRadius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
     paddingHorizontal: 16,
     minHeight: 56,
     ...(Platform.OS !== 'android' && {
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     borderRadius: PlantTheme.material3.shapes.corner.medium,
     elevation: 1,
     shadowColor: 'transparent',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   
   focused: {
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   
   disabled: {
     opacity: 0.6,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'transparent',
   },
   
   input: {
@@ -210,8 +210,9 @@ const styles = StyleSheet.create({
     minWidth: 40,
     minHeight: 40,
     borderRadius: PlantTheme.borderRadius.sm,
+    backgroundColor: 'transparent',
     ...(Platform.OS === 'android' && {
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
     }),
   },
   

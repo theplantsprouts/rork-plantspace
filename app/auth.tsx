@@ -260,8 +260,9 @@ const styles = StyleSheet.create({
   formCard: {
     padding: 24,
     marginBottom: 16,
+    backgroundColor: 'transparent',
     ...(Platform.OS === 'android' && {
-      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
       borderRadius: PlantTheme.material3.shapes.corner.large,
       elevation: 3,
       shadowColor: 'transparent',
@@ -275,21 +276,23 @@ const styles = StyleSheet.create({
   },
   switchCard: {
     padding: 16,
-    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
     ...(Platform.OS === 'android' && {
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
       borderRadius: PlantTheme.material3.shapes.corner.large,
       elevation: 2,
       shadowColor: 'transparent',
     }),
   },
   glassInput: {
-    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
     ...PlantTheme.shadows.sm,
     ...(Platform.OS === 'android' && {
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
       elevation: 1,
       shadowColor: 'transparent',
       borderRadius: PlantTheme.material3.shapes.corner.medium,
