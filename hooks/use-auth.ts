@@ -111,35 +111,60 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    if (!email?.trim() || !password?.trim()) throw new Error("Invalid credentials");
+    if (!email?.trim() || !password?.trim()) throw new Error("Please enter both email and password");
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      throw new Error("Please enter a valid email address");
+    }
+    
     try {
       console.log('Attempting login for:', email);
-      const response = await loginMutation.mutateAsync({ email, password });
+      const response = await loginMutation.mutateAsync({ email: email.trim(), password });
       console.log('Login successful, storing token');
+      
+      if (!response?.token || !response?.user) {
+        throw new Error('Invalid response from server');
+      }
+      
       setToken(response.token);
       setUser(response.user);
       await storeToken(response.token);
     } catch (error: any) {
       console.error('Login error:', error);
       
-      // Handle different types of errors
-      if (error?.message?.includes('HTML instead of JSON')) {
-        throw new Error('Server configuration error. The backend may not be running properly. Please contact support.');
+      // Handle different types of errors with user-friendly messages
+      if (error?.message?.includes('API endpoint not found')) {
+        throw new Error('Unable to connect to server. Please check if the backend is running.');
       }
       
-      if (error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
+      if (error?.message?.includes('Server configuration error') || error?.message?.includes('HTML instead of JSON')) {
+        throw new Error('Server is not responding correctly. Please try again later or contact support.');
+      }
+      
+      if (error?.message?.includes('Unable to connect') || error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
         throw new Error('Unable to connect to server. Please check your internet connection and try again.');
       }
       
       if (error?.message?.includes('timeout')) {
-        throw new Error('Request timed out. Please try again.');
+        throw new Error('Connection timed out. Please check your internet connection and try again.');
       }
       
-      if (error?.data?.code === 'UNAUTHORIZED') {
-        throw new Error('Invalid email or password. Please try again.');
+      if (error?.data?.code === 'UNAUTHORIZED' || error?.message?.includes('Invalid email or password')) {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
       }
       
-      if (error?.message) {
+      if (error?.data?.code === 'TOO_MANY_REQUESTS') {
+        throw new Error('Too many login attempts. Please wait a few minutes and try again.');
+      }
+      
+      // Pass through validation errors
+      if (error?.message?.includes('valid email') || error?.message?.includes('required')) {
+        throw new Error(error.message);
+      }
+      
+      if (error?.message && !error.message.includes('mutateAsync')) {
         throw new Error(error.message);
       }
       
@@ -148,36 +173,67 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   }, [loginMutation]);
 
   const register = useCallback(async (email: string, password: string) => {
-    if (!email?.trim() || !password?.trim()) throw new Error("Invalid credentials");
-    if (password.length < 6) throw new Error("Password must be at least 6 characters");
+    if (!email?.trim() || !password?.trim()) throw new Error("Please enter both email and password");
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      throw new Error("Please enter a valid email address");
+    }
+    
+    if (password.length < 6) throw new Error("Password must be at least 6 characters long");
+    
+    // Password strength validation
+    if (password.length > 128) {
+      throw new Error("Password is too long (maximum 128 characters)");
+    }
+    
     try {
       console.log('Attempting registration for:', email);
-      const response = await registerMutation.mutateAsync({ email, password });
+      const response = await registerMutation.mutateAsync({ email: email.trim(), password });
       console.log('Registration successful, storing token');
+      
+      if (!response?.token || !response?.user) {
+        throw new Error('Invalid response from server');
+      }
+      
       setToken(response.token);
       setUser(response.user);
       await storeToken(response.token);
     } catch (error: any) {
       console.error('Registration error:', error);
       
-      // Handle different types of errors
-      if (error?.message?.includes('HTML instead of JSON')) {
-        throw new Error('Server configuration error. The backend may not be running properly. Please contact support.');
+      // Handle different types of errors with user-friendly messages
+      if (error?.message?.includes('API endpoint not found')) {
+        throw new Error('Unable to connect to server. Please check if the backend is running.');
       }
       
-      if (error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
+      if (error?.message?.includes('Server configuration error') || error?.message?.includes('HTML instead of JSON')) {
+        throw new Error('Server is not responding correctly. Please try again later or contact support.');
+      }
+      
+      if (error?.message?.includes('Unable to connect') || error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
         throw new Error('Unable to connect to server. Please check your internet connection and try again.');
       }
       
       if (error?.message?.includes('timeout')) {
-        throw new Error('Request timed out. Please try again.');
+        throw new Error('Connection timed out. Please check your internet connection and try again.');
       }
       
-      if (error?.data?.code === 'CONFLICT') {
+      if (error?.data?.code === 'CONFLICT' || error?.message?.includes('already exists')) {
         throw new Error('An account with this email already exists. Please try logging in instead.');
       }
       
-      if (error?.message) {
+      if (error?.data?.code === 'TOO_MANY_REQUESTS') {
+        throw new Error('Too many registration attempts. Please wait a few minutes and try again.');
+      }
+      
+      // Pass through validation errors
+      if (error?.message?.includes('valid email') || error?.message?.includes('characters') || error?.message?.includes('required')) {
+        throw new Error(error.message);
+      }
+      
+      if (error?.message && !error.message.includes('mutateAsync')) {
         throw new Error(error.message);
       }
       

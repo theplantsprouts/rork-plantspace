@@ -16,14 +16,19 @@ const getBaseUrl = () => {
   if (__DEV__) {
     // For web development
     if (Platform.OS === 'web') {
-      // Try to use the current origin, but fallback to tunnel URL if needed
+      // Try to use the current origin first
       try {
-        return window.location.origin;
-      } catch {
-        return "https://l1v04hq0ysnd54scxcbqm.rork.com";
+        if (typeof window !== 'undefined' && window.location) {
+          const origin = window.location.origin;
+          console.log('Using web origin:', origin);
+          return origin;
+        }
+      } catch (error) {
+        console.log('Failed to get window.location.origin:', error);
       }
     }
-    // For mobile development - use the tunnel URL from the start script
+    // For mobile development or web fallback
+    console.log('Using tunnel URL for mobile/fallback');
     return "https://l1v04hq0ysnd54scxcbqm.rork.com";
   }
 
@@ -120,8 +125,9 @@ export const trpcClient = trpc.createClient({
             throw new Error('Invalid URL provided');
           }
           
+          const baseUrl = getBaseUrl();
           console.log('Making tRPC request to:', url);
-          console.log('Base URL:', getBaseUrl());
+          console.log('Base URL:', baseUrl);
           
           // Get auth token
           let token = null;
@@ -146,7 +152,7 @@ export const trpcClient = trpc.createClient({
           
           // Add timeout and better error handling
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
           
           const response = await fetch(url, {
             ...options,
@@ -162,15 +168,43 @@ export const trpcClient = trpc.createClient({
             let errorText = '';
             try {
               errorText = await response.text();
-              console.error(`HTTP ${response.status} response body:`, errorText);
+              console.error(`HTTP ${response.status} response body:`, errorText.substring(0, 500));
               
               // Check if we're getting HTML instead of JSON (common server error)
               if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
-                throw new Error(`Server returned HTML instead of JSON. This usually means the API endpoint is not found or the server is not running properly.`);
+                // This is likely a 404 or server configuration issue
+                if (response.status === 404) {
+                  throw new Error('API endpoint not found. Please check if the backend server is running and accessible.');
+                } else {
+                  throw new Error('Server configuration error. The backend may not be running properly.');
+                }
               }
+              
+              // Try to parse as JSON for better error messages
+              try {
+                const errorData = JSON.parse(errorText);
+                if (errorData.error?.message) {
+                  throw new Error(errorData.error.message);
+                }
+              } catch (parseError) {
+                // Not JSON, use the text as is
+              }
+              
             } catch (readError) {
               console.error('Failed to read error response:', readError);
+              if (readError instanceof Error && readError.message.includes('API endpoint not found')) {
+                throw readError;
+              }
               errorText = 'Unable to read error response';
+            }
+            
+            // Provide more specific error messages based on status codes
+            if (response.status === 404) {
+              throw new Error('API endpoint not found. Please check if the backend server is running.');
+            } else if (response.status === 500) {
+              throw new Error('Internal server error. Please try again later.');
+            } else if (response.status === 503) {
+              throw new Error('Service unavailable. The server may be temporarily down.');
             }
             
             throw new Error(`HTTP ${response.status}: ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
@@ -180,7 +214,7 @@ export const trpcClient = trpc.createClient({
           const contentType = response.headers.get('content-type');
           if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
-            console.error('Non-JSON response received:', { contentType, text });
+            console.error('Non-JSON response received:', { contentType, text: text.substring(0, 200) });
             if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
               throw new Error('Server returned HTML instead of JSON. The API endpoint may not be configured correctly.');
             }
@@ -192,13 +226,17 @@ export const trpcClient = trpc.createClient({
           console.error('Network request failed:', error);
           if (error instanceof Error) {
             if (error.name === 'AbortError') {
-              throw new Error('Request timeout - please check your connection');
+              throw new Error('Request timeout - please check your connection and try again');
             }
-            if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
+            if (error.message.includes('Failed to fetch')) {
+              // This is often a CORS or network connectivity issue
+              throw new Error('Unable to connect to server. Please check your internet connection and ensure the backend is running.');
+            }
+            if (error.message.includes('Network request failed')) {
               throw new Error('Network error - please check your internet connection and try again');
             }
             // Pass through our custom error messages
-            if (error.message.includes('HTML instead of JSON') || error.message.includes('API endpoint')) {
+            if (error.message.includes('API endpoint') || error.message.includes('Server') || error.message.includes('HTML instead of JSON')) {
               throw error;
             }
           }

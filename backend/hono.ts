@@ -69,4 +69,27 @@ app.get("/test", (c) => {
   });
 });
 
+// Debug endpoint to check backend status
+app.get("/debug", (c) => {
+  console.log('Debug endpoint hit');
+  return c.json({
+    status: "Backend is running",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    routes: {
+      health: "/api",
+      test: "/api/test", 
+      debug: "/api/debug",
+      trpc: "/api/trpc"
+    },
+    cors: "enabled",
+    headers: Object.fromEntries(c.req.raw.headers.entries())
+  });
+});
+
+// Simple ping endpoint
+app.get("/ping", (c) => {
+  return c.text("pong");
+});
+
 export default app;

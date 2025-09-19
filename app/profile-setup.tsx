@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -48,44 +47,28 @@ export default function ProfileSetupScreen() {
     ]).start();
   }, [fadeAnim, scaleAnim]);
 
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
   const handleSubmit = async () => {
+    setErrorMessage('');
+    
     if (!name.trim() || !username.trim() || !bio.trim()) {
-      const errorMsg = "Please fill in all required fields";
-      if (Platform.OS !== 'web') {
-        Alert.alert("Error", errorMsg);
-      } else {
-        console.error(errorMsg);
-      }
+      setErrorMessage("Please fill in all required fields");
       return;
     }
 
     if (bio.length < 10) {
-      const errorMsg = "Bio must be at least 10 characters long";
-      if (Platform.OS !== 'web') {
-        Alert.alert("Error", errorMsg);
-      } else {
-        console.error(errorMsg);
-      }
+      setErrorMessage("Bio must be at least 10 characters long");
       return;
     }
 
     if (username.length < 3) {
-      const errorMsg = "Username must be at least 3 characters long";
-      if (Platform.OS !== 'web') {
-        Alert.alert("Error", errorMsg);
-      } else {
-        console.error(errorMsg);
-      }
+      setErrorMessage("Username must be at least 3 characters long");
       return;
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      const errorMsg = "Username can only contain letters, numbers, and underscores";
-      if (Platform.OS !== 'web') {
-        Alert.alert("Error", errorMsg);
-      } else {
-        console.error(errorMsg);
-      }
+      setErrorMessage("Username can only contain letters, numbers, and underscores");
       return;
     }
 
@@ -100,12 +83,14 @@ export default function ProfileSetupScreen() {
       // Don't navigate here - let the index.tsx handle routing based on profile completion
     } catch (error: any) {
       console.error('Profile setup error:', error);
-      const errorMessage = error?.message || "Failed to complete profile";
-      if (Platform.OS !== 'web') {
-        Alert.alert("Error", errorMessage);
-      } else {
-        console.error(errorMessage);
+      let message = error?.message || "Failed to complete profile";
+      
+      // Make error messages more user-friendly
+      if (message.includes('mutateAsync')) {
+        message = "Profile setup failed. Please try again.";
       }
+      
+      setErrorMessage(message);
     } finally {
       setLoading(false);
     }
@@ -178,6 +163,7 @@ export default function ProfileSetupScreen() {
                 autoCapitalize="words"
                 leftIcon={<UserCheck color={PlantTheme.colors.textSecondary} size={20} />}
                 testID="name-input"
+                style={styles.glassInput}
               />
 
               <MaterialInput
@@ -190,6 +176,7 @@ export default function ProfileSetupScreen() {
                 leftIcon={<AtSign color={PlantTheme.colors.textSecondary} size={20} />}
                 hint="Letters, numbers, and underscores only"
                 testID="username-input"
+                style={styles.glassInput}
               />
 
               <MaterialInput
@@ -202,7 +189,14 @@ export default function ProfileSetupScreen() {
                 leftIcon={<FileText color={PlantTheme.colors.textSecondary} size={20} />}
                 hint={`${bio.length}/200 characters (minimum 10)`}
                 testID="bio-input"
+                style={styles.glassInput}
               />
+
+              {errorMessage ? (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                </View>
+              ) : null}
 
               <MaterialButton
                 title={loading ? "🌱 Planting Your Profile..." : `🌿 Join the ${PlantTerminology.home}`}
@@ -411,5 +405,30 @@ const styles = StyleSheet.create({
   materialButtonStyle: {
     marginTop: 8,
     marginBottom: 16,
+  },
+  glassInput: {
+    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.glassBorder,
+    ...PlantTheme.shadows.sm,
+    ...(Platform.OS === 'android' && {
+      elevation: 1,
+      shadowColor: 'transparent',
+      borderRadius: PlantTheme.material3.shapes.corner.medium,
+    }),
+  },
+  errorContainer: {
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+    borderRadius: PlantTheme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 67, 54, 0.3)',
+  },
+  errorText: {
+    color: PlantTheme.colors.error,
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500' as const,
   },
 });

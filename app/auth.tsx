@@ -154,8 +154,15 @@ export default function LoginScreen() {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setErrorMessage("Please enter a valid email address");
+      return;
+    }
+
     if (!isLogin && password.length < 6) {
-      setErrorMessage("Password must be at least 6 characters");
+      setErrorMessage("Password must be at least 6 characters long");
       return;
     }
 
@@ -169,7 +176,13 @@ export default function LoginScreen() {
       // Don't navigate here - let the index.tsx handle routing based on auth state
     } catch (error: any) {
       console.error('Auth error:', error);
-      const message = error?.message || "Authentication failed";
+      let message = error?.message || "Authentication failed";
+      
+      // Make error messages more user-friendly
+      if (message.includes('mutateAsync')) {
+        message = isLogin ? "Login failed. Please try again." : "Registration failed. Please try again.";
+      }
+      
       setErrorMessage(message);
     } finally {
       setLoading(false);
@@ -288,7 +301,7 @@ export default function LoginScreen() {
                         : `🌱 ${PlantTerminology.create}`
                     }
                     onPress={handleSubmit}
-                    disabled={loading || !isOnline || connectionStatus.includes('❌')}
+                    disabled={loading || !isOnline}
                     size="large"
                     testID="submit-button"
                     style={styles.materialButtonStyle}
