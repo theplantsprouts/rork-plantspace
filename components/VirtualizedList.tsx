@@ -1,5 +1,5 @@
-import React, { memo, useCallback } from "react";
-import { FlatList, View, StyleSheet, useWindowDimensions } from "react-native";
+import React, { memo, useCallback, useMemo } from "react";
+import { FlatList, View, StyleSheet, useWindowDimensions, Platform } from "react-native";
 
 interface VirtualizedListProps<T> {
   data: T[];
@@ -33,6 +33,7 @@ function VirtualizedList<T>({
   testID,
 }: VirtualizedListProps<T>) {
   const { height: screenHeight } = useWindowDimensions();
+  
   const getItemLayout = useCallback(
     (_: any, index: number) => ({
       length: estimatedItemSize,
@@ -41,6 +42,13 @@ function VirtualizedList<T>({
     }),
     [estimatedItemSize]
   );
+  
+  const initialNumToRender = useMemo(() => {
+    return Math.min(Math.ceil(screenHeight / estimatedItemSize) + 2, 10);
+  }, [screenHeight, estimatedItemSize]);
+  
+  const maxToRenderPerBatch = Platform.OS === 'web' ? 5 : 10;
+  const windowSize = Platform.OS === 'web' ? 3 : 5;
 
   // Custom pull-to-refresh implementation would go here
   // For now, we'll handle refresh through onEndReached or external controls
@@ -65,10 +73,11 @@ function VirtualizedList<T>({
       ListEmptyComponent={ListEmptyComponent}
       getItemLayout={getItemLayout}
       removeClippedSubviews={true}
-      maxToRenderPerBatch={10}
-      updateCellsBatchingPeriod={50}
-      initialNumToRender={Math.ceil(screenHeight / estimatedItemSize)}
-      windowSize={5}
+      maxToRenderPerBatch={maxToRenderPerBatch}
+      updateCellsBatchingPeriod={Platform.OS === 'web' ? 100 : 50}
+      initialNumToRender={initialNumToRender}
+      windowSize={windowSize}
+      disableVirtualization={Platform.OS === 'web' && data.length < 20}
       showsVerticalScrollIndicator={false}
       testID={testID}
       style={styles.container}

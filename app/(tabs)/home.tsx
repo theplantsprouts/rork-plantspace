@@ -24,7 +24,7 @@ import * as Haptics from 'expo-haptics';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { isOnline, cachedPosts, cachePost } = useOffline();
+  const { isOnline } = useOffline();
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showInsights, setShowInsights] = useState(false);
@@ -40,6 +40,8 @@ export default function HomeScreen() {
 
   // Removed caching logic to prevent infinite loops
   // TODO: Implement proper caching without causing re-renders
+
+
 
   const handleCreatePost = useCallback(() => {
     if (!user) {
@@ -60,15 +62,22 @@ export default function HomeScreen() {
     toggleLike(postId);
   }, [toggleLike]);
 
-  const renderPost = useCallback(({ item }: { item: Post }) => (
-    <PostItem
-      post={item}
-      onLike={() => handleLike(item.id)}
-      testID={`post-${item.id}`}
-    />
-  ), [handleLike]);
 
-  const memoizedPosts = useMemo(() => posts, [posts]);
+  const renderPost = useCallback(({ item }: { item: Post }) => {
+    const onLike = () => handleLike(item.id);
+    return (
+      <PostItem
+        post={item}
+        onLike={onLike}
+        testID={`post-${item.id}`}
+      />
+    );
+  }, [handleLike]);
+
+  const memoizedPosts = useMemo(() => {
+    // Limit posts for better performance on mobile
+    return Platform.OS === 'web' ? posts : posts.slice(0, 50);
+  }, [posts]);
 
   const keyExtractor = useCallback((item: Post) => item.id, []);
 
@@ -160,7 +169,7 @@ export default function HomeScreen() {
             data={memoizedPosts}
             renderItem={renderPost}
             keyExtractor={keyExtractor}
-            estimatedItemSize={300}
+            estimatedItemSize={Platform.OS === 'web' ? 280 : 320}
             testID="posts-list"
           />
         </Animated.View>

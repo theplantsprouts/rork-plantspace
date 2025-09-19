@@ -1,5 +1,5 @@
-import React, { memo } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { memo, useCallback } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import { Image } from "expo-image";
 import { Sun, Sprout, Share2 } from "lucide-react-native";
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
@@ -15,6 +15,17 @@ interface PostItemProps {
 }
 
 function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
+  const handleLike = useCallback(() => {
+    onLike?.();
+  }, [onLike]);
+  
+  const handleComment = useCallback(() => {
+    onComment?.(post.id);
+  }, [onComment, post.id]);
+  
+  const handleShare = useCallback(() => {
+    onShare?.(post.id);
+  }, [onShare, post.id]);
 
   return (
     <GlassCard style={styles.container} testID={testID}>
@@ -25,6 +36,8 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
               source={{ uri: post.user.avatar }}
               style={styles.avatarImage}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={100}
             />
           ) : (
             <Text style={styles.avatarText}>
@@ -45,15 +58,18 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
           source={{ uri: post.image }}
           style={styles.image}
           contentFit="cover"
-          transition={200}
+          transition={Platform.OS === 'web' ? 0 : 200}
+          cachePolicy="memory-disk"
+          priority="normal"
         />
       )}
 
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={onLike}
+          onPress={handleLike}
           testID={`like-button-${post.id}`}
+          activeOpacity={0.7}
         >
           <Sun size={20} color={PlantTheme.colors.accent} />
           <Text style={styles.actionText}>{post.likes} {PlantTerminology.likes}</Text>
@@ -61,8 +77,9 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
 
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => onComment?.(post.id)}
+          onPress={handleComment}
           testID={`comment-button-${post.id}`}
+          activeOpacity={0.7}
         >
           <Sprout size={20} color={PlantTheme.colors.primary} />
           <Text style={styles.actionText}>{post.comments} {PlantTerminology.comments}</Text>
@@ -70,8 +87,9 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
 
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => onShare?.(post.id)}
+          onPress={handleShare}
           testID={`share-button-${post.id}`}
+          activeOpacity={0.7}
         >
           <Share2 size={20} color={PlantTheme.colors.secondary} />
           <Text style={styles.actionText}>{PlantTerminology.share}</Text>

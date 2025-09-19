@@ -26,7 +26,7 @@ export default function ProfileScreen() {
 
   const insets = useSafeAreaInsets();
   
-  const userPosts = posts.filter(post => post.user.id === Number(currentUser?.id));
+  const userPosts = posts.filter(post => post.user.id === currentUser?.id);
   const totalLikes = userPosts.reduce((sum, post) => sum + post.likes, 0);
   
   // Calculate engagement score for plant growth
@@ -72,23 +72,18 @@ export default function ProfileScreen() {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          removeClippedSubviews={true}
         >
           <GlassCard style={styles.profileCard}>
-            {/* Plant Growth Animation */}
-            <View style={styles.plantGrowthContainer}>
-              <PlantGrowthAnimation 
-                stage={plantStage}
-                engagementScore={Math.round(engagementScore)}
-                size={140}
-              />
-            </View>
-            
             <View style={styles.profileHeader}>
               <Image 
                 source={{ uri: currentUser?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face' }} 
                 style={styles.profileImage}
+                cachePolicy="memory-disk"
+                contentFit="cover"
+                transition={200}
               />
-              <TouchableOpacity style={styles.editButton}>
+              <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
                 <Edit3 color={PlantTheme.colors.white} size={16} />
               </TouchableOpacity>
             </View>
@@ -97,7 +92,7 @@ export default function ProfileScreen() {
             <Text style={styles.profileHandle}>{currentUser?.username || '@alexjohnson'}</Text>
             
             <Text style={styles.profileBio}>
-              {currentUser?.bio || 'Sustainable living enthusiast 🌱 Growing green communities 🌿 Sharing eco-friendly tips ♻️'}
+              Digital creator & photographer 📸 Sharing moments that matter ✨ Living life one adventure at a time 🌍
             </Text>
 
             <View style={styles.profileInfo}>
@@ -118,38 +113,47 @@ export default function ProfileScreen() {
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
                 <Sun color={PlantTheme.colors.accent} size={20} />
-                <Text style={styles.statNumber}>{userPosts.length}</Text>
-                <Text style={styles.statLabel}>{PlantTerminology.posts}</Text>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Seeds</Text>
               </View>
               <View style={styles.statItem}>
                 <TreePine color={PlantTheme.colors.primary} size={20} />
-                <Text style={styles.statNumber}>{(currentUser?.followers || 0).toLocaleString()}</Text>
-                <Text style={styles.statLabel}>{PlantTerminology.followers}</Text>
+                <Text style={styles.statNumber}>15,400</Text>
+                <Text style={styles.statLabel}>Garden Friends</Text>
               </View>
               <View style={styles.statItem}>
                 <Leaf color={PlantTheme.colors.secondary} size={20} />
-                <Text style={styles.statNumber}>{(currentUser?.following || 0).toLocaleString()}</Text>
-                <Text style={styles.statLabel}>{PlantTerminology.following}</Text>
+                <Text style={styles.statNumber}>892</Text>
+                <Text style={styles.statLabel}>Tending</Text>
               </View>
               <View style={styles.statItem}>
                 <Sun color={PlantTheme.colors.accent} size={20} />
-                <Text style={styles.statNumber}>{totalLikes.toLocaleString()}</Text>
-                <Text style={styles.statLabel}>{PlantTerminology.likes}</Text>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Sunshine</Text>
               </View>
             </View>
 
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.editProfileButton}>
+              <TouchableOpacity style={styles.editProfileButton} activeOpacity={0.8}>
                 <Text style={styles.editProfileText}>Tend Garden</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton}>
-                <Text style={styles.shareButtonText}>{PlantTerminology.share}</Text>
+              <TouchableOpacity style={styles.shareButton} activeOpacity={0.8}>
+                <Text style={styles.shareButtonText}>Spread Seeds</Text>
               </TouchableOpacity>
             </View>
           </GlassCard>
 
+          {/* Plant Growth Animation - Moved below profile details */}
+          <GlassCard style={styles.plantGrowthCard}>
+            <PlantGrowthAnimation 
+              stage={plantStage}
+              engagementScore={Math.round(engagementScore)}
+              size={120}
+            />
+          </GlassCard>
+
           <View style={styles.postsSection}>
-            <Text style={styles.sectionTitle}>🌱 Your {PlantTerminology.posts} ({userPosts.length})</Text>
+            <Text style={styles.sectionTitle}>🌱 Your Seeds (0)</Text>
             {userPosts.length === 0 ? (
               <View style={styles.emptyPosts}>
                 <Text style={styles.emptyPostsText}>No seeds planted yet</Text>
@@ -157,13 +161,20 @@ export default function ProfileScreen() {
               </View>
             ) : (
               <View style={styles.postsGrid}>
-                {userPosts.map((post) => (
+                {userPosts.slice(0, 9).map((post) => (
                   <TouchableOpacity 
                     key={post.id} 
                     style={[styles.postItem, { width: (width - 50) / 3, height: (width - 50) / 3 }]}
+                    activeOpacity={0.8}
                   >
                     {post.image ? (
-                      <Image source={{ uri: post.image }} style={styles.postImage} />
+                      <Image 
+                        source={{ uri: post.image }} 
+                        style={styles.postImage}
+                        cachePolicy="memory-disk"
+                        contentFit="cover"
+                        transition={100}
+                      />
                     ) : (
                       <View style={styles.textPost}>
                         <Text style={styles.textPostContent} numberOfLines={4}>
@@ -229,9 +240,10 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     padding: 25,
   },
-  plantGrowthContainer: {
-    marginBottom: 20,
+  plantGrowthCard: {
     alignItems: 'center',
+    marginBottom: 25,
+    padding: 20,
   },
   profileHeader: {
     position: 'relative',

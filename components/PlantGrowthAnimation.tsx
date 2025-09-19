@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet, Text } from 'react-native';
+import React, { useEffect, useRef, memo } from 'react';
+import { View, Animated, StyleSheet, Text, Platform } from 'react-native';
 import { PlantGrowthStage, PlantGrowthStages, PlantTheme } from '@/constants/theme';
 
 interface PlantGrowthAnimationProps {
@@ -8,7 +8,7 @@ interface PlantGrowthAnimationProps {
   size?: number;
 }
 
-export function PlantGrowthAnimation({ 
+function PlantGrowthAnimationComponent({ 
   stage, 
   engagementScore, 
   size = 120 
@@ -20,13 +20,16 @@ export function PlantGrowthAnimation({
   const currentStage = PlantGrowthStages[stage];
 
   useEffect(() => {
+    const reducedMotion = Platform.OS === 'web';
+    
     // Growth animation
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 1500,
+        duration: reducedMotion ? 800 : 1500,
         useNativeDriver: true,
       }),
+      reducedMotion ? Animated.timing(scaleAnim, { toValue: 1, duration: 0, useNativeDriver: true }) :
       Animated.loop(
         Animated.sequence([
           Animated.timing(scaleAnim, {
@@ -43,43 +46,45 @@ export function PlantGrowthAnimation({
       ),
     ]).start();
 
-    // Gentle sway animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(rotateAnim, {
-          toValue: 1,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnim, {
-          toValue: -1,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnim, {
-          toValue: 0,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
+    if (!reducedMotion) {
+      // Gentle sway animation - only on mobile
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(rotateAnim, {
+            toValue: 1,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(rotateAnim, {
+            toValue: -1,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(rotateAnim, {
+            toValue: 0,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
 
-    // Glow animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 0.8,
-          duration: 2500,
-          useNativeDriver: false,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0.3,
-          duration: 2500,
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
-  }, [stage]);
+      // Glow animation - only on mobile
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 0.8,
+            duration: 2500,
+            useNativeDriver: false,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0.3,
+            duration: 2500,
+            useNativeDriver: false,
+          }),
+        ])
+      ).start();
+    }
+  }, [stage, scaleAnim, rotateAnim, glowAnim]);
 
   const rotate = rotateAnim.interpolate({
     inputRange: [-1, 1],
@@ -91,20 +96,24 @@ export function PlantGrowthAnimation({
     outputRange: [0.3, 0.8],
   });
 
+  const showGlow = Platform.OS !== 'web';
+  
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      {/* Glow effect */}
-      <Animated.View
-        style={[
-          styles.glow,
-          {
-            width: size * 1.5,
-            height: size * 1.5,
-            borderRadius: size * 0.75,
-            opacity: glowOpacity,
-          },
-        ]}
-      />
+      {/* Glow effect - only on mobile */}
+      {showGlow && (
+        <Animated.View
+          style={[
+            styles.glow,
+            {
+              width: size * 1.5,
+              height: size * 1.5,
+              borderRadius: size * 0.75,
+              opacity: glowOpacity,
+            },
+          ]}
+        />
+      )}
       
       {/* Plant container */}
       <Animated.View
@@ -113,7 +122,7 @@ export function PlantGrowthAnimation({
           {
             transform: [
               { scale: scaleAnim },
-              { rotate },
+              Platform.OS !== 'web' ? { rotate } : { rotate: '0deg' },
             ],
           },
         ]}
@@ -176,3 +185,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export const PlantGrowthAnimation = memo(PlantGrowthAnimationComponent);
