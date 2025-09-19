@@ -13,8 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Sprout, Leaf, Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
-
-
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { MaterialInput } from "@/components/MaterialInput";
@@ -198,8 +196,6 @@ export default function LoginScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-      
-
     </View>
   );
 }

@@ -7,7 +7,6 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppProvider } from "@/hooks/use-app-context";
 import { AuthProvider } from "@/hooks/use-auth";
 import { OfflineProvider } from "@/hooks/use-offline";
-import { trpc, trpcClient } from "@/lib/trpc";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer } from "@/components/Toast";
 
@@ -73,20 +72,18 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <OfflineProvider>
-              <AppProvider>
-                <GestureHandlerRootView style={styles.gestureHandler}>
-                  <RootLayoutNav />
-                  <ToastContainer />
-                </GestureHandlerRootView>
-              </AppProvider>
-            </OfflineProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <OfflineProvider>
+            <AppProvider>
+              <GestureHandlerRootView style={styles.gestureHandler}>
+                <RootLayoutNav />
+                <ToastContainer />
+              </GestureHandlerRootView>
+            </AppProvider>
+          </OfflineProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

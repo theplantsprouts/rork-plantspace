@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAIContent } from './use-ai-content';
+import { getPosts, createPost, uploadImage, type Post as SupabasePost } from '@/lib/supabase';
+import { useAuth } from './use-auth';
 
 export interface User {
-  id: number;
+  id: string;
   name: string;
   username: string;
-  avatar: string;
+  avatar?: string;
   bio?: string;
   followers: number;
   following: number;
@@ -13,7 +15,7 @@ export interface User {
 }
 
 export interface Comment {
-  id: number;
+  id: string;
   user: User;
   content: string;
   timestamp: string;
@@ -21,7 +23,7 @@ export interface Comment {
 }
 
 export interface Post {
-  id: number;
+  id: string;
   user: User;
   content: string;
   image?: string;
@@ -39,11 +41,52 @@ export interface Post {
   recommendationScore?: number;
 }
 
+// Helper function to convert Supabase post to our Post interface
+const convertSupabasePost = (supabasePost: SupabasePost): Post => {
+  const profile = supabasePost.profiles;
+  return {
+    id: supabasePost.id,
+    user: {
+      id: profile?.id || supabasePost.author_id,
+      name: profile?.name || 'Unknown User',
+      username: profile?.username || '@unknown',
+      avatar: profile?.avatar,
+      followers: profile?.followers || 0,
+      following: profile?.following || 0,
+    },
+    content: supabasePost.content,
+    image: supabasePost.image,
+    timestamp: formatTimestamp(supabasePost.created_at),
+    likes: supabasePost.likes,
+    comments: supabasePost.comments,
+    shares: 0, // Not implemented in Supabase schema yet
+    isLiked: false, // Would need to check user's likes
+    isShared: false,
+    moderationStatus: 'approved',
+    isAgricultureRelated: true,
+    aiScore: 0.9,
+    aiTags: [],
+    recommendationScore: 0.8,
+  };
+};
+
+// Helper function to format timestamp
+const formatTimestamp = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 1) return 'now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+  return `${Math.floor(diffInMinutes / 1440)}d ago`;
+};
+
 const mockPosts: Post[] = [
   {
-    id: 1,
+    id: '1',
     user: {
-      id: 1,
+      id: '1',
       name: 'Sarah Chen',
       username: '@sarahchen',
       avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
@@ -66,9 +109,9 @@ const mockPosts: Post[] = [
     recommendationScore: 0.92,
   },
   {
-    id: 2,
+    id: '2',
     user: {
-      id: 2,
+      id: '2',
       name: 'Marcus Johnson',
       username: '@marcusj',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
@@ -91,9 +134,9 @@ const mockPosts: Post[] = [
     recommendationScore: 0.96,
   },
   {
-    id: 3,
+    id: '3',
     user: {
-      id: 3,
+      id: '3',
       name: 'Emma Rodriguez',
       username: '@emmarodriguez',
       avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
@@ -116,9 +159,9 @@ const mockPosts: Post[] = [
     recommendationScore: 0.88,
   },
   {
-    id: 4,
+    id: '4',
     user: {
-      id: 4,
+      id: '4',
       name: 'David Kim',
       username: '@davidkim',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
@@ -141,9 +184,9 @@ const mockPosts: Post[] = [
     recommendationScore: 0.85,
   },
   {
-    id: 5,
+    id: '5',
     user: {
-      id: 5,
+      id: '5',
       name: 'Lisa Park',
       username: '@lisapark',
       avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
@@ -166,9 +209,9 @@ const mockPosts: Post[] = [
     recommendationScore: 0.90,
   },
   {
-    id: 6,
+    id: '6',
     user: {
-      id: 6,
+      id: '6',
       name: 'Alex Thompson',
       username: '@alexthompson',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
@@ -197,19 +240,27 @@ export function usePosts() {
   const [isLoading, setIsLoading] = useState(true);
   const [recommendedPosts, setRecommendedPosts] = useState<Post[]>([]);
   const { getRecommendations, getContentInsights } = useAIContent();
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        console.log('Loading posts...');
+        console.log('Loading posts from Supabase...');
         
-        // For now, just use mock data since the backend posts structure might be different
-        // In the future, we can integrate with the real backend posts
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
-        setPosts(mockPosts);
-        console.log('Posts loaded:', mockPosts.length);
+        // Try to load posts from Supabase
+        const supabasePosts = await getPosts();
+        
+        if (supabasePosts.length > 0) {
+          console.log('Loaded posts from Supabase:', supabasePosts.length);
+          const convertedPosts = supabasePosts.map(convertSupabasePost);
+          setPosts([...convertedPosts, ...mockPosts]); // Combine with mock data
+        } else {
+          console.log('No posts in Supabase, using mock data');
+          setPosts(mockPosts);
+        }
       } catch (error) {
-        console.log('Failed to load posts:', error);
+        console.log('Failed to load posts from Supabase:', error);
+        console.log('Falling back to mock data');
         setPosts(mockPosts);
       } finally {
         setIsLoading(false);
@@ -219,7 +270,7 @@ export function usePosts() {
     loadPosts();
   }, []);
 
-  const toggleLike = (postId: number) => {
+  const toggleLike = (postId: string) => {
     setPosts(prevPosts => 
       prevPosts.map(post => {
         if (post.id === postId) {
@@ -235,7 +286,7 @@ export function usePosts() {
     );
   };
 
-  const toggleShare = (postId: number) => {
+  const toggleShare = (postId: string) => {
     setPosts(prevPosts => 
       prevPosts.map(post => {
         if (post.id === postId) {
@@ -252,36 +303,66 @@ export function usePosts() {
   };
 
   const addPost = async (content: string, image?: string) => {
-    const newPost: Post = {
-      id: Date.now(),
-      user: {
-        id: 999,
-        name: 'You',
-        username: '@you',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
-        followers: 0,
-        following: 0,
-      },
-      content,
-      image,
-      timestamp: 'now',
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      isLiked: false,
-      isShared: false,
-      moderationStatus: 'pending',
-      isAgricultureRelated: false,
-      aiScore: 0,
-      aiTags: [],
-      recommendationScore: 0,
-    };
+    if (!user) {
+      throw new Error('User must be authenticated to create posts');
+    }
     
-    setPosts(prevPosts => [newPost, ...prevPosts]);
-    return newPost;
+    try {
+      console.log('Creating post with Supabase...');
+      
+      // Upload image if provided
+      let imageUrl = image;
+      if (image && !image.startsWith('http')) {
+        console.log('Uploading image...');
+        imageUrl = await uploadImage(image) || undefined;
+      }
+      
+      // Create post in Supabase
+      const supabasePost = await createPost(content, imageUrl || undefined);
+      
+      if (supabasePost) {
+        const newPost = convertSupabasePost(supabasePost);
+        setPosts(prevPosts => [newPost, ...prevPosts]);
+        console.log('Post created successfully');
+        return newPost;
+      }
+      
+      throw new Error('Failed to create post');
+    } catch (error) {
+      console.error('Error creating post:', error);
+      
+      // Fallback to local post creation
+      const newPost: Post = {
+        id: Date.now().toString(),
+        user: {
+          id: user.id,
+          name: user.name || 'You',
+          username: user.username || '@you',
+          avatar: user.avatar,
+          followers: user.followers || 0,
+          following: user.following || 0,
+        },
+        content,
+        image,
+        timestamp: 'now',
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        isLiked: false,
+        isShared: false,
+        moderationStatus: 'pending',
+        isAgricultureRelated: false,
+        aiScore: 0,
+        aiTags: [],
+        recommendationScore: 0,
+      };
+      
+      setPosts(prevPosts => [newPost, ...prevPosts]);
+      return newPost;
+    }
   };
 
-  const addComment = (postId: number, content: string) => {
+  const addComment = (postId: string, content: string) => {
     setPosts(prevPosts => 
       prevPosts.map(post => {
         if (post.id === postId) {
@@ -295,10 +376,10 @@ export function usePosts() {
     );
   };
 
-  const getSmartRecommendations = async (userInterests: string[] = [], followedUsers: number[] = []) => {
+  const getSmartRecommendations = async (userInterests: string[] = [], followedUsers: string[] = []) => {
     const recommendations = await getRecommendations(posts, {
       userInterests,
-      followedUsers,
+      followedUsers: followedUsers as any, // Type compatibility fix
       recentActivity: []
     });
     setRecommendedPosts(recommendations);

@@ -1,13 +1,13 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
-import { trpc, trpcClient, mockTrpcClient, enableMockMode } from "@/lib/trpc";
+import { supabase, getProfile, createProfile, updateProfile, type Profile } from "@/lib/supabase";
+import type { AuthError, User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface User {
   id: string;
   email: string;
-  createdAt: Date;
+  created_at: string;
   name?: string;
   username?: string;
   bio?: string;
@@ -23,7 +23,7 @@ export const isProfileComplete = (user: User | null): boolean => {
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
+  supabaseUser: SupabaseUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
@@ -31,113 +31,111 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const TOKEN_KEY = "auth_token";
 
-const getStoredToken = async (): Promise<string | null> => {
-  if (Platform.OS === "web") {
-    return localStorage.getItem(TOKEN_KEY);
-  }
-  return SecureStore.getItemAsync(TOKEN_KEY);
-};
-
-const storeToken = async (token: string): Promise<void> => {
-  if (!token?.trim()) return;
-  if (Platform.OS === "web") {
-    localStorage.setItem(TOKEN_KEY, token);
-  } else {
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
-  }
-};
-
-const removeToken = async (): Promise<void> => {
-  if (Platform.OS === "web") {
-    localStorage.removeItem(TOKEN_KEY);
-  } else {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-  }
-};
 
 export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const loginMutation = trpc.auth.login.useMutation();
-  const registerMutation = trpc.auth.register.useMutation();
-  const completeProfileMutation = trpc.auth.completeProfile.useMutation();
 
 
   useEffect(() => {
-    const loadStoredAuth = async () => {
+    let mounted = true;
+    
+    const initializeAuth = async () => {
       try {
-        console.log('Loading stored auth...');
-        const storedToken = await getStoredToken();
-        console.log('Stored token:', storedToken ? 'Found' : 'Not found');
+        console.log('Initializing Supabase auth...');
         
-        if (storedToken?.trim()) {
-          setToken(storedToken);
-          console.log('Verifying token with server...');
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          return;
+        }
+        
+        if (session?.user && mounted) {
+          console.log('Found existing session');
+          setSupabaseUser(session.user);
           
-          // Try real backend first, then fallback to mock
-          try {
-            const userData = await trpcClient.auth.me.query();
-            setUser(userData);
-            console.log('Auth verified with real backend');
-          } catch (authError: any) {
-            console.log('Real backend auth failed:', authError?.message);
-            
-            if (authError?.message === 'BACKEND_UNAVAILABLE' || 
-                authError?.message?.includes('Failed to fetch') ||
-                authError?.message?.includes('Network error') ||
-                authError?.message?.includes('fetch')) {
-              console.log('Backend unavailable, trying mock backend for auth check');
-              enableMockMode();
-              try {
-                const userData = await mockTrpcClient.auth.me.query();
-                setUser(userData);
-                console.log('Auth verified with mock backend');
-              } catch (mockError: any) {
-                console.log('Mock backend auth also failed:', mockError?.message);
-                throw mockError;
-              }
-            } else {
-              throw authError;
-            }
+          // Get or create profile
+          let profile = await getProfile(session.user.id);
+          if (!profile) {
+            console.log('Creating new profile for user');
+            profile = await createProfile(session.user.id, session.user.email || '');
+          }
+          
+          if (profile && mounted) {
+            setUser({
+              id: profile.id,
+              email: profile.email,
+              created_at: profile.created_at,
+              name: profile.name,
+              username: profile.username,
+              bio: profile.bio,
+              avatar: profile.avatar,
+              followers: profile.followers || 0,
+              following: profile.following || 0,
+            });
           }
         }
       } catch (error) {
-        console.log("Failed to load stored auth:", error);
-        // Only clear token if it's an auth error, not a network error
-        if (error && typeof error === 'object' && 'message' in error) {
-          const errorMessage = (error as any).message;
-          if (errorMessage.includes('UNAUTHORIZED') || 
-              errorMessage.includes('Invalid') || 
-              errorMessage.includes('expired') ||
-              errorMessage.includes('Not authenticated')) {
-            console.log('Clearing invalid token');
-            await removeToken();
-            setToken(null);
-            setUser(null);
-          } else {
-            console.log('Network error during auth check, keeping token for retry');
-          }
-        } else {
-          console.log('Unknown error during auth check, clearing token');
-          await removeToken();
-          setToken(null);
-          setUser(null);
-        }
+        console.error('Error initializing auth:', error);
       } finally {
-        setIsLoading(false);
-        console.log('Auth loading complete');
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
-
-    loadStoredAuth();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event);
+        
+        if (!mounted) return;
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          setSupabaseUser(session.user);
+          
+          // Get or create profile
+          let profile = await getProfile(session.user.id);
+          if (!profile) {
+            profile = await createProfile(session.user.id, session.user.email || '');
+          }
+          
+          if (profile) {
+            setUser({
+              id: profile.id,
+              email: profile.email,
+              created_at: profile.created_at,
+              name: profile.name,
+              username: profile.username,
+              bio: profile.bio,
+              avatar: profile.avatar,
+              followers: profile.followers || 0,
+              following: profile.following || 0,
+            });
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setSupabaseUser(null);
+          setUser(null);
+        }
+      }
+    );
+    
+    initializeAuth();
+    
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    if (!email?.trim() || !password?.trim()) throw new Error("Please enter both email and password");
+    if (!email?.trim() || !password?.trim()) {
+      throw new Error("Please enter both email and password");
+    }
     
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -146,80 +144,58 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     }
     
     try {
-      console.log('Attempting login for:', email);
-      let response;
+      console.log('Attempting login with Supabase for:', email);
       
-      try {
-        response = await loginMutation.mutateAsync({ email: email.trim(), password });
-        console.log('Login successful with real backend');
-      } catch (loginError: any) {
-        console.log('Real backend login failed:', loginError?.message);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      
+      if (error) {
+        console.error('Supabase login error:', error);
         
-        if (loginError?.message === 'BACKEND_UNAVAILABLE' || 
-            loginError?.message?.includes('Failed to fetch') ||
-            loginError?.message?.includes('Network error') ||
-            loginError?.message?.includes('fetch')) {
-          console.log('Backend unavailable, trying mock backend for login');
-          enableMockMode();
-          response = await mockTrpcClient.auth.login.mutate({ email: email.trim(), password });
-          console.log('Login successful with mock backend');
-        } else {
-          throw loginError;
+        // Handle specific Supabase auth errors
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
         }
+        
+        if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please check your email and click the confirmation link before signing in.');
+        }
+        
+        if (error.message.includes('Too many requests')) {
+          throw new Error('Too many login attempts. Please wait a few minutes and try again.');
+        }
+        
+        throw new Error(error.message || 'Login failed. Please try again.');
       }
       
-      console.log('Login successful, storing token');
-      
-      if (!response?.token || !response?.user) {
-        throw new Error('Invalid response from server');
+      if (!data.user) {
+        throw new Error('Login failed. Please try again.');
       }
       
-      setToken(response.token);
-      setUser(response.user);
-      await storeToken(response.token);
+      console.log('Login successful with Supabase');
+      
+      // The auth state change listener will handle setting the user
     } catch (error: any) {
       console.error('Login error:', error);
       
-      // Handle different types of errors with user-friendly messages
-      if (error?.message?.includes('API endpoint not found')) {
-        throw new Error('Unable to connect to server. Please check if the backend is running.');
-      }
-      
-      if (error?.message?.includes('Server configuration error') || error?.message?.includes('HTML instead of JSON')) {
-        throw new Error('Server is not responding correctly. Please try again later or contact support.');
-      }
-      
-      if (error?.message?.includes('Unable to connect') || error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
-        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
-      }
-      
-      if (error?.message?.includes('timeout')) {
-        throw new Error('Connection timed out. Please check your internet connection and try again.');
-      }
-      
-      if (error?.data?.code === 'UNAUTHORIZED' || error?.message?.includes('Invalid email or password')) {
-        throw new Error('Invalid email or password. Please check your credentials and try again.');
-      }
-      
-      if (error?.data?.code === 'TOO_MANY_REQUESTS') {
-        throw new Error('Too many login attempts. Please wait a few minutes and try again.');
-      }
-      
-      // Pass through validation errors
-      if (error?.message?.includes('valid email') || error?.message?.includes('required')) {
-        throw new Error(error.message);
-      }
-      
-      if (error?.message && !error.message.includes('mutateAsync')) {
-        throw new Error(error.message);
+      // Pass through our custom error messages
+      if (error?.message?.includes('valid email') || 
+          error?.message?.includes('credentials') ||
+          error?.message?.includes('confirmation') ||
+          error?.message?.includes('Too many')) {
+        throw error;
       }
       
       throw new Error('Login failed. Please check your credentials and try again.');
     }
-  }, [loginMutation]);
+  }, []);
 
   const register = useCallback(async (email: string, password: string) => {
-    if (!email?.trim() || !password?.trim()) throw new Error("Please enter both email and password");
+    if (!email?.trim() || !password?.trim()) {
+      throw new Error("Please enter both email and password");
+    }
     
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -227,7 +203,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       throw new Error("Please enter a valid email address");
     }
     
-    if (password.length < 6) throw new Error("Password must be at least 6 characters long");
+    if (password.length < 6) {
+      throw new Error("Password must be at least 6 characters long");
+    }
     
     // Password strength validation
     if (password.length > 128) {
@@ -235,130 +213,136 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     }
     
     try {
-      console.log('Attempting registration for:', email);
-      let response;
+      console.log('Attempting registration with Supabase for:', email);
       
-      try {
-        response = await registerMutation.mutateAsync({ email: email.trim(), password });
-        console.log('Registration successful with real backend');
-      } catch (registerError: any) {
-        console.log('Real backend registration failed:', registerError?.message);
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+      });
+      
+      if (error) {
+        console.error('Supabase registration error:', error);
         
-        if (registerError?.message === 'BACKEND_UNAVAILABLE' || 
-            registerError?.message?.includes('Failed to fetch') ||
-            registerError?.message?.includes('Network error') ||
-            registerError?.message?.includes('fetch')) {
-          console.log('Backend unavailable, trying mock backend for registration');
-          enableMockMode();
-          response = await mockTrpcClient.auth.register.mutate({ email: email.trim(), password });
-          console.log('Registration successful with mock backend');
-        } else {
-          throw registerError;
+        // Handle specific Supabase auth errors
+        if (error.message.includes('User already registered')) {
+          throw new Error('An account with this email already exists. Please try logging in instead.');
         }
+        
+        if (error.message.includes('Password should be at least')) {
+          throw new Error('Password must be at least 6 characters long.');
+        }
+        
+        if (error.message.includes('Unable to validate email address')) {
+          throw new Error('Please enter a valid email address.');
+        }
+        
+        if (error.message.includes('Signup is disabled')) {
+          throw new Error('Registration is currently disabled. Please contact support.');
+        }
+        
+        throw new Error(error.message || 'Registration failed. Please try again.');
       }
       
-      console.log('Registration successful, storing token');
-      
-      if (!response?.token || !response?.user) {
-        throw new Error('Invalid response from server');
+      if (!data.user) {
+        throw new Error('Registration failed. Please try again.');
       }
       
-      setToken(response.token);
-      setUser(response.user);
-      await storeToken(response.token);
+      console.log('Registration successful with Supabase');
+      
+      // Check if email confirmation is required
+      if (!data.session) {
+        throw new Error('Please check your email and click the confirmation link to complete registration.');
+      }
+      
+      // The auth state change listener will handle setting the user
     } catch (error: any) {
       console.error('Registration error:', error);
       
-      // Handle different types of errors with user-friendly messages
-      if (error?.message?.includes('API endpoint not found')) {
-        throw new Error('Unable to connect to server. Please check if the backend is running.');
-      }
-      
-      if (error?.message?.includes('Server configuration error') || error?.message?.includes('HTML instead of JSON')) {
-        throw new Error('Server is not responding correctly. Please try again later or contact support.');
-      }
-      
-      if (error?.message?.includes('Unable to connect') || error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
-        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
-      }
-      
-      if (error?.message?.includes('timeout')) {
-        throw new Error('Connection timed out. Please check your internet connection and try again.');
-      }
-      
-      if (error?.data?.code === 'CONFLICT' || error?.message?.includes('already exists')) {
-        throw new Error('An account with this email already exists. Please try logging in instead.');
-      }
-      
-      if (error?.data?.code === 'TOO_MANY_REQUESTS') {
-        throw new Error('Too many registration attempts. Please wait a few minutes and try again.');
-      }
-      
-      // Pass through validation errors
-      if (error?.message?.includes('valid email') || error?.message?.includes('characters') || error?.message?.includes('required')) {
-        throw new Error(error.message);
-      }
-      
-      if (error?.message && !error.message.includes('mutateAsync')) {
-        throw new Error(error.message);
+      // Pass through our custom error messages
+      if (error?.message?.includes('valid email') || 
+          error?.message?.includes('characters') ||
+          error?.message?.includes('already exists') ||
+          error?.message?.includes('confirmation') ||
+          error?.message?.includes('disabled')) {
+        throw error;
       }
       
       throw new Error('Registration failed. Please try again.');
     }
-  }, [registerMutation]);
+  }, []);
 
   const completeProfile = useCallback(async (data: { name: string; username: string; bio: string; avatar?: string }) => {
     if (!data.name?.trim() || !data.username?.trim() || !data.bio?.trim()) {
       throw new Error("All fields are required");
     }
-    if (!token) {
+    
+    if (!supabaseUser) {
       throw new Error("Authentication required");
     }
+    
     try {
-      let response;
+      console.log('Updating profile with Supabase');
       
-      try {
-        response = await completeProfileMutation.mutateAsync(data);
-        console.log('Profile completion successful with real backend');
-      } catch (profileError: any) {
-        console.log('Real backend profile completion failed:', profileError?.message);
-        
-        if (profileError?.message === 'BACKEND_UNAVAILABLE' || 
-            profileError?.message?.includes('Failed to fetch') ||
-            profileError?.message?.includes('Network error') ||
-            profileError?.message?.includes('fetch')) {
-          console.log('Backend unavailable, trying mock backend for profile completion');
-          enableMockMode();
-          response = await mockTrpcClient.auth.completeProfile.mutate(data);
-          console.log('Profile completion successful with mock backend');
-        } else {
-          throw profileError;
-        }
+      const updatedProfile = await updateProfile(supabaseUser.id, {
+        name: data.name.trim(),
+        username: data.username.trim(),
+        bio: data.bio.trim(),
+        avatar: data.avatar,
+      });
+      
+      if (updatedProfile) {
+        setUser({
+          id: updatedProfile.id,
+          email: updatedProfile.email,
+          created_at: updatedProfile.created_at,
+          name: updatedProfile.name,
+          username: updatedProfile.username,
+          bio: updatedProfile.bio,
+          avatar: updatedProfile.avatar,
+          followers: updatedProfile.followers || 0,
+          following: updatedProfile.following || 0,
+        });
       }
       
-      setUser(response);
+      console.log('Profile completion successful');
     } catch (error: any) {
       console.error('Profile completion error:', error);
-      if (error?.message) {
-        throw new Error(error.message);
+      
+      if (error?.message?.includes('duplicate key value')) {
+        throw new Error('This username is already taken. Please choose a different one.');
       }
-      throw new Error('Failed to complete profile. Please try again.');
+      
+      throw new Error(error?.message || 'Failed to complete profile. Please try again.');
     }
-  }, [completeProfileMutation, token]);
+  }, [supabaseUser]);
 
   const logout = useCallback(async () => {
-    setUser(null);
-    setToken(null);
-    await removeToken();
+    try {
+      console.log('Signing out from Supabase');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Logout error:', error);
+      }
+      
+      // Clear local state (auth state change listener will also handle this)
+      setUser(null);
+      setSupabaseUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Clear local state even if logout fails
+      setUser(null);
+      setSupabaseUser(null);
+    }
   }, []);
 
   return useMemo(() => ({
     user,
-    token,
+    supabaseUser,
     isLoading,
     login,
     register,
     completeProfile,
     logout,
-  }), [user, token, isLoading, login, register, completeProfile, logout]);
+  }), [user, supabaseUser, isLoading, login, register, completeProfile, logout]);
 });
