@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
-import { testConnection, trpcClient } from '@/lib/trpc';
+import { trpcClient } from '@/lib/trpc';
 import { GlassContainer } from './GlassContainer';
 import { MaterialButton } from './MaterialButton';
-import { PlantTheme } from '@/constants/theme';
 
 interface ConnectionTestProps {
   onClose?: () => void;
@@ -26,7 +25,7 @@ export const ConnectionTest: React.FC<ConnectionTestProps> = ({ onClose }) => {
     return "https://l1v04hq0ysnd54scxcbqm.rork.com";
   };
 
-  const runTest = async () => {
+  const runTest = useCallback(async () => {
     setIsLoading(true);
     setResult(null);
     
@@ -51,19 +50,36 @@ export const ConnectionTest: React.FC<ConnectionTestProps> = ({ onClose }) => {
         });
         
         if (response.ok) {
-          const data = await response.json();
-          testResults.tests.push({
-            name: 'API Health Check',
-            status: 'success',
-            message: `API is healthy (${response.status})`,
-            data
-          });
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            testResults.tests.push({
+              name: 'API Health Check',
+              status: 'success',
+              message: `API is healthy (${response.status})`,
+              data
+            });
+          } else {
+            const text = await response.text();
+            testResults.tests.push({
+              name: 'API Health Check',
+              status: 'error',
+              message: `API returned non-JSON response (${response.status})`,
+              data: { status: response.status, contentType, text: text.substring(0, 200) }
+            });
+          }
         } else {
           const text = await response.text();
+          let errorMessage = `API returned ${response.status}: ${response.statusText}`;
+          
+          if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
+            errorMessage = `Server returned HTML error page (${response.status}). Backend may not be configured correctly.`;
+          }
+          
           testResults.tests.push({
             name: 'API Health Check',
             status: 'error',
-            message: `API returned ${response.status}: ${response.statusText}`,
+            message: errorMessage,
             data: { status: response.status, text: text.substring(0, 200) }
           });
         }
@@ -141,12 +157,12 @@ export const ConnectionTest: React.FC<ConnectionTestProps> = ({ onClose }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Auto-run test on mount
   useEffect(() => {
     runTest();
-  }, []);
+  }, [runTest]);
 
   return (
     <View style={styles.container}>
