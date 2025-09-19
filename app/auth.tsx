@@ -26,13 +26,11 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [showOtpVerification, setShowOtpVerification] = useState(false);
-  const [otp, setOtp] = useState('');
-  const [otpLoading, setOtpLoading] = useState(false);
+
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   
-  const { login, register, verifyOtp, resendOtp } = useAuth();
+  const { login, register } = useAuth();
 
 
 
@@ -75,8 +73,7 @@ export default function LoginScreen() {
       } else {
         const result = await register(email.trim(), password);
         if (result?.needsVerification) {
-          setShowOtpVerification(true);
-          setErrorMessage('');
+          setErrorMessage('Please check your email and click the verification link to complete registration.');
           return;
         }
       }
@@ -96,48 +93,7 @@ export default function LoginScreen() {
     }
   };
 
-  const handleOtpVerification = async () => {
-    if (!otp.trim()) {
-      setErrorMessage('Please enter the verification code');
-      return;
-    }
 
-    if (otp.length !== 6) {
-      setErrorMessage('Verification code must be 6 digits');
-      return;
-    }
-
-    setOtpLoading(true);
-    setErrorMessage('');
-    
-    try {
-      await verifyOtp(email.trim(), otp.trim());
-      setShowOtpVerification(false);
-      // Don't navigate here - let the index.tsx handle routing based on auth state
-    } catch (error: any) {
-      console.error('OTP verification error:', error);
-      setErrorMessage(error?.message || 'Verification failed. Please try again.');
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    setErrorMessage('');
-    try {
-      await resendOtp(email.trim());
-      setErrorMessage('Verification code sent! Please check your email.');
-    } catch (error: any) {
-      console.error('Resend OTP error:', error);
-      setErrorMessage(error?.message || 'Failed to resend code. Please try again.');
-    }
-  };
-
-  const handleBackToAuth = () => {
-    setShowOtpVerification(false);
-    setOtp('');
-    setErrorMessage('');
-  };
 
   return (
     <View style={styles.container}>
@@ -171,70 +127,7 @@ export default function LoginScreen() {
             </View>
 
             <Animated.View style={[styles.animatedContainer, { opacity: fadeAnim }]}>
-              {showOtpVerification ? (
-                <GlassCard style={styles.formCard}>
-                  <View style={styles.otpHeader}>
-                    <Text style={styles.otpTitle}>🔐 Verify Your Email</Text>
-                    <Text style={styles.otpSubtitle}>
-                      We&apos;ve sent a 6-digit verification code to{"\n"}
-                      <Text style={styles.emailText}>{email}</Text>
-                    </Text>
-                    <Text style={styles.otpNote}>
-                      📧 Check your email inbox (and spam folder) for the verification code.
-                      The code expires in 60 minutes.
-                    </Text>
-                  </View>
-
-                  <View style={styles.inputSection}>
-                    <MaterialInput
-                      label="🔢 Verification Code"
-                      value={otp}
-                      onChangeText={setOtp}
-                      placeholder="Enter 6-digit code"
-                      keyboardType="numeric"
-                      maxLength={6}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      testID="otp-input"
-                      style={styles.glassInput}
-                    />
-                  </View>
-
-                  {errorMessage ? (
-                    <View style={styles.errorContainer}>
-                      <Text style={styles.errorText}>{errorMessage}</Text>
-                    </View>
-                  ) : null}
-
-                  <View style={styles.actionSection}>
-                    <MaterialButton
-                      title={otpLoading ? "🔐 Verifying..." : "✅ Verify Email"}
-                      onPress={handleOtpVerification}
-                      disabled={otpLoading}
-                      size="large"
-                      testID="verify-otp-button"
-                      style={styles.materialButtonStyle}
-                    />
-                    
-                    <TouchableOpacity
-                      style={styles.resendButton}
-                      onPress={handleResendOtp}
-                      testID="resend-otp-button"
-                    >
-                      <Text style={styles.resendText}>📧 Resend Code</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.backButton}
-                      onPress={handleBackToAuth}
-                      testID="back-to-auth-button"
-                    >
-                      <Text style={styles.backText}>← Back to Sign Up</Text>
-                    </TouchableOpacity>
-                  </View>
-                </GlassCard>
-              ) : (
-                <GlassCard style={styles.formCard}>
+              <GlassCard style={styles.formCard}>
                 <View style={styles.inputSection}>
                   <MaterialInput
                     label="🌱 Email"
@@ -292,10 +185,8 @@ export default function LoginScreen() {
                   />
                 </View>
               </GlassCard>
-              )}
               
-              {!showOtpVerification && (
-                <GlassCard style={styles.switchCard}>
+              <GlassCard style={styles.switchCard}>
                 <TouchableOpacity
                   style={styles.switchButton}
                   onPress={() => setIsLogin(!isLogin)}
@@ -308,7 +199,6 @@ export default function LoginScreen() {
                   </Text>
                 </TouchableOpacity>
               </GlassCard>
-              )}
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>

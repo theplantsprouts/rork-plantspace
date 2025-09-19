@@ -1,8 +1,21 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Platform } from "react-native";
-import { supabase, getProfile, createProfile, updateProfile, type Profile } from "@/lib/supabase";
-import type { AuthError, User as SupabaseUser } from '@supabase/supabase-js';
+import { auth, db } from "@/lib/firebase";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  sendEmailVerification,
+  User as FirebaseUser
+} from 'firebase/auth';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
 
 export interface User {
   id: string;
@@ -23,12 +36,10 @@ export const isProfileComplete = (user: User | null): boolean => {
 
 interface AuthContextType {
   user: User | null;
-  supabaseUser: SupabaseUser | null;
+  firebaseUser: FirebaseUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<{ needsVerification?: boolean } | void>;
-  verifyOtp: (email: string, token: string) => Promise<void>;
-  resendOtp: (email: string) => Promise<void>;
   completeProfile: (data: { name: string; username: string; bio: string; avatar?: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -37,106 +48,100 @@ interface AuthContextType {
 
 export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => {
   const [user, setUser] = useState<User | null>(null);
-  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const supabaseUserRef = useRef<SupabaseUser | null>(null);
+  const firebaseUserRef = useRef<FirebaseUser | null>(null);
 
   // Keep ref in sync with state
   useEffect(() => {
-    supabaseUserRef.current = supabaseUser;
-  }, [supabaseUser]);
+    firebaseUserRef.current = firebaseUser;
+  }, [firebaseUser]);
 
+
+  const getProfile = async (userId: string): Promise<User | null> => {
+    try {
+      const docRef = doc(db, 'profiles', userId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          email: data.email || '',
+          created_at: data.created_at?.toDate?.()?.toISOString() || new Date().toISOString(),
+          name: data.name,
+          username: data.username,
+          bio: data.bio,
+          avatar: data.avatar,
+          followers: data.followers || 0,
+          following: data.following || 0,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting profile:', error);
+      return null;
+    }
+  };
+
+  const createProfile = async (userId: string, email: string): Promise<User> => {
+    try {
+      const profileData = {
+        email,
+        created_at: serverTimestamp(),
+        followers: 0,
+        following: 0,
+      };
+      
+      await setDoc(doc(db, 'profiles', userId), profileData);
+      return {
+        id: userId,
+        email,
+        created_at: new Date().toISOString(),
+        followers: 0,
+        following: 0,
+      };
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
     
-    const initializeAuth = async () => {
-      try {
-        console.log('Initializing Supabase auth...');
-        
-        // Get initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          return;
-        }
-        
-        if (session?.user && mounted) {
-          console.log('Found existing session');
-          setSupabaseUser(session.user);
-          
-          // Get or create profile
-          let profile = await getProfile(session.user.id);
-          if (!profile) {
-            console.log('Creating new profile for user');
-            profile = await createProfile(session.user.id, session.user.email || '');
-          }
-          
-          if (profile && mounted) {
-            setUser({
-              id: profile.id,
-              email: profile.email,
-              created_at: profile.created_at,
-              name: profile.name,
-              username: profile.username,
-              bio: profile.bio,
-              avatar: profile.avatar,
-              followers: profile.followers || 0,
-              following: profile.following || 0,
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
+    console.log('Initializing Firebase auth...');
     
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event);
+    const unsubscribe = onAuthStateChanged(auth, async (currentFirebaseUser) => {
+      if (!mounted) return;
+      
+      console.log('Auth state changed:', currentFirebaseUser ? 'signed in' : 'signed out');
+      
+      if (currentFirebaseUser) {
+        setFirebaseUser(currentFirebaseUser);
         
-        if (!mounted) return;
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          setSupabaseUser(session.user);
-          
-          // Get or create profile
-          let profile = await getProfile(session.user.id);
-          if (!profile) {
-            profile = await createProfile(session.user.id, session.user.email || '');
-          }
-          
-          if (profile) {
-            setUser({
-              id: profile.id,
-              email: profile.email,
-              created_at: profile.created_at,
-              name: profile.name,
-              username: profile.username,
-              bio: profile.bio,
-              avatar: profile.avatar,
-              followers: profile.followers || 0,
-              following: profile.following || 0,
-            });
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setSupabaseUser(null);
-          setUser(null);
+        // Get or create profile
+        let profile = await getProfile(currentFirebaseUser.uid);
+        if (!profile) {
+          console.log('Creating new profile for user');
+          profile = await createProfile(currentFirebaseUser.uid, currentFirebaseUser.email || '');
         }
+        
+        if (profile && mounted) {
+          setUser(profile);
+        }
+      } else {
+        setFirebaseUser(null);
+        setUser(null);
       }
-    );
-    
-    initializeAuth();
+      
+      setIsLoading(false);
+    });
     
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 
@@ -152,48 +157,31 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     }
     
     try {
-      console.log('Attempting login with Supabase for:', email);
+      console.log('Attempting login with Firebase for:', email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      await signInWithEmailAndPassword(auth, email.trim(), password);
       
-      if (error) {
-        console.error('Supabase login error:', error);
-        
-        // Handle specific Supabase auth errors
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Invalid email or password. Please check your credentials and try again.');
-        }
-        
-        if (error.message.includes('Email not confirmed')) {
-          throw new Error('Please check your email and click the confirmation link before signing in.');
-        }
-        
-        if (error.message.includes('Too many requests')) {
-          throw new Error('Too many login attempts. Please wait a few minutes and try again.');
-        }
-        
-        throw new Error(error.message || 'Login failed. Please try again.');
-      }
-      
-      if (!data.user) {
-        throw new Error('Login failed. Please try again.');
-      }
-      
-      console.log('Login successful with Supabase');
+      console.log('Login successful with Firebase');
       
       // The auth state change listener will handle setting the user
     } catch (error: any) {
       console.error('Login error:', error);
       
-      // Pass through our custom error messages
-      if (error?.message?.includes('valid email') || 
-          error?.message?.includes('credentials') ||
-          error?.message?.includes('confirmation') ||
-          error?.message?.includes('Too many')) {
-        throw error;
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
+      }
+      
+      if (error.code === 'auth/user-disabled') {
+        throw new Error('This account has been disabled. Please contact support.');
+      }
+      
+      if (error.code === 'auth/too-many-requests') {
+        throw new Error('Too many login attempts. Please wait a few minutes and try again.');
+      }
+      
+      if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your connection and try again.');
       }
       
       throw new Error('Login failed. Please check your credentials and try again.');
@@ -215,256 +203,106 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       throw new Error("Password must be at least 6 characters long");
     }
     
-    // Password strength validation
-    if (password.length > 128) {
-      throw new Error("Password is too long (maximum 128 characters)");
-    }
-    
     try {
-      console.log('Attempting registration with Supabase for:', email);
+      console.log('Attempting registration with Firebase for:', email);
       
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: undefined, // Disable redirect for mobile
-        }
-      });
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
-      console.log('Supabase signUp response:', { data, error });
+      console.log('Registration successful with Firebase');
+      console.log('User created:', userCredential.user.uid);
       
-      if (error) {
-        console.error('Supabase registration error:', error);
-        
-        // Handle specific Supabase auth errors
-        if (error.message.includes('User already registered')) {
-          throw new Error('An account with this email already exists. Please try logging in instead.');
-        }
-        
-        if (error.message.includes('Password should be at least')) {
-          throw new Error('Password must be at least 6 characters long.');
-        }
-        
-        if (error.message.includes('Unable to validate email address')) {
-          throw new Error('Please enter a valid email address.');
-        }
-        
-        if (error.message.includes('Signup is disabled')) {
-          throw new Error('Registration is currently disabled. Please contact support.');
-        }
-        
-        throw new Error(error.message || 'Registration failed. Please try again.');
-      }
-      
-      if (!data.user) {
-        throw new Error('Registration failed. Please try again.');
-      }
-      
-      console.log('Registration successful with Supabase');
-      console.log('User created:', data.user.id);
-      console.log('Session created:', !!data.session);
-      console.log('Email confirmed:', data.user.email_confirmed_at);
-      
-      // Check if email confirmation is required
-      if (!data.session && !data.user.email_confirmed_at) {
-        console.log('Email confirmation required - OTP should be sent');
+      // Send email verification
+      if (!userCredential.user.emailVerified) {
+        await sendEmailVerification(userCredential.user);
+        console.log('Email verification sent');
         return { needsVerification: true };
-      }
-      
-      // If we have a session, user is automatically confirmed
-      if (data.session) {
-        console.log('User automatically confirmed, no OTP needed');
       }
       
       // The auth state change listener will handle setting the user
     } catch (error: any) {
       console.error('Registration error:', error);
       
-      // Pass through our custom error messages
-      if (error?.message?.includes('valid email') || 
-          error?.message?.includes('characters') ||
-          error?.message?.includes('already exists') ||
-          error?.message?.includes('confirmation') ||
-          error?.message?.includes('disabled')) {
-        throw error;
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/email-already-in-use') {
+        throw new Error('An account with this email already exists. Please try logging in instead.');
+      }
+      
+      if (error.code === 'auth/weak-password') {
+        throw new Error('Password must be at least 6 characters long.');
+      }
+      
+      if (error.code === 'auth/invalid-email') {
+        throw new Error('Please enter a valid email address.');
+      }
+      
+      if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your connection and try again.');
       }
       
       throw new Error('Registration failed. Please try again.');
     }
   }, []);
 
-  const verifyOtp = useCallback(async (email: string, token: string) => {
-    if (!email?.trim() || !token?.trim()) {
-      throw new Error("Email and verification code are required");
-    }
-    
-    if (token.length !== 6) {
-      throw new Error("Verification code must be 6 digits");
-    }
-    
-    try {
-      console.log('Verifying OTP with Supabase');
-      
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: token.trim(),
-        type: 'signup'
-      });
-      
-      if (error) {
-        console.error('OTP verification error:', error);
-        
-        if (error.message.includes('Token has expired')) {
-          throw new Error('Verification code has expired. Please request a new one.');
-        }
-        
-        if (error.message.includes('Invalid token')) {
-          throw new Error('Invalid verification code. Please check and try again.');
-        }
-        
-        throw new Error(error.message || 'Verification failed. Please try again.');
-      }
-      
-      if (!data.user) {
-        throw new Error('Verification failed. Please try again.');
-      }
-      
-      console.log('OTP verification successful');
-      
-      // The auth state change listener will handle setting the user
-    } catch (error: any) {
-      console.error('OTP verification error:', error);
-      
-      // Pass through our custom error messages
-      if (error?.message?.includes('expired') || 
-          error?.message?.includes('Invalid') ||
-          error?.message?.includes('required')) {
-        throw error;
-      }
-      
-      throw new Error('Verification failed. Please try again.');
-    }
-  }, []);
 
-  const resendOtp = useCallback(async (email: string) => {
-    if (!email?.trim()) {
-      throw new Error("Email is required");
-    }
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      throw new Error("Please enter a valid email address");
-    }
-    
-    try {
-      console.log('Resending OTP with Supabase');
-      
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email.trim()
-      });
-      
-      if (error) {
-        console.error('Resend OTP error:', error);
-        
-        if (error.message.includes('For security purposes')) {
-          throw new Error('Please wait a moment before requesting another code.');
-        }
-        
-        throw new Error(error.message || 'Failed to resend verification code. Please try again.');
-      }
-      
-      console.log('OTP resent successfully');
-    } catch (error: any) {
-      console.error('Resend OTP error:', error);
-      
-      // Pass through our custom error messages
-      if (error?.message?.includes('valid email') || 
-          error?.message?.includes('wait') ||
-          error?.message?.includes('required')) {
-        throw error;
-      }
-      
-      throw new Error('Failed to resend verification code. Please try again.');
-    }
-  }, []);
 
   const completeProfile = useCallback(async (data: { name: string; username: string; bio: string; avatar?: string }) => {
     if (!data.name?.trim() || !data.username?.trim() || !data.bio?.trim()) {
       throw new Error("All fields are required");
     }
     
-    const currentSupabaseUser = supabaseUserRef.current;
-    if (!currentSupabaseUser) {
+    const currentFirebaseUser = firebaseUserRef.current;
+    if (!currentFirebaseUser) {
       throw new Error("Authentication required");
     }
     
     try {
-      console.log('Updating profile with Supabase');
+      console.log('Updating profile with Firebase');
       
-      const updatedProfile = await updateProfile(currentSupabaseUser.id, {
+      const profileRef = doc(db, 'profiles', currentFirebaseUser.uid);
+      await updateDoc(profileRef, {
         name: data.name.trim(),
         username: data.username.trim(),
         bio: data.bio.trim(),
         avatar: data.avatar,
+        updated_at: serverTimestamp(),
       });
       
+      // Update local state
+      const updatedProfile = await getProfile(currentFirebaseUser.uid);
       if (updatedProfile) {
-        setUser({
-          id: updatedProfile.id,
-          email: updatedProfile.email,
-          created_at: updatedProfile.created_at,
-          name: updatedProfile.name,
-          username: updatedProfile.username,
-          bio: updatedProfile.bio,
-          avatar: updatedProfile.avatar,
-          followers: updatedProfile.followers || 0,
-          following: updatedProfile.following || 0,
-        });
+        setUser(updatedProfile);
       }
       
       console.log('Profile completion successful');
     } catch (error: any) {
       console.error('Profile completion error:', error);
-      
-      if (error?.message?.includes('duplicate key value')) {
-        throw new Error('This username is already taken. Please choose a different one.');
-      }
-      
       throw new Error(error?.message || 'Failed to complete profile. Please try again.');
     }
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      console.log('Signing out from Supabase');
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Logout error:', error);
-      }
+      console.log('Signing out from Firebase');
+      await signOut(auth);
       
       // Clear local state (auth state change listener will also handle this)
       setUser(null);
-      setSupabaseUser(null);
+      setFirebaseUser(null);
     } catch (error) {
       console.error('Logout error:', error);
       // Clear local state even if logout fails
       setUser(null);
-      setSupabaseUser(null);
+      setFirebaseUser(null);
     }
   }, []);
 
   return useMemo(() => ({
     user,
-    supabaseUser,
+    firebaseUser,
     isLoading,
     login,
     register,
-    verifyOtp,
-    resendOtp,
     completeProfile,
     logout,
-  }), [user, supabaseUser, isLoading, login, register, verifyOtp, resendOtp, completeProfile, logout]);
+  }), [user, firebaseUser, isLoading, login, register, completeProfile, logout]);
 });

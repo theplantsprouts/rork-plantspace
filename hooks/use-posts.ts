@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useAIContent } from './use-ai-content';
-import { getPosts, createPost, uploadImage, type Post as SupabasePost } from '@/lib/supabase';
 import { useAuth } from './use-auth';
+import { db, storage } from '@/lib/firebase';
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  orderBy, 
+  serverTimestamp,
+  doc,
+  getDoc
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export interface User {
   id: string;
@@ -41,31 +52,50 @@ export interface Post {
   recommendationScore?: number;
 }
 
-// Helper function to convert Supabase post to our Post interface
-const convertSupabasePost = (supabasePost: SupabasePost): Post => {
-  const profile = supabasePost.profiles;
+// Helper function to convert Firebase post to our Post interface
+const convertFirebasePost = async (firebasePost: any): Promise<Post> => {
+  // Get user profile
+  let userProfile = {
+    id: firebasePost.author_id,
+    name: 'Unknown User',
+    username: '@unknown',
+    avatar: undefined,
+    followers: 0,
+    following: 0,
+  };
+  
+  try {
+    const profileDoc = await getDoc(doc(db, 'profiles', firebasePost.author_id));
+    if (profileDoc.exists()) {
+      const profileData = profileDoc.data();
+      userProfile = {
+        id: profileDoc.id,
+        name: profileData.name || 'Unknown User',
+        username: profileData.username || '@unknown',
+        avatar: profileData.avatar,
+        followers: profileData.followers || 0,
+        following: profileData.following || 0,
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+  }
+  
   return {
-    id: supabasePost.id,
-    user: {
-      id: profile?.id || supabasePost.author_id,
-      name: profile?.name || 'Unknown User',
-      username: profile?.username || '@unknown',
-      avatar: profile?.avatar,
-      followers: profile?.followers || 0,
-      following: profile?.following || 0,
-    },
-    content: supabasePost.content,
-    image: supabasePost.image,
-    timestamp: formatTimestamp(supabasePost.created_at),
-    likes: supabasePost.likes,
-    comments: supabasePost.comments,
-    shares: 0, // Not implemented in Supabase schema yet
+    id: firebasePost.id,
+    user: userProfile,
+    content: firebasePost.content,
+    image: firebasePost.image,
+    timestamp: formatTimestamp(firebasePost.created_at?.toDate?.()?.toISOString() || new Date().toISOString()),
+    likes: firebasePost.likes || 0,
+    comments: firebasePost.comments || 0,
+    shares: firebasePost.shares || 0,
     isLiked: false, // Would need to check user's likes
     isShared: false,
     moderationStatus: 'approved',
     isAgricultureRelated: true,
     aiScore: 0.9,
-    aiTags: [],
+    aiTags: firebasePost.aiTags || [],
     recommendationScore: 0.8,
   };
 };
@@ -245,17 +275,29 @@ export function usePosts() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        console.log('Loading posts from Supabase...');
+        console.log('Loading posts from Firebase...');
         
-        // Try to load posts from Supabase
-        const supabasePosts = await getPosts();
+        // Try to load posts from Firebase
+        const postsQuery = query(
+          collection(db, 'posts'),
+          orderBy('created_at', 'desc')
+        );
         
-        if (supabasePosts.length > 0) {
-          console.log('Loaded posts from Supabase:', supabasePosts.length);
-          const convertedPosts = supabasePosts.map(convertSupabasePost);
+        const querySnapshot = await getDocs(postsQuery);
+        const firebasePosts: any[] = [];
+        
+        querySnapshot.forEach((doc) => {
+          firebasePosts.push({ id: doc.id, ...doc.data() });
+        });
+        
+        if (firebasePosts.length > 0) {
+          console.log('Loaded posts from Firebase:', firebasePosts.length);
+          const convertedPosts = await Promise.all(
+            firebasePosts.map(convertFirebasePost)
+          );
           setPosts([...convertedPosts, ...mockPosts]); // Combine with mock data
         } else {
-          console.log('No posts in Supabase, using mock data');
+          console.log('No posts in Firebase, using mock data');
           setPosts(mockPosts);
         }
       } catch (error) {
@@ -302,32 +344,81 @@ export function usePosts() {
     );
   };
 
+  const uploadImageToFirebase = async (imageUri: string): Promise<string> => {
+    try {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      
+      const filename = `posts/${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const storageRef = ref(storage, filename);
+      
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      return downloadURL;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
   const addPost = async (content: string, image?: string) => {
     if (!user) {
       throw new Error('User must be authenticated to create posts');
     }
     
     try {
-      console.log('Creating post with Supabase...');
+      console.log('Creating post with Firebase...');
       
       // Upload image if provided
       let imageUrl = image;
       if (image && !image.startsWith('http')) {
         console.log('Uploading image...');
-        imageUrl = await uploadImage(image) || undefined;
+        imageUrl = await uploadImageToFirebase(image);
       }
       
-      // Create post in Supabase
-      const supabasePost = await createPost(content, imageUrl || undefined);
+      // Create post in Firebase
+      const postData = {
+        content,
+        image: imageUrl,
+        author_id: user.id,
+        created_at: serverTimestamp(),
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        aiTags: [],
+      };
       
-      if (supabasePost) {
-        const newPost = convertSupabasePost(supabasePost);
-        setPosts(prevPosts => [newPost, ...prevPosts]);
-        console.log('Post created successfully');
-        return newPost;
-      }
+      const docRef = await addDoc(collection(db, 'posts'), postData);
       
-      throw new Error('Failed to create post');
+      const newPost: Post = {
+        id: docRef.id,
+        user: {
+          id: user.id,
+          name: user.name || 'You',
+          username: user.username || '@you',
+          avatar: user.avatar,
+          followers: user.followers || 0,
+          following: user.following || 0,
+        },
+        content,
+        image: imageUrl,
+        timestamp: 'now',
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        isLiked: false,
+        isShared: false,
+        moderationStatus: 'approved',
+        isAgricultureRelated: true,
+        aiScore: 0.9,
+        aiTags: [],
+        recommendationScore: 0.8,
+      };
+      
+      setPosts(prevPosts => [newPost, ...prevPosts]);
+      console.log('Post created successfully');
+      return newPost;
     } catch (error) {
       console.error('Error creating post:', error);
       
