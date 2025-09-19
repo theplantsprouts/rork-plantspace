@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Heading, Sparkles, Wifi, WifiOff, Sun, Droplets } from 'lucide-react-native';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
+import { BackendStatus } from '@/components/BackendStatus';
 import { useAuth } from '@/hooks/use-auth';
 import { useOffline } from '@/hooks/use-offline';
 import { trpc } from '@/lib/trpc';
@@ -131,6 +132,7 @@ export default function HomeScreen() {
           <View style={styles.headerTitleContainer}>
             <Text style={styles.headerTitle}>🌿 {PlantTerminology.home}</Text>
             <Text style={styles.headerSubtitle}>Nurture your community</Text>
+            <BackendStatus style={styles.backendStatus} />
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity 
@@ -322,5 +324,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: 'center',
   },
-
+  backendStatus: {
+    marginTop: 4,
+  },
 });

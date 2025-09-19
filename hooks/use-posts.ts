@@ -200,9 +200,20 @@ export function usePosts() {
 
   useEffect(() => {
     const loadPosts = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setPosts(mockPosts);
-      setIsLoading(false);
+      try {
+        console.log('Loading posts...');
+        
+        // For now, just use mock data since the backend posts structure might be different
+        // In the future, we can integrate with the real backend posts
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
+        setPosts(mockPosts);
+        console.log('Posts loaded:', mockPosts.length);
+      } catch (error) {
+        console.log('Failed to load posts:', error);
+        setPosts(mockPosts);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadPosts();

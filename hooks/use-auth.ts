@@ -77,28 +77,43 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         if (storedToken?.trim()) {
           setToken(storedToken);
           console.log('Verifying token with server...');
-          // Use trpc client directly for initial auth check
+          
+          // Try real backend first, then fallback to mock
           try {
             const userData = await trpcClient.auth.me.query();
             setUser(userData);
+            console.log('Auth verified with real backend');
           } catch (authError: any) {
-            if (authError?.message === 'BACKEND_UNAVAILABLE') {
+            console.log('Real backend auth failed:', authError?.message);
+            
+            if (authError?.message === 'BACKEND_UNAVAILABLE' || 
+                authError?.message?.includes('Failed to fetch') ||
+                authError?.message?.includes('Network error') ||
+                authError?.message?.includes('fetch')) {
               console.log('Backend unavailable, trying mock backend for auth check');
               enableMockMode();
-              const userData = await mockTrpcClient.auth.me.query();
-              setUser(userData);
+              try {
+                const userData = await mockTrpcClient.auth.me.query();
+                setUser(userData);
+                console.log('Auth verified with mock backend');
+              } catch (mockError: any) {
+                console.log('Mock backend auth also failed:', mockError?.message);
+                throw mockError;
+              }
             } else {
               throw authError;
             }
           }
-
         }
       } catch (error) {
         console.log("Failed to load stored auth:", error);
         // Only clear token if it's an auth error, not a network error
         if (error && typeof error === 'object' && 'message' in error) {
           const errorMessage = (error as any).message;
-          if (errorMessage.includes('UNAUTHORIZED') || errorMessage.includes('Invalid') || errorMessage.includes('expired')) {
+          if (errorMessage.includes('UNAUTHORIZED') || 
+              errorMessage.includes('Invalid') || 
+              errorMessage.includes('expired') ||
+              errorMessage.includes('Not authenticated')) {
             console.log('Clearing invalid token');
             await removeToken();
             setToken(null);
@@ -136,11 +151,18 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       try {
         response = await loginMutation.mutateAsync({ email: email.trim(), password });
+        console.log('Login successful with real backend');
       } catch (loginError: any) {
-        if (loginError?.message === 'BACKEND_UNAVAILABLE') {
+        console.log('Real backend login failed:', loginError?.message);
+        
+        if (loginError?.message === 'BACKEND_UNAVAILABLE' || 
+            loginError?.message?.includes('Failed to fetch') ||
+            loginError?.message?.includes('Network error') ||
+            loginError?.message?.includes('fetch')) {
           console.log('Backend unavailable, trying mock backend for login');
           enableMockMode();
           response = await mockTrpcClient.auth.login.mutate({ email: email.trim(), password });
+          console.log('Login successful with mock backend');
         } else {
           throw loginError;
         }
@@ -218,11 +240,18 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       try {
         response = await registerMutation.mutateAsync({ email: email.trim(), password });
+        console.log('Registration successful with real backend');
       } catch (registerError: any) {
-        if (registerError?.message === 'BACKEND_UNAVAILABLE') {
+        console.log('Real backend registration failed:', registerError?.message);
+        
+        if (registerError?.message === 'BACKEND_UNAVAILABLE' || 
+            registerError?.message?.includes('Failed to fetch') ||
+            registerError?.message?.includes('Network error') ||
+            registerError?.message?.includes('fetch')) {
           console.log('Backend unavailable, trying mock backend for registration');
           enableMockMode();
           response = await mockTrpcClient.auth.register.mutate({ email: email.trim(), password });
+          console.log('Registration successful with mock backend');
         } else {
           throw registerError;
         }
@@ -290,11 +319,18 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       try {
         response = await completeProfileMutation.mutateAsync(data);
+        console.log('Profile completion successful with real backend');
       } catch (profileError: any) {
-        if (profileError?.message === 'BACKEND_UNAVAILABLE') {
+        console.log('Real backend profile completion failed:', profileError?.message);
+        
+        if (profileError?.message === 'BACKEND_UNAVAILABLE' || 
+            profileError?.message?.includes('Failed to fetch') ||
+            profileError?.message?.includes('Network error') ||
+            profileError?.message?.includes('fetch')) {
           console.log('Backend unavailable, trying mock backend for profile completion');
           enableMockMode();
           response = await mockTrpcClient.auth.completeProfile.mutate(data);
+          console.log('Profile completion successful with mock backend');
         } else {
           throw profileError;
         }

@@ -7,7 +7,46 @@ import { Platform } from "react-native";
 
 // Mock backend for when the real backend is not available
 const createMockBackend = () => {
-  const mockUsers: any[] = [];
+  // Try to load existing mock data from storage
+  let mockUsers: any[] = [];
+  
+  const loadMockData = async () => {
+    try {
+      if (Platform.OS === "web") {
+        const stored = localStorage.getItem('mock_users');
+        if (stored) {
+          mockUsers = JSON.parse(stored);
+          console.log('Loaded mock users from localStorage:', mockUsers.length);
+        }
+      } else {
+        const stored = await SecureStore.getItemAsync('mock_users');
+        if (stored) {
+          mockUsers = JSON.parse(stored);
+          console.log('Loaded mock users from SecureStore:', mockUsers.length);
+        }
+      }
+    } catch (error) {
+      console.log('Failed to load mock data:', error);
+      mockUsers = [];
+    }
+  };
+  
+  const saveMockData = async () => {
+    try {
+      const data = JSON.stringify(mockUsers);
+      if (Platform.OS === "web") {
+        localStorage.setItem('mock_users', data);
+      } else {
+        await SecureStore.setItemAsync('mock_users', data);
+      }
+      console.log('Saved mock users:', mockUsers.length);
+    } catch (error) {
+      console.log('Failed to save mock data:', error);
+    }
+  };
+  
+  // Load data immediately
+  loadMockData();
   
   return {
     example: {
@@ -43,6 +82,7 @@ const createMockBackend = () => {
           };
           
           mockUsers.push({ ...user, password });
+          await saveMockData();
           
           const token = 'mock-token-' + user.id;
           
@@ -126,6 +166,7 @@ const createMockBackend = () => {
             username,
             bio,
           };
+          await saveMockData();
           
           const { password: _, ...userWithoutPassword } = mockUsers[userIndex];
           return userWithoutPassword;
@@ -174,43 +215,10 @@ let isUsingMockBackend = false;
 export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
-  if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
-    return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-  }
-
-  // Development fallback - try multiple sources
-  if (__DEV__) {
-    // For web development
-    if (Platform.OS === 'web') {
-      // Try to use the current origin first
-      try {
-        if (typeof window !== 'undefined' && window.location) {
-          const origin = window.location.origin;
-          console.log('Using web origin:', origin);
-          return origin;
-        }
-      } catch (error) {
-        console.log('Failed to get window.location.origin:', error);
-      }
-      // Web fallback to localhost
-      return "http://localhost:3000";
-    }
-    // For mobile development - try localhost first, then tunnel
-    console.log('Using localhost for mobile development');
-    return "http://localhost:3000";
-  }
-
-  // Production fallback - use current origin if web, otherwise tunnel
-  if (Platform.OS === 'web') {
-    try {
-      if (typeof window !== 'undefined' && window.location) {
-        return window.location.origin;
-      }
-    } catch (error) {
-      console.log('Failed to get window.location.origin in production:', error);
-    }
-  }
-  return "https://l1v04hq0ysnd54scxcbqm.rork.com";
+  // Always use the Rork tunnel URL for this project
+  const rorkUrl = "https://l1v04hq0ysnd54scxcbqm.rork.com";
+  console.log('Using Rork backend URL:', rorkUrl);
+  return rorkUrl;
 };
 
 // Test connection function
@@ -419,9 +427,9 @@ export const trpcClient = trpc.createClient({
             if (error.message === 'BACKEND_UNAVAILABLE') {
               throw error; // Let this bubble up to be handled by the auth hooks
             }
-            if (error.message.includes('Failed to fetch')) {
+            if (error.message.includes('Failed to fetch') || error.message.includes('fetch')) {
               // This is often a CORS or network connectivity issue
-              console.log('Backend not available, switching to mock mode');
+              console.log('Backend not available (fetch failed), switching to mock mode');
               if (!mockBackend) {
                 mockBackend = createMockBackend();
                 isUsingMockBackend = true;
@@ -443,11 +451,12 @@ export const trpcClient = trpc.createClient({
   ],
 });
 
-// Create a simple mock client that can be used as fallback
+// Enhanced mock client with better error handling and persistence
 export const mockTrpcClient = {
   example: {
     hi: {
       mutate: async ({ name }: { name: string }) => {
+        console.log('Using mock backend for example.hi');
         if (!mockBackend) mockBackend = createMockBackend();
         return mockBackend.example.hi.mutate({ name });
       },
@@ -456,24 +465,28 @@ export const mockTrpcClient = {
   auth: {
     register: {
       mutate: async ({ email, password }: { email: string; password: string }) => {
+        console.log('Using mock backend for auth.register');
         if (!mockBackend) mockBackend = createMockBackend();
         return mockBackend.auth.register.mutate({ email, password });
       },
     },
     login: {
       mutate: async ({ email, password }: { email: string; password: string }) => {
+        console.log('Using mock backend for auth.login');
         if (!mockBackend) mockBackend = createMockBackend();
         return mockBackend.auth.login.mutate({ email, password });
       },
     },
     me: {
       query: async () => {
+        console.log('Using mock backend for auth.me');
         if (!mockBackend) mockBackend = createMockBackend();
         return mockBackend.auth.me.query();
       },
     },
     completeProfile: {
       mutate: async ({ name, username, bio }: { name?: string; username?: string; bio?: string }) => {
+        console.log('Using mock backend for auth.completeProfile');
         if (!mockBackend) mockBackend = createMockBackend();
         return mockBackend.auth.completeProfile.mutate({ name, username, bio });
       },
@@ -482,18 +495,21 @@ export const mockTrpcClient = {
   posts: {
     list: {
       query: async () => {
+        console.log('Using mock backend for posts.list');
         if (!mockBackend) mockBackend = createMockBackend();
         return mockBackend.posts.list.query();
       },
     },
     create: {
       mutate: async ({ content, image }: { content: string; image?: string }) => {
+        console.log('Using mock backend for posts.create');
         if (!mockBackend) mockBackend = createMockBackend();
         return mockBackend.posts.create.mutate({ content, image });
       },
     },
     uploadImage: {
       mutate: async ({ image }: { image: string }) => {
+        console.log('Using mock backend for posts.uploadImage');
         if (!mockBackend) mockBackend = createMockBackend();
         return mockBackend.posts.uploadImage.mutate({ image });
       },
