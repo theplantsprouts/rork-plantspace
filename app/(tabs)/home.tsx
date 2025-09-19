@@ -38,16 +38,8 @@ export default function HomeScreen() {
     }).start();
   }, [fadeAnim]);
 
-  useEffect(() => {
-    if (posts.length > 0) {
-      // Cache posts for offline use (only cache new posts)
-      posts.forEach(post => {
-        if (!cachedPosts.find(cached => cached.id === post.id)) {
-          cachePost(post);
-        }
-      });
-    }
-  }, [posts.length]); // Only depend on posts length to avoid infinite loops
+  // Removed caching logic to prevent infinite loops
+  // TODO: Implement proper caching without causing re-renders
 
   const handleCreatePost = useCallback(() => {
     if (!user) {

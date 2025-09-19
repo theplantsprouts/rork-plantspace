@@ -1,41 +1,28 @@
 import { z } from "zod";
-import { publicProcedure } from "@/backend/trpc/create-context";
+import { protectedProcedure } from "@/backend/trpc/create-context";
+import { createPost } from "@/lib/supabase";
 
-// In-memory posts storage (replace with database in production)
-const posts: Array<{
-  id: string;
-  userId: string;
-  content: string;
-  imageUrl?: string;
-  createdAt: Date;
-  likes: number;
-  comments: number;
-}> = [];
-
-export const createPostProcedure = publicProcedure
+export const createPostProcedure = protectedProcedure
   .input(
     z.object({
-      userId: z.string(),
       content: z.string().min(1),
-      imageUrl: z.string().optional(),
+      image: z.string().optional(),
     })
   )
   .mutation(async ({ input }) => {
-    const { userId, content, imageUrl } = input;
-
-    const post = {
-      id: Math.random().toString(36).substring(2, 15),
-      userId,
-      content,
-      imageUrl,
-      createdAt: new Date(),
-      likes: 0,
-      comments: 0,
-    };
-
-    posts.push(post);
-
-    return post;
+    try {
+      const { content, image } = input;
+      
+      // Create post in Supabase
+      const post = await createPost(content, image);
+      
+      if (!post) {
+        throw new Error('Failed to create post');
+      }
+      
+      return post;
+    } catch (error) {
+      console.error('Error creating post:', error);
+      throw new Error('Failed to create post');
+    }
   });
-
-export { posts };

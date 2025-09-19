@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { publicProcedure } from "@/backend/trpc/create-context";
-import { posts } from "../create/route";
+import { getPosts } from "@/lib/supabase";
 
 export const getPostsProcedure = publicProcedure
   .input(
@@ -10,16 +10,22 @@ export const getPostsProcedure = publicProcedure
     })
   )
   .query(async ({ input }) => {
-    const { limit, offset } = input;
-
-    // Sort posts by creation date (newest first)
-    const sortedPosts = posts
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(offset, offset + limit);
-
-    return {
-      posts: sortedPosts,
-      hasMore: offset + limit < posts.length,
-      total: posts.length,
-    };
+    try {
+      const { limit, offset } = input;
+      
+      // Fetch posts from Supabase
+      const allPosts = await getPosts();
+      
+      // Apply pagination
+      const paginatedPosts = allPosts.slice(offset, offset + limit);
+      
+      return {
+        posts: paginatedPosts,
+        hasMore: offset + limit < allPosts.length,
+        total: allPosts.length,
+      };
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      throw new Error('Failed to fetch posts');
+    }
   });

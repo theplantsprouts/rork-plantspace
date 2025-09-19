@@ -314,16 +314,14 @@ export const trpcClient = trpc.createClient({
           console.log('Making tRPC request to:', url);
           console.log('Base URL:', baseUrl);
           
-          // Get auth token
+          // Get Supabase auth token
           let token = null;
           try {
-            if (Platform.OS === "web") {
-              token = localStorage.getItem("auth_token");
-            } else {
-              token = await SecureStore.getItemAsync("auth_token");
-            }
+            const { data: { session } } = await import('@/lib/supabase').then(m => m.supabase.auth.getSession());
+            token = session?.access_token || null;
+            console.log('Retrieved Supabase token:', token ? 'Present' : 'None');
           } catch (error) {
-            console.log('Token retrieval error:', error);
+            console.log('Supabase token retrieval error:', error);
           }
           
           const headers = {

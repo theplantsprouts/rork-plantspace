@@ -1,11 +1,7 @@
 import { z } from "zod";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { publicProcedure } from "../../../create-context";
+import { publicProcedure } from "@/backend/trpc/create-context";
 import { TRPCError } from "@trpc/server";
-import { users } from "../register/route";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { supabase } from "@/lib/supabase";
 
 export const loginProcedure = publicProcedure
   .input(
@@ -19,48 +15,52 @@ export const loginProcedure = publicProcedure
       console.log('Login attempt for:', input.email);
       const { email, password } = input;
 
-      // Find user
-      const user = users.find((u) => u.email === email);
-      if (!user) {
-        console.log('User not found:', email);
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid email or password",
-        });
-      }
-
-      // Verify password
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        console.log('Invalid password for:', email);
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid email or password",
-        });
-      }
-
-      // Generate JWT token
-      const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
-        expiresIn: "7d",
+      // Use Supabase auth for login
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const response = {
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          createdAt: user.createdAt,
-          name: user.name,
-          username: user.username,
-          bio: user.bio,
-          avatar: user.avatar,
-          followers: user.followers || 0,
-          following: user.following || 0,
-        },
-      };
-      
+      if (error) {
+        console.error('Supabase login error:', error);
+        
+        if (error.message.includes('Invalid login credentials')) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid email or password",
+          });
+        }
+        
+        if (error.message.includes('Email not confirmed')) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Please check your email and click the confirmation link before signing in.",
+          });
+        }
+        
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error.message || "Login failed",
+        });
+      }
+
+      if (!data.user || !data.session) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Login failed. Please try again.",
+        });
+      }
+
       console.log('Login successful for:', email);
-      return response;
+
+      return {
+        user: {
+          id: data.user.id,
+          email: data.user.email || email,
+          created_at: data.user.created_at,
+        },
+        session: data.session,
+      };
     } catch (error) {
       console.error('Login error:', error);
       if (error instanceof TRPCError) {

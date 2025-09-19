@@ -1,10 +1,7 @@
 import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import jwt from "jsonwebtoken";
-import { users } from "./routes/auth/register/route";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { supabase } from "@/lib/supabase";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
@@ -16,10 +13,17 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
   if (authHeader?.startsWith("Bearer ")) {
     try {
       const token = authHeader.substring(7);
-      console.log('Verifying token in context');
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
-      user = users.find(u => u.id === decoded.userId);
-      console.log('Context user found:', user ? user.id : 'None');
+      console.log('Verifying Supabase token in context');
+      
+      // Verify token with Supabase
+      const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(token);
+      
+      if (error || !supabaseUser) {
+        console.log('Supabase token verification failed:', error?.message);
+      } else {
+        user = supabaseUser;
+        console.log('Context user found:', user.id);
+      }
     } catch (error) {
       console.log('Token verification failed in context:', error);
       // Invalid token, user remains null

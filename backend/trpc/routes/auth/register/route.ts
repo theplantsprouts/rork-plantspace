@@ -1,26 +1,7 @@
 import { z } from "zod";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { publicProcedure } from "../../../create-context";
 import { TRPCError } from "@trpc/server";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-
-// In-memory user storage (replace with database in production)
-export interface BackendUser {
-  id: string;
-  email: string;
-  password: string;
-  createdAt: Date;
-  name?: string;
-  username?: string;
-  bio?: string;
-  avatar?: string;
-  followers?: number;
-  following?: number;
-}
-
-const users: BackendUser[] = [];
+import { supabase } from "@/lib/supabase";
 
 export const registerProcedure = publicProcedure
   .input(
@@ -34,54 +15,48 @@ export const registerProcedure = publicProcedure
       console.log('Registration attempt for:', input.email);
       const { email, password } = input;
 
-      // Check if user already exists
-      const existingUser = users.find((user) => user.email === email);
-      if (existingUser) {
-        console.log('User already exists:', email);
+      // Use Supabase auth for registration
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: undefined, // Disable redirect for mobile
+        }
+      });
+
+      if (error) {
+        console.error('Supabase registration error:', error);
+        
+        if (error.message.includes('User already registered')) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "User already exists with this email",
+          });
+        }
+        
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "User already exists with this email",
+          code: "BAD_REQUEST",
+          message: error.message || "Registration failed",
         });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      if (!data.user) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Registration failed. Please try again.",
+        });
+      }
 
-      // Create user
-      const user: BackendUser = {
-        id: Math.random().toString(36).substring(2, 15),
-        email,
-        password: hashedPassword,
-        createdAt: new Date(),
-        name: undefined,
-        username: undefined,
-        bio: undefined,
-        avatar: undefined,
-        followers: 0,
-        following: 0,
-      };
-
-      users.push(user);
-      console.log('User created successfully:', user.id);
-
-      // Generate JWT token
-      const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
-        expiresIn: "7d",
-      });
+      console.log('User created successfully:', data.user.id);
 
       const response = {
-        token,
         user: {
-          id: user.id,
-          email: user.email,
-          createdAt: user.createdAt,
-          name: user.name,
-          username: user.username,
-          bio: user.bio,
-          avatar: user.avatar,
-          followers: user.followers || 0,
-          following: user.following || 0,
+          id: data.user.id,
+          email: data.user.email || email,
+          created_at: data.user.created_at,
         },
+        needsVerification: !data.session && !data.user.email_confirmed_at,
+        session: data.session,
       };
       
       console.log('Registration successful for:', email);
@@ -97,5 +72,3 @@ export const registerProcedure = publicProcedure
       });
     }
   });
-
-export { users };
