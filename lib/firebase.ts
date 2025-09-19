@@ -326,58 +326,79 @@ export const subscribeToAllPosts = (
   callback: (posts: Post[]) => void,
   errorCallback?: (error: any) => void
 ) => {
-  // Ensure user is authenticated before setting up listener
-  const currentUser = auth.currentUser;
-  if (!currentUser) {
-    console.error('User not authenticated for posts subscription');
-    if (errorCallback) {
-      errorCallback(new Error('Authentication required'));
+  // Check authentication with retry logic
+  const checkAuthAndSetupListener = () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.error('User not authenticated for posts subscription');
+      if (errorCallback) {
+        errorCallback(new Error('Authentication required'));
+      }
+      return () => {}; // Return empty unsubscribe function
     }
-    return () => {}; // Return empty unsubscribe function
-  }
 
-  const postsRef = collection(db, 'posts');
-  const q = query(postsRef, orderBy('created_at', 'desc'), limit(20));
-  
-  console.log('Setting up Firestore listener for all posts');
-  
-  return onSnapshot(q, async (snapshot) => {
-    try {
-      console.log('Processing posts snapshot with', snapshot.docs.length, 'documents');
-      const posts: Post[] = [];
-      
-      for (const docSnap of snapshot.docs) {
-        const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+    const postsRef = collection(db, 'posts');
+    const q = query(postsRef, orderBy('created_at', 'desc'), limit(20));
+    
+    console.log('Setting up Firestore listener for all posts with user:', currentUser.uid);
+    
+    return onSnapshot(q, async (snapshot) => {
+      try {
+        console.log('Processing posts snapshot with', snapshot.docs.length, 'documents');
+        const posts: Post[] = [];
         
-        // Fetch author profile
-        if (postData.author_id) {
-          const authorProfile = await getProfile(postData.author_id);
-          if (authorProfile) {
-            postData.author = authorProfile;
+        for (const docSnap of snapshot.docs) {
+          const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+          
+          // Fetch author profile with error handling
+          if (postData.author_id) {
+            try {
+              const authorProfile = await getProfile(postData.author_id);
+              if (authorProfile) {
+                postData.author = authorProfile;
+              }
+            } catch (profileError) {
+              console.warn('Failed to fetch author profile for post:', postData.id, profileError);
+              // Continue without author profile
+            }
           }
+          
+          posts.push(postData);
         }
         
-        posts.push(postData);
+        console.log('Successfully processed', posts.length, 'posts');
+        callback(posts);
+      } catch (error) {
+        console.error('Error processing posts snapshot:', error);
+        if (errorCallback) {
+          errorCallback(error);
+        } else {
+          callback([]);
+        }
       }
+    }, (error) => {
+      console.error('Firestore subscription error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
       
-      console.log('Successfully processed', posts.length, 'posts');
-      callback(posts);
-    } catch (error) {
-      console.error('Error processing posts snapshot:', error);
       if (errorCallback) {
         errorCallback(error);
       } else {
         callback([]);
       }
-    }
-  }, (error) => {
-    console.error('Firestore subscription error:', error);
-    if (errorCallback) {
-      errorCallback(error);
-    } else {
-      callback([]);
-    }
-  });
+    });
+  };
+
+  // If user is not authenticated yet, wait a bit and try again
+  if (!auth.currentUser) {
+    console.log('User not authenticated yet, waiting...');
+    setTimeout(() => {
+      return checkAuthAndSetupListener();
+    }, 2000);
+    return () => {};
+  }
+
+  return checkAuthAndSetupListener();
 };
 
 // Analytics functions

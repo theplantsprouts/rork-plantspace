@@ -88,6 +88,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
 
   const createProfile = async (userId: string, email: string): Promise<User> => {
     try {
+      console.log('Creating profile for user:', userId);
+      
+      // Wait a bit to ensure Firebase auth token is ready
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const profileData = {
         email,
         created_at: serverTimestamp(),
@@ -96,6 +101,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       };
       
       await setDoc(doc(db, 'profiles', userId), profileData);
+      
+      console.log('Profile created successfully for user:', userId);
+      
       return {
         id: userId,
         email,
@@ -103,8 +111,41 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         followers: 0,
         following: 0,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating profile:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      
+      // If it's a permission error, retry once after a longer delay
+      if (error.code === 'permission-denied') {
+        console.log('Permission denied, retrying after delay...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        try {
+          const profileData = {
+            email,
+            created_at: serverTimestamp(),
+            followers: 0,
+            following: 0,
+          };
+          
+          await setDoc(doc(db, 'profiles', userId), profileData);
+          
+          console.log('Profile created successfully on retry for user:', userId);
+          
+          return {
+            id: userId,
+            email,
+            created_at: new Date().toISOString(),
+            followers: 0,
+            following: 0,
+          };
+        } catch (retryError) {
+          console.error('Retry failed:', retryError);
+          throw retryError;
+        }
+      }
+      
       throw error;
     }
   };

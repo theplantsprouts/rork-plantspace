@@ -11,7 +11,7 @@ export const useRealTimePosts = () => {
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let isActive = true;
     let retryCount = 0;
     const maxRetries = 3;
@@ -167,7 +167,7 @@ export const useRealTimeUserPosts = (userId: string | null) => {
     }
 
     let unsubscribe: (() => void) | null = null;
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let isActive = true;
     let retryCount = 0;
     const maxRetries = 3;
