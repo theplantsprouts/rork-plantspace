@@ -10,7 +10,7 @@ export const useRealTimePosts = () => {
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
     let isActive = true;
 
     const setupListener = () => {
@@ -72,7 +72,7 @@ export const useRealTimePosts = () => {
               }
             }, 3000);
           }
-        }, 10000); // Reduced timeout to 10 seconds
+        }, 10000) as ReturnType<typeof setTimeout>; // Reduced timeout to 10 seconds
       } catch (err: any) {
         if (!isActive) return;
         console.error('Real-time posts error:', err);
@@ -132,7 +132,7 @@ export const useRealTimeUserPosts = (userId: string | null) => {
     }
 
     let unsubscribe: (() => void) | null = null;
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
     let isActive = true;
 
     const setupListener = () => {
@@ -194,7 +194,7 @@ export const useRealTimeUserPosts = (userId: string | null) => {
               }
             }, 3000);
           }
-        }, 10000);
+        }, 10000) as ReturnType<typeof setTimeout>;
       } catch (err: any) {
         if (!isActive) return;
         console.error('Real-time user posts error:', err);
