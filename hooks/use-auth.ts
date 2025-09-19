@@ -123,6 +123,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.error('Login error:', error);
       
       // Handle different types of errors
+      if (error?.message?.includes('HTML instead of JSON')) {
+        throw new Error('Server configuration error. The backend may not be running properly. Please contact support.');
+      }
+      
       if (error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
         throw new Error('Unable to connect to server. Please check your internet connection and try again.');
       }
@@ -157,6 +161,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.error('Registration error:', error);
       
       // Handle different types of errors
+      if (error?.message?.includes('HTML instead of JSON')) {
+        throw new Error('Server configuration error. The backend may not be running properly. Please contact support.');
+      }
+      
       if (error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
         throw new Error('Unable to connect to server. Please check your internet connection and try again.');
       }

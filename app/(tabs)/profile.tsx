@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Settings, Edit3, MapPin, Calendar, Link, TreePine, Leaf, Sun } from 'lucide-react-native';
+import { Settings, Edit3, MapPin, Calendar, Link, TreePine, Leaf, Sun, Bug } from 'lucide-react-native';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useAppContext } from '@/hooks/use-app-context';
 import { usePosts } from '@/hooks/use-posts';
 import { PlantTheme, PlantTerminology, PlantGrowthStage } from '@/constants/theme';
@@ -52,9 +53,19 @@ export default function ProfileScreen() {
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>🌲 {PlantTerminology.profile}</Text>
-          <TouchableOpacity>
-            <Settings color={PlantTheme.colors.textPrimary} size={24} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.debugButton}
+              onPress={() => {
+                router.push('/debug');
+              }}
+            >
+              <Bug color={PlantTheme.colors.textSecondary} size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Settings color={PlantTheme.colors.textPrimary} size={24} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView 
@@ -195,6 +206,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: PlantTheme.colors.textDark,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  debugButton: {
+    padding: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   scrollView: {
     flex: 1,

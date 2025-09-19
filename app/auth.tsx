@@ -20,6 +20,7 @@ import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { MaterialInput } from "@/components/MaterialInput";
 import { MaterialButton } from "@/components/MaterialButton";
+import { ConnectionTest } from "@/components/ConnectionTest";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -29,6 +30,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>('Checking...');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showConnectionTest, setShowConnectionTest] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   
   const { login, register } = useAuth();
@@ -122,7 +124,17 @@ export default function LoginScreen() {
       setConnectionStatus('✅ tRPC Connected');
     } catch (error) {
       console.error('tRPC test failed:', error);
-      setConnectionStatus('❌ tRPC Failed');
+      if (error instanceof Error) {
+        if (error.message.includes('HTML instead of JSON')) {
+          setConnectionStatus('❌ Server Error (HTML)');
+        } else if (error.message.includes('Failed to fetch')) {
+          setConnectionStatus('❌ Network Error');
+        } else {
+          setConnectionStatus(`❌ tRPC: ${error.message.substring(0, 20)}...`);
+        }
+      } else {
+        setConnectionStatus('❌ tRPC Failed');
+      }
     }
   };
 
@@ -217,6 +229,9 @@ export default function LoginScreen() {
                   <TouchableOpacity onPress={testTrpcConnection} style={[styles.retryButton, { marginLeft: 8 }]}>
                     <Text style={styles.retryText}>tRPC</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setShowConnectionTest(true)} style={[styles.retryButton, { marginLeft: 8 }]}>
+                    <Text style={styles.retryText}>Debug</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -298,6 +313,12 @@ export default function LoginScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      
+      {showConnectionTest && (
+        <View style={styles.modalOverlay}>
+          <ConnectionTest onClose={() => setShowConnectionTest(false)} />
+        </View>
+      )}
     </View>
   );
 }
@@ -501,5 +522,14 @@ const styles = StyleSheet.create({
   materialButtonStyle: {
     marginTop: 8,
     marginBottom: 16,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1000,
   },
 });

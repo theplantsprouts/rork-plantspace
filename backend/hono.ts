@@ -44,12 +44,29 @@ app.use(
 
 // Simple health check endpoint
 app.get("/", (c) => {
-  return c.json({ status: "ok", message: "API is running", timestamp: new Date().toISOString() });
+  console.log('Health check endpoint hit');
+  return c.json({ 
+    status: "ok", 
+    message: "API is running", 
+    timestamp: new Date().toISOString(),
+    version: "1.0.0",
+    endpoints: {
+      health: "/api",
+      test: "/api/test",
+      trpc: "/api/trpc"
+    }
+  });
 });
 
 // Test endpoint to verify tRPC is working
 app.get("/test", (c) => {
-  return c.json({ message: "Backend is working", trpc: "available at /api/trpc" });
+  console.log('Test endpoint hit');
+  return c.json({ 
+    message: "Backend is working", 
+    trpc: "available at /api/trpc",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 export default app;

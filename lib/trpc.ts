@@ -31,6 +31,84 @@ const getBaseUrl = () => {
   return "https://l1v04hq0ysnd54scxcbqm.rork.com";
 };
 
+// Test connection function
+export const testConnection = async (): Promise<{ success: boolean; message: string; details?: any }> => {
+  try {
+    const baseUrl = getBaseUrl();
+    console.log('Testing connection to:', baseUrl);
+    
+    // Test basic API endpoint first
+    const response = await fetch(`${baseUrl}/api`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    console.log('API test response status:', response.status);
+    
+    if (!response.ok) {
+      const text = await response.text();
+      console.log('API test response text:', text);
+      return {
+        success: false,
+        message: `API endpoint returned ${response.status}: ${response.statusText}`,
+        details: { status: response.status, text }
+      };
+    }
+    
+    const data = await response.json();
+    console.log('API test response data:', data);
+    
+    // Test tRPC endpoint
+    try {
+      const trpcResponse = await fetch(`${baseUrl}/api/trpc/example.hi`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+      
+      console.log('tRPC test response status:', trpcResponse.status);
+      
+      if (trpcResponse.ok) {
+        const trpcData = await trpcResponse.json();
+        console.log('tRPC test response data:', trpcData);
+        return {
+          success: true,
+          message: 'Connection successful',
+          details: { api: data, trpc: trpcData }
+        };
+      } else {
+        const trpcText = await trpcResponse.text();
+        console.log('tRPC test response text:', trpcText);
+        return {
+          success: false,
+          message: `tRPC endpoint returned ${trpcResponse.status}: ${trpcResponse.statusText}`,
+          details: { api: data, trpcStatus: trpcResponse.status, trpcText }
+        };
+      }
+    } catch (trpcError) {
+      console.log('tRPC test error:', trpcError);
+      return {
+        success: false,
+        message: 'API endpoint works but tRPC failed',
+        details: { api: data, trpcError: trpcError instanceof Error ? trpcError.message : String(trpcError) }
+      };
+    }
+  } catch (error) {
+    console.error('Connection test failed:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown connection error',
+      details: { error: error instanceof Error ? error.message : String(error) }
+    };
+  }
+};
+
 export const trpcClient = trpc.createClient({
   links: [
     httpLink({
@@ -68,7 +146,7 @@ export const trpcClient = trpc.createClient({
           
           // Add timeout and better error handling
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
           
           const response = await fetch(url, {
             ...options,
@@ -84,11 +162,29 @@ export const trpcClient = trpc.createClient({
             let errorText = '';
             try {
               errorText = await response.text();
-            } catch {
+              console.error(`HTTP ${response.status} response body:`, errorText);
+              
+              // Check if we're getting HTML instead of JSON (common server error)
+              if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
+                throw new Error(`Server returned HTML instead of JSON. This usually means the API endpoint is not found or the server is not running properly.`);
+              }
+            } catch (readError) {
+              console.error('Failed to read error response:', readError);
               errorText = 'Unable to read error response';
             }
-            console.error(`HTTP ${response.status}: ${response.statusText}`, errorText);
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            
+            throw new Error(`HTTP ${response.status}: ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
+          }
+          
+          // Validate that we're getting JSON
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Non-JSON response received:', { contentType, text });
+            if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
+              throw new Error('Server returned HTML instead of JSON. The API endpoint may not be configured correctly.');
+            }
+            throw new Error(`Expected JSON response but got ${contentType || 'unknown content type'}`);
           }
           
           return response;
@@ -100,6 +196,10 @@ export const trpcClient = trpc.createClient({
             }
             if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
               throw new Error('Network error - please check your internet connection and try again');
+            }
+            // Pass through our custom error messages
+            if (error.message.includes('HTML instead of JSON') || error.message.includes('API endpoint')) {
+              throw error;
             }
           }
           throw error;
