@@ -165,6 +165,14 @@ export default function LoginScreen() {
                 {errorMessage ? (
                   <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{errorMessage}</Text>
+                    {errorMessage.includes('No account found') && (
+                      <TouchableOpacity 
+                        style={styles.helpButton}
+                        onPress={() => setIsLogin(false)}
+                      >
+                        <Text style={styles.helpButtonText}>Create Account Instead</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ) : null}
 
@@ -199,6 +207,16 @@ export default function LoginScreen() {
                   </Text>
                 </TouchableOpacity>
               </GlassCard>
+              
+              {/* Debug info for development */}
+              {__DEV__ && (
+                <GlassCard style={[styles.switchCard, { marginTop: 16 }]}>
+                  <Text style={[styles.switchText, { fontSize: 12, opacity: 0.7 }]}>
+                    🔧 Debug: Firebase Auth Ready
+                    {isLogin ? ' | Try creating an account first if you don\'t have one' : ' | Account will be created in Firebase'}
+                  </Text>
+                </GlassCard>
+              )}
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -427,6 +445,20 @@ const styles = StyleSheet.create({
     color: PlantTheme.colors.textSecondary,
     fontSize: 14,
     fontWeight: '500' as const,
+  },
+  helpButton: {
+    marginTop: 12,
+    padding: 8,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderRadius: PlantTheme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.3)',
+  },
+  helpButtonText: {
+    color: PlantTheme.colors.primary,
+    fontSize: 14,
+    fontWeight: '600' as const,
+    textAlign: 'center',
   },
 
 });
