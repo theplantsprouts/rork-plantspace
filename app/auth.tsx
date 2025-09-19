@@ -116,7 +116,7 @@ export default function LoginScreen() {
                 )}
               </View>
               <Text style={styles.title}>
-                {isLogin ? `🌱 Welcome Back to ${PlantTerminology.home}` : `🌿 Join Our ${PlantTerminology.home}`}
+                {isLogin ? `Welcome Back to ${PlantTerminology.home}` : `Join Our ${PlantTerminology.home}`}
               </Text>
               <Text style={styles.subtitle}>
                 {isLogin
@@ -130,7 +130,7 @@ export default function LoginScreen() {
               <GlassCard style={styles.formCard}>
                 <View style={styles.inputSection}>
                   <MaterialInput
-                    label="🌱 Email"
+                    label="Email"
                     value={email}
                     onChangeText={setEmail}
                     placeholder="Enter your email"
@@ -143,7 +143,7 @@ export default function LoginScreen() {
                   />
 
                   <MaterialInput
-                    label="🔒 Password"
+                    label="Password"
                     value={password}
                     onChangeText={setPassword}
                     placeholder="Enter your password"
