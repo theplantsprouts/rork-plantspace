@@ -179,6 +179,10 @@ export default function LoginScreen() {
                       We&apos;ve sent a 6-digit verification code to{"\n"}
                       <Text style={styles.emailText}>{email}</Text>
                     </Text>
+                    <Text style={styles.otpNote}>
+                      📧 Check your email inbox (and spam folder) for the verification code.
+                      The code expires in 60 minutes.
+                    </Text>
                   </View>
 
                   <View style={styles.inputSection}>
@@ -505,6 +509,14 @@ const styles = StyleSheet.create({
   emailText: {
     fontWeight: '600' as const,
     color: PlantTheme.colors.primary,
+  },
+  otpNote: {
+    fontSize: 14,
+    color: PlantTheme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: 12,
+    fontStyle: 'italic' as const,
   },
   resendButton: {
     alignItems: 'center',

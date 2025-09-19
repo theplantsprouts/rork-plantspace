@@ -226,7 +226,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          emailRedirectTo: undefined, // Disable redirect for mobile
+        }
       });
+      
+      console.log('Supabase signUp response:', { data, error });
       
       if (error) {
         console.error('Supabase registration error:', error);
@@ -256,11 +261,19 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       }
       
       console.log('Registration successful with Supabase');
+      console.log('User created:', data.user.id);
+      console.log('Session created:', !!data.session);
+      console.log('Email confirmed:', data.user.email_confirmed_at);
       
       // Check if email confirmation is required
-      if (!data.session) {
-        console.log('Email confirmation required');
+      if (!data.session && !data.user.email_confirmed_at) {
+        console.log('Email confirmation required - OTP should be sent');
         return { needsVerification: true };
+      }
+      
+      // If we have a session, user is automatically confirmed
+      if (data.session) {
+        console.log('User automatically confirmed, no OTP needed');
       }
       
       // The auth state change listener will handle setting the user
