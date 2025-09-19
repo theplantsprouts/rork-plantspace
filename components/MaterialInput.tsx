@@ -22,6 +22,7 @@ interface MaterialInputProps {
   autoCorrect?: boolean;
   multiline?: boolean;
   numberOfLines?: number;
+  maxLength?: number;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   onRightIconPress?: () => void;
@@ -44,6 +45,7 @@ export function MaterialInput({
   autoCorrect = true,
   multiline = false,
   numberOfLines = 1,
+  maxLength,
   leftIcon,
   rightIcon,
   onRightIconPress,
@@ -91,6 +93,7 @@ export function MaterialInput({
           autoCorrect={autoCorrect}
           multiline={multiline}
           numberOfLines={numberOfLines}
+          maxLength={maxLength}
           textAlignVertical={multiline ? 'top' : 'center'}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}

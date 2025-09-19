@@ -26,7 +26,9 @@ interface AuthContextType {
   supabaseUser: SupabaseUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<{ needsVerification?: boolean } | void>;
+  verifyOtp: (email: string, token: string) => Promise<void>;
+  resendOtp: (email: string) => Promise<void>;
   completeProfile: (data: { name: string; username: string; bio: string; avatar?: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -257,7 +259,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       // Check if email confirmation is required
       if (!data.session) {
-        throw new Error('Please check your email and click the confirmation link to complete registration.');
+        console.log('Email confirmation required');
+        return { needsVerification: true };
       }
       
       // The auth state change listener will handle setting the user
@@ -274,6 +277,103 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       }
       
       throw new Error('Registration failed. Please try again.');
+    }
+  }, []);
+
+  const verifyOtp = useCallback(async (email: string, token: string) => {
+    if (!email?.trim() || !token?.trim()) {
+      throw new Error("Email and verification code are required");
+    }
+    
+    if (token.length !== 6) {
+      throw new Error("Verification code must be 6 digits");
+    }
+    
+    try {
+      console.log('Verifying OTP with Supabase');
+      
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: token.trim(),
+        type: 'signup'
+      });
+      
+      if (error) {
+        console.error('OTP verification error:', error);
+        
+        if (error.message.includes('Token has expired')) {
+          throw new Error('Verification code has expired. Please request a new one.');
+        }
+        
+        if (error.message.includes('Invalid token')) {
+          throw new Error('Invalid verification code. Please check and try again.');
+        }
+        
+        throw new Error(error.message || 'Verification failed. Please try again.');
+      }
+      
+      if (!data.user) {
+        throw new Error('Verification failed. Please try again.');
+      }
+      
+      console.log('OTP verification successful');
+      
+      // The auth state change listener will handle setting the user
+    } catch (error: any) {
+      console.error('OTP verification error:', error);
+      
+      // Pass through our custom error messages
+      if (error?.message?.includes('expired') || 
+          error?.message?.includes('Invalid') ||
+          error?.message?.includes('required')) {
+        throw error;
+      }
+      
+      throw new Error('Verification failed. Please try again.');
+    }
+  }, []);
+
+  const resendOtp = useCallback(async (email: string) => {
+    if (!email?.trim()) {
+      throw new Error("Email is required");
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      throw new Error("Please enter a valid email address");
+    }
+    
+    try {
+      console.log('Resending OTP with Supabase');
+      
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim()
+      });
+      
+      if (error) {
+        console.error('Resend OTP error:', error);
+        
+        if (error.message.includes('For security purposes')) {
+          throw new Error('Please wait a moment before requesting another code.');
+        }
+        
+        throw new Error(error.message || 'Failed to resend verification code. Please try again.');
+      }
+      
+      console.log('OTP resent successfully');
+    } catch (error: any) {
+      console.error('Resend OTP error:', error);
+      
+      // Pass through our custom error messages
+      if (error?.message?.includes('valid email') || 
+          error?.message?.includes('wait') ||
+          error?.message?.includes('required')) {
+        throw error;
+      }
+      
+      throw new Error('Failed to resend verification code. Please try again.');
     }
   }, []);
 
@@ -349,7 +449,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     isLoading,
     login,
     register,
+    verifyOtp,
+    resendOtp,
     completeProfile,
     logout,
-  }), [user, supabaseUser, isLoading, login, register, completeProfile, logout]);
+  }), [user, supabaseUser, isLoading, login, register, verifyOtp, resendOtp, completeProfile, logout]);
 });
