@@ -264,6 +264,16 @@ export const subscribeToUserPosts = (
   callback: (posts: Post[]) => void,
   errorCallback?: (error: any) => void
 ) => {
+  // Ensure user is authenticated before setting up listener
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    console.error('User not authenticated for user posts subscription');
+    if (errorCallback) {
+      errorCallback(new Error('Authentication required'));
+    }
+    return () => {}; // Return empty unsubscribe function
+  }
+
   const postsRef = collection(db, 'posts');
   const q = query(
     postsRef, 
@@ -271,8 +281,11 @@ export const subscribeToUserPosts = (
     orderBy('created_at', 'desc')
   );
   
+  console.log('Setting up Firestore listener for user posts:', userId);
+  
   return onSnapshot(q, async (snapshot) => {
     try {
+      console.log('Processing user posts snapshot with', snapshot.docs.length, 'documents');
       const posts: Post[] = [];
       
       for (const docSnap of snapshot.docs) {
@@ -289,6 +302,7 @@ export const subscribeToUserPosts = (
         posts.push(postData);
       }
       
+      console.log('Successfully processed', posts.length, 'user posts');
       callback(posts);
     } catch (error) {
       console.error('Error processing user posts snapshot:', error);
@@ -312,11 +326,24 @@ export const subscribeToAllPosts = (
   callback: (posts: Post[]) => void,
   errorCallback?: (error: any) => void
 ) => {
+  // Ensure user is authenticated before setting up listener
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    console.error('User not authenticated for posts subscription');
+    if (errorCallback) {
+      errorCallback(new Error('Authentication required'));
+    }
+    return () => {}; // Return empty unsubscribe function
+  }
+
   const postsRef = collection(db, 'posts');
   const q = query(postsRef, orderBy('created_at', 'desc'), limit(20));
   
+  console.log('Setting up Firestore listener for all posts');
+  
   return onSnapshot(q, async (snapshot) => {
     try {
+      console.log('Processing posts snapshot with', snapshot.docs.length, 'documents');
       const posts: Post[] = [];
       
       for (const docSnap of snapshot.docs) {
@@ -333,6 +360,7 @@ export const subscribeToAllPosts = (
         posts.push(postData);
       }
       
+      console.log('Successfully processed', posts.length, 'posts');
       callback(posts);
     } catch (error) {
       console.error('Error processing posts snapshot:', error);

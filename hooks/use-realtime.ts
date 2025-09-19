@@ -1,22 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import { subscribeToAllPosts, subscribeToUserPosts, Post, auth } from '@/lib/firebase';
 import { trackError } from '@/lib/analytics';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 export const useRealTimePosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: NodeJS.Timeout | null = null;
     let isActive = true;
+    let retryCount = 0;
+    const maxRetries = 3;
 
-    const setupListener = () => {
-      if (!isActive) return;
+    const setupListener = (user: User) => {
+      if (!isActive || !user) return;
       
-      console.log('Setting up real-time posts listener');
+      console.log('Setting up real-time posts listener for authenticated user');
       setLoading(true);
       setError(null);
 
@@ -27,7 +30,11 @@ export const useRealTimePosts = () => {
             console.log('Received real-time posts update:', newPosts.length);
             setPosts(newPosts);
             setLoading(false);
-            clearTimeout(timeoutId);
+            retryCount = 0; // Reset retry count on success
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
           },
           (error) => {
             if (!isActive) return;
@@ -35,21 +42,31 @@ export const useRealTimePosts = () => {
             
             if (error.code === 'permission-denied') {
               setError('Authentication required - please log in again');
+              retryCount = maxRetries; // Don't retry permission errors
             } else if (error.code === 'unavailable') {
               setError('Connection lost - retrying...');
-              // Retry after 5 seconds for network issues
-              setTimeout(() => {
-                if (isActive) {
-                  setupListener();
-                }
-              }, 5000);
+              if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(() => {
+                  if (isActive && currentUser) {
+                    setupListener(currentUser);
+                  }
+                }, 5000 * retryCount); // Exponential backoff
+              } else {
+                setError('Unable to connect. Please check your internet connection.');
+              }
             } else {
               setError('Connection error - retrying...');
-              setTimeout(() => {
-                if (isActive) {
-                  setupListener();
-                }
-              }, 3000);
+              if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(() => {
+                  if (isActive && currentUser) {
+                    setupListener(currentUser);
+                  }
+                }, 3000 * retryCount);
+              } else {
+                setError('Connection failed. Please refresh the app.');
+              }
             }
             
             setLoading(false);
@@ -57,7 +74,7 @@ export const useRealTimePosts = () => {
           }
         );
 
-        // Set up timeout for initial connection
+        // Set up timeout for initial connection (increased to 15 seconds)
         timeoutId = setTimeout(() => {
           if (isActive && loading) {
             console.error('Real-time connection timeout');
@@ -65,14 +82,16 @@ export const useRealTimePosts = () => {
             setLoading(false);
             trackError('realtime_posts_timeout', 'Connection timeout');
             
-            // Retry after 3 seconds
-            setTimeout(() => {
-              if (isActive) {
-                setupListener();
-              }
-            }, 3000);
+            if (retryCount < maxRetries) {
+              retryCount++;
+              setTimeout(() => {
+                if (isActive && currentUser) {
+                  setupListener(currentUser);
+                }
+              }, 3000);
+            }
           }
-        }, 10000) as ReturnType<typeof setTimeout>; // Reduced timeout to 10 seconds
+        }, 15000);
       } catch (err: any) {
         if (!isActive) return;
         console.error('Real-time posts error:', err);
@@ -84,21 +103,36 @@ export const useRealTimePosts = () => {
 
     // Wait for auth state before setting up listener
     const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && isActive) {
+      if (!isActive) return;
+      
+      setCurrentUser(user);
+      
+      if (user) {
         console.log('User authenticated, setting up real-time listener');
-        setupListener();
-      } else if (!user && isActive) {
+        // Add a small delay to ensure Firebase auth token is ready
+        setTimeout(() => {
+          if (isActive) {
+            setupListener(user);
+          }
+        }, 1000);
+      } else {
         console.log('User not authenticated');
         setError('Please log in to view posts');
         setLoading(false);
         setPosts([]);
+        if (unsubscribe) {
+          unsubscribe();
+          unsubscribe = null;
+        }
       }
     });
 
     return () => {
       isActive = false;
       console.log('Cleaning up real-time posts listener');
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       if (unsubscribe) {
         unsubscribe();
       }
@@ -123,6 +157,7 @@ export const useRealTimeUserPosts = (userId: string | null) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (!userId) {
@@ -132,11 +167,13 @@ export const useRealTimeUserPosts = (userId: string | null) => {
     }
 
     let unsubscribe: (() => void) | null = null;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: NodeJS.Timeout | null = null;
     let isActive = true;
+    let retryCount = 0;
+    const maxRetries = 3;
 
-    const setupListener = () => {
-      if (!isActive) return;
+    const setupListener = (user: User) => {
+      if (!isActive || !user) return;
       
       console.log('Setting up real-time user posts listener for:', userId);
       setLoading(true);
@@ -150,7 +187,11 @@ export const useRealTimeUserPosts = (userId: string | null) => {
             console.log('Received real-time user posts update:', newPosts.length);
             setPosts(newPosts);
             setLoading(false);
-            clearTimeout(timeoutId);
+            retryCount = 0;
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
           },
           (error) => {
             if (!isActive) return;
@@ -158,20 +199,31 @@ export const useRealTimeUserPosts = (userId: string | null) => {
             
             if (error.code === 'permission-denied') {
               setError('Authentication required - please log in again');
+              retryCount = maxRetries;
             } else if (error.code === 'unavailable') {
               setError('Connection lost - retrying...');
-              setTimeout(() => {
-                if (isActive) {
-                  setupListener();
-                }
-              }, 5000);
+              if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(() => {
+                  if (isActive && currentUser) {
+                    setupListener(currentUser);
+                  }
+                }, 5000 * retryCount);
+              } else {
+                setError('Unable to connect. Please check your internet connection.');
+              }
             } else {
               setError('Connection error - retrying...');
-              setTimeout(() => {
-                if (isActive) {
-                  setupListener();
-                }
-              }, 3000);
+              if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(() => {
+                  if (isActive && currentUser) {
+                    setupListener(currentUser);
+                  }
+                }, 3000 * retryCount);
+              } else {
+                setError('Connection failed. Please refresh the app.');
+              }
             }
             
             setLoading(false);
@@ -187,14 +239,16 @@ export const useRealTimeUserPosts = (userId: string | null) => {
             setLoading(false);
             trackError('realtime_user_posts_timeout', 'Connection timeout', { userId });
             
-            // Retry after 3 seconds
-            setTimeout(() => {
-              if (isActive) {
-                setupListener();
-              }
-            }, 3000);
+            if (retryCount < maxRetries) {
+              retryCount++;
+              setTimeout(() => {
+                if (isActive && currentUser) {
+                  setupListener(currentUser);
+                }
+              }, 3000);
+            }
           }
-        }, 10000) as ReturnType<typeof setTimeout>;
+        }, 15000);
       } catch (err: any) {
         if (!isActive) return;
         console.error('Real-time user posts error:', err);
@@ -206,21 +260,35 @@ export const useRealTimeUserPosts = (userId: string | null) => {
 
     // Wait for auth state before setting up listener
     const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && isActive) {
-        console.log('User authenticated, setting up real-time listener');
-        setupListener();
-      } else if (!user && isActive) {
+      if (!isActive) return;
+      
+      setCurrentUser(user);
+      
+      if (user) {
+        console.log('User authenticated, setting up real-time user posts listener');
+        setTimeout(() => {
+          if (isActive) {
+            setupListener(user);
+          }
+        }, 1000);
+      } else {
         console.log('User not authenticated');
         setError('Please log in to view posts');
         setLoading(false);
         setPosts([]);
+        if (unsubscribe) {
+          unsubscribe();
+          unsubscribe = null;
+        }
       }
     });
 
     return () => {
       isActive = false;
       console.log('Cleaning up real-time user posts listener');
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       if (unsubscribe) {
         unsubscribe();
       }

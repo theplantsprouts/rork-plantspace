@@ -52,19 +52,33 @@ export const ConnectionTest: React.FC<ConnectionTestProps> = ({ onClose }) => {
       // Test 2: Firestore Connection
       console.log('Testing Firestore connection...');
       try {
+        // Wait for auth to be ready
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          // Get auth token to ensure it's valid
+          await currentUser.getIdToken();
+        }
+        
         const posts = await getPosts();
         testResults.tests.push({
           name: 'Firestore Database',
           status: 'success',
           message: `Firestore connected successfully (${posts.length} posts found)`,
-          data: { postsCount: posts.length }
+          data: { postsCount: posts.length, authenticated: !!currentUser }
         });
-      } catch (error) {
+      } catch (error: any) {
+        let errorMessage = error.message || 'Unknown error';
+        if (error.code === 'permission-denied') {
+          errorMessage = 'Permission denied - user may not be properly authenticated';
+        } else if (error.code === 'unauthenticated') {
+          errorMessage = 'User not authenticated - please log in';
+        }
+        
         testResults.tests.push({
           name: 'Firestore Database',
           status: 'error',
-          message: `Firestore error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          data: { error: String(error) }
+          message: `Firestore error: ${errorMessage}`,
+          data: { error: String(error), code: error.code }
         });
       }
 

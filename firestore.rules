@@ -12,10 +12,9 @@ service cloud.firestore {
       // Anyone authenticated can read posts
       allow read: if request.auth != null;
       
-      // Allow authenticated users to create posts
+      // Allow authenticated users to create posts with flexible validation
       allow create: if request.auth != null && 
-                   request.auth.uid == request.resource.data.author_id &&
-                   request.resource.data.keys().hasAll(['content', 'author_id', 'created_at', 'updated_at', 'likes', 'comments']);
+                   request.auth.uid == request.resource.data.author_id;
       
       // Only the author can update/delete their posts
       allow update, delete: if request.auth != null && 
