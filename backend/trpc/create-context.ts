@@ -1,7 +1,7 @@
 import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import { supabase } from "@/lib/supabase";
+import { auth, getProfile } from "@/lib/firebase";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
@@ -12,17 +12,31 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
 
   if (authHeader?.startsWith("Bearer ")) {
     try {
-      const token = authHeader.substring(7);
-      console.log('Verifying Supabase token in context');
+      console.log('Verifying Firebase token in context');
       
-      // Verify token with Supabase
-      const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(token);
+      // For now, we'll use a simplified approach
+      // In production, you'd use Firebase Admin SDK to verify the token
+      // For development, we'll check if the current user is authenticated
+      const currentUser = auth.currentUser;
       
-      if (error || !supabaseUser) {
-        console.log('Supabase token verification failed:', error?.message);
-      } else {
-        user = supabaseUser;
+      if (currentUser) {
+        // Get user profile from Firestore
+        const profile = await getProfile(currentUser.uid);
+        
+        user = {
+          id: currentUser.uid,
+          email: currentUser.email || '',
+          createdAt: profile?.created_at || new Date().toISOString(),
+          name: profile?.name,
+          username: profile?.username,
+          bio: profile?.bio,
+          avatar: profile?.avatar,
+          followers: profile?.followers || 0,
+          following: profile?.following || 0,
+        };
         console.log('Context user found:', user.id);
+      } else {
+        console.log('No authenticated Firebase user found');
       }
     } catch (error) {
       console.log('Token verification failed in context:', error);

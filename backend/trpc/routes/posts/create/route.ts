@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure } from "@/backend/trpc/create-context";
-import { createPost } from "@/lib/supabase";
+import { createPost } from "@/lib/firebase";
 
 export const createPostProcedure = protectedProcedure
   .input(
@@ -13,7 +13,7 @@ export const createPostProcedure = protectedProcedure
     try {
       const { content, image } = input;
       
-      // Create post in Supabase
+      // Create post in Firebase
       const post = await createPost(content, image);
       
       if (!post) {

@@ -43,6 +43,7 @@
     "expo-system-ui": "~5.0.6",
     "expo-web-browser": "^14.2.0",
     "firebase": "^12.3.0",
+    "firebase-admin": "^13.5.0",
     "hono": "^4.9.8",
     "jsonwebtoken": "^9.0.2",
     "lucide-react-native": "^0.475.0",

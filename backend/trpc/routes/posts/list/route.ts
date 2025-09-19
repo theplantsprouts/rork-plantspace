@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { publicProcedure } from "@/backend/trpc/create-context";
-import { getPosts } from "@/lib/supabase";
+import { getPosts } from "@/lib/firebase";
 
 export const getPostsProcedure = publicProcedure
   .input(
@@ -13,7 +13,7 @@ export const getPostsProcedure = publicProcedure
     try {
       const { limit, offset } = input;
       
-      // Fetch posts from Supabase
+      // Fetch posts from Firebase
       const allPosts = await getPosts();
       
       // Apply pagination

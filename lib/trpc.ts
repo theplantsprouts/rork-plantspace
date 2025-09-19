@@ -314,14 +314,19 @@ export const trpcClient = trpc.createClient({
           console.log('Making tRPC request to:', url);
           console.log('Base URL:', baseUrl);
           
-          // Get Supabase auth token
+          // Get Firebase auth token
           let token = null;
           try {
-            const { data: { session } } = await import('@/lib/supabase').then(m => m.supabase.auth.getSession());
-            token = session?.access_token || null;
-            console.log('Retrieved Supabase token:', token ? 'Present' : 'None');
+            const { auth } = await import('@/lib/firebase');
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+              token = await currentUser.getIdToken();
+              console.log('Retrieved Firebase token:', token ? 'Present' : 'None');
+            } else {
+              console.log('No Firebase user authenticated');
+            }
           } catch (error) {
-            console.log('Supabase token retrieval error:', error);
+            console.log('Firebase token retrieval error:', error);
           }
           
           const headers = {

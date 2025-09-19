@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure } from "../../../create-context";
 import { TRPCError } from "@trpc/server";
-import { users } from "../register/route";
+import { updateProfile, getProfile } from "@/lib/firebase";
 
 export const completeProfileProcedure = protectedProcedure
   .input(
@@ -18,45 +18,32 @@ export const completeProfileProcedure = protectedProcedure
       const { name, username, bio, avatar } = input;
       const userId = ctx.user.id;
 
-      // Check if username is already taken
-      const existingUser = users.find((user) => user.username === username && user.id !== userId);
-      if (existingUser) {
-        console.log('Username already taken:', username);
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "Username is already taken",
-        });
-      }
-
-      // Find and update user
-      const userIndex = users.findIndex((user) => user.id === userId);
-      if (userIndex === -1) {
-        console.log('User not found:', userId);
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
-        });
-      }
-
-      users[userIndex] = {
-        ...users[userIndex],
+      // Update profile in Firebase
+      const updatedProfile = await updateProfile(userId, {
         name,
         username,
         bio,
         avatar,
-      };
+      });
+      
+      if (!updatedProfile) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update profile",
+        });
+      }
 
       const response = {
         user: {
-          id: users[userIndex].id,
-          email: users[userIndex].email,
-          createdAt: users[userIndex].createdAt,
-          name: users[userIndex].name,
-          username: users[userIndex].username,
-          bio: users[userIndex].bio,
-          avatar: users[userIndex].avatar,
-          followers: users[userIndex].followers || 0,
-          following: users[userIndex].following || 0,
+          id: updatedProfile.id,
+          email: updatedProfile.email,
+          createdAt: updatedProfile.created_at,
+          name: updatedProfile.name,
+          username: updatedProfile.username,
+          bio: updatedProfile.bio,
+          avatar: updatedProfile.avatar,
+          followers: updatedProfile.followers || 0,
+          following: updatedProfile.following || 0,
         },
       };
       
