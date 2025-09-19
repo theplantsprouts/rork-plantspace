@@ -1,22 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { isUsingMock } from '@/lib/trpc';
 import { PlantTheme } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 
 interface BackendStatusProps {
   style?: any;
 }
 
 export const BackendStatus: React.FC<BackendStatusProps> = ({ style }) => {
-  const usingMock = isUsingMock();
+  const { firebaseUser } = useAuth();
   
-  if (!usingMock) {
-    return null; // Don't show anything when using real backend
-  }
-  
+  // Show Firebase status
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.text}>🔧 Demo Mode</Text>
+      <Text style={styles.text}>
+        🔥 Firebase {firebaseUser ? 'Connected' : 'Ready'}
+      </Text>
     </View>
   );
 };

@@ -1,9 +1,7 @@
-import { createTRPCReact } from "@trpc/react-query";
-import { httpLink } from "@trpc/client";
-import type { AppRouter } from "@/backend/trpc/app-router";
-import superjson from "superjson";
-import * as SecureStore from "expo-secure-store";
+// This file is kept for backward compatibility but Firebase is now the primary backend
+// Most functionality has been moved to Firebase
 import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 
 // Mock backend for when the real backend is not available
 const createMockBackend = () => {
@@ -212,7 +210,8 @@ const createMockBackend = () => {
 let mockBackend: any = null;
 let isUsingMockBackend = false;
 
-export const trpc = createTRPCReact<AppRouter>();
+// Legacy tRPC client - now using Firebase
+// export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
   // Always use the Rork tunnel URL for this project
@@ -299,160 +298,11 @@ export const testConnection = async (): Promise<{ success: boolean; message: str
   }
 };
 
-export const trpcClient = trpc.createClient({
-  links: [
-    httpLink({
-      url: `${getBaseUrl()}/api/trpc`,
-      transformer: superjson,
-      fetch: async (url, options) => {
-        try {
-          if (!url || typeof url !== 'string' || !url.trim()) {
-            throw new Error('Invalid URL provided');
-          }
-          
-          const baseUrl = getBaseUrl();
-          console.log('Making tRPC request to:', url);
-          console.log('Base URL:', baseUrl);
-          
-          // Get Firebase auth token
-          let token = null;
-          try {
-            const { auth } = await import('@/lib/firebase');
-            const currentUser = auth.currentUser;
-            if (currentUser) {
-              token = await currentUser.getIdToken();
-              console.log('Retrieved Firebase token:', token ? 'Present' : 'None');
-            } else {
-              console.log('No Firebase user authenticated');
-            }
-          } catch (error) {
-            console.log('Firebase token retrieval error:', error);
-          }
-          
-          const headers = {
-            ...options?.headers,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-          };
-          
-          console.log('Request headers:', { ...headers, Authorization: token ? 'Bearer [REDACTED]' : 'None' });
-          
-          // Add timeout and better error handling
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-          
-          const response = await fetch(url, {
-            ...options,
-            headers,
-            signal: controller.signal,
-          });
-          
-          clearTimeout(timeoutId);
-          
-          console.log(`Response status: ${response.status} ${response.statusText}`);
-          
-          if (!response.ok) {
-            let errorText = '';
-            try {
-              errorText = await response.text();
-              console.error(`HTTP ${response.status} response body:`, errorText.substring(0, 500));
-              
-              // Check if we're getting HTML instead of JSON (common server error)
-              if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
-                // This is likely a 404 or server configuration issue
-                if (response.status === 404) {
-                  // Switch to mock backend for 404 errors
-                  console.log('Backend not available, switching to mock mode');
-                  if (!mockBackend) {
-                    mockBackend = createMockBackend();
-                    isUsingMockBackend = true;
-                  }
-                  throw new Error('BACKEND_UNAVAILABLE');
-                } else {
-                  throw new Error('Server configuration error. The backend may not be running properly.');
-                }
-              }
-              
-              // Try to parse as JSON for better error messages
-              try {
-                const errorData = JSON.parse(errorText);
-                if (errorData.error?.message) {
-                  throw new Error(errorData.error.message);
-                }
-              } catch (_parseError) {
-                // Not JSON, use the text as is
-              }
-              
-            } catch (readError) {
-              console.error('Failed to read error response:', readError);
-              if (readError instanceof Error && readError.message === 'BACKEND_UNAVAILABLE') {
-                throw readError;
-              }
-              errorText = 'Unable to read error response';
-            }
-            
-            // Provide more specific error messages based on status codes
-            if (response.status === 404) {
-              console.log('Backend not available, switching to mock mode');
-              if (!mockBackend) {
-                mockBackend = createMockBackend();
-                isUsingMockBackend = true;
-              }
-              throw new Error('BACKEND_UNAVAILABLE');
-            } else if (response.status === 500) {
-              throw new Error('Internal server error. Please try again later.');
-            } else if (response.status === 503) {
-              throw new Error('Service unavailable. The server may be temporarily down.');
-            }
-            
-            throw new Error(`HTTP ${response.status}: ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
-          }
-          
-          // Validate that we're getting JSON
-          const contentType = response.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('Non-JSON response received:', { contentType, text: text.substring(0, 200) });
-            if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
-              throw new Error('Server returned HTML instead of JSON. The API endpoint may not be configured correctly.');
-            }
-            throw new Error(`Expected JSON response but got ${contentType || 'unknown content type'}`);
-          }
-          
-          return response;
-        } catch (error) {
-          console.error('Network request failed:', error);
-          if (error instanceof Error) {
-            if (error.name === 'AbortError') {
-              throw new Error('Request timeout - please check your connection and try again');
-            }
-            if (error.message === 'BACKEND_UNAVAILABLE') {
-              throw error; // Let this bubble up to be handled by the auth hooks
-            }
-            if (error.message.includes('Failed to fetch') || error.message.includes('fetch')) {
-              // This is often a CORS or network connectivity issue
-              console.log('Backend not available (fetch failed), switching to mock mode');
-              if (!mockBackend) {
-                mockBackend = createMockBackend();
-                isUsingMockBackend = true;
-              }
-              throw new Error('BACKEND_UNAVAILABLE');
-            }
-            if (error.message.includes('Network request failed')) {
-              throw new Error('Network error - please check your internet connection and try again');
-            }
-            // Pass through our custom error messages
-            if (error.message.includes('API endpoint') || error.message.includes('Server') || error.message.includes('HTML instead of JSON')) {
-              throw error;
-            }
-          }
-          throw error;
-        }
-      },
-    }),
-  ],
-});
+// Legacy tRPC client - Firebase is now the primary backend
+// This is kept for backward compatibility but should not be used
+export const trpcClient = {
+  // Deprecated - use Firebase functions instead
+};
 
 // Enhanced mock client with better error handling and persistence
 export const mockTrpcClient = {

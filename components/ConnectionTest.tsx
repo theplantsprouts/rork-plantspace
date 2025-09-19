@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
-import { trpcClient } from '@/lib/trpc';
+import { auth, getPosts } from '@/lib/firebase';
 import { GlassContainer } from './GlassContainer';
 import { MaterialButton } from './MaterialButton';
+import { useAuth } from '@/hooks/use-auth';
 
 interface ConnectionTestProps {
   onClose?: () => void;
@@ -11,143 +12,91 @@ interface ConnectionTestProps {
 export const ConnectionTest: React.FC<ConnectionTestProps> = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
-
-  const getBaseUrl = () => {
-    if (Platform.OS === 'web') {
-      try {
-        if (typeof window !== 'undefined' && window.location) {
-          return window.location.origin;
-        }
-      } catch (error) {
-        console.log('Failed to get window.location.origin:', error);
-      }
-      // Web fallback to localhost in development
-      return __DEV__ ? "http://localhost:3000" : "https://l1v04hq0ysnd54scxcbqm.rork.com";
-    }
-    // Mobile fallback - use localhost in development
-    return __DEV__ ? "http://localhost:3000" : "https://l1v04hq0ysnd54scxcbqm.rork.com";
-  };
+  const { user } = useAuth();
 
   const runTest = useCallback(async () => {
     setIsLoading(true);
     setResult(null);
     
-    const baseUrl = getBaseUrl();
     const testResults = {
-      baseUrl,
       platform: Platform.OS,
       environment: __DEV__ ? 'Development' : 'Production',
+      backend: 'Firebase',
       tests: [] as any[]
     };
     
     try {
-      // Test 1: Basic API Health Check
-      console.log('Testing basic API health check...');
+      // Test 1: Firebase Auth Connection
+      console.log('Testing Firebase Auth connection...');
       try {
-        const response = await fetch(`${baseUrl}/api`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
+        const currentUser = auth.currentUser;
+        testResults.tests.push({
+          name: 'Firebase Auth',
+          status: 'success',
+          message: currentUser ? 'User authenticated' : 'Auth service available (no user)',
+          data: { 
+            hasUser: !!currentUser,
+            userId: currentUser?.uid,
+            email: currentUser?.email
+          }
         });
-        
-        if (response.ok) {
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const data = await response.json();
-            testResults.tests.push({
-              name: 'API Health Check',
-              status: 'success',
-              message: `API is healthy (${response.status})`,
-              data
-            });
-          } else {
-            const text = await response.text();
-            testResults.tests.push({
-              name: 'API Health Check',
-              status: 'error',
-              message: `API returned non-JSON response (${response.status})`,
-              data: { status: response.status, contentType, text: text.substring(0, 200) }
-            });
-          }
-        } else {
-          const text = await response.text();
-          let errorMessage = `API returned ${response.status}: ${response.statusText}`;
-          
-          if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
-            errorMessage = `Server returned HTML error page (${response.status}). Backend may not be configured correctly.`;
-          }
-          
-          testResults.tests.push({
-            name: 'API Health Check',
-            status: 'error',
-            message: errorMessage,
-            data: { status: response.status, text: text.substring(0, 200) }
-          });
-        }
       } catch (error) {
         testResults.tests.push({
-          name: 'API Health Check',
+          name: 'Firebase Auth',
           status: 'error',
-          message: `API connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          message: `Firebase Auth error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           data: { error: String(error) }
         });
       }
 
-      // Test 2: tRPC Example Endpoint
-      console.log('Testing tRPC example endpoint...');
+      // Test 2: Firestore Connection
+      console.log('Testing Firestore connection...');
       try {
-        const exampleResult = await trpcClient.example.hi.mutate({ name: 'ConnectionTest' });
+        const posts = await getPosts();
         testResults.tests.push({
-          name: 'tRPC Example',
+          name: 'Firestore Database',
           status: 'success',
-          message: 'tRPC example endpoint working',
-          data: exampleResult
+          message: `Firestore connected successfully (${posts.length} posts found)`,
+          data: { postsCount: posts.length }
         });
       } catch (error) {
         testResults.tests.push({
-          name: 'tRPC Example',
+          name: 'Firestore Database',
           status: 'error',
-          message: `tRPC example failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          message: `Firestore error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           data: { error: String(error) }
         });
       }
 
-      // Test 3: Auth Endpoint (should fail without auth)
-      console.log('Testing auth endpoint...');
-      try {
-        const authResult = await trpcClient.auth.me.query();
+      // Test 3: User Profile Check
+      console.log('Testing user profile...');
+      if (user) {
         testResults.tests.push({
-          name: 'Auth Endpoint',
+          name: 'User Profile',
           status: 'success',
-          message: 'Auth endpoint working (user authenticated)',
-          data: authResult
+          message: 'User profile loaded successfully',
+          data: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            username: user.username,
+            hasCompleteProfile: !!(user.name && user.username && user.bio)
+          }
         });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage.includes('UNAUTHORIZED') || errorMessage.includes('Not authenticated')) {
-          testResults.tests.push({
-            name: 'Auth Endpoint',
-            status: 'success',
-            message: 'Auth endpoint working (correctly rejected unauthenticated request)',
-            data: { expectedError: errorMessage }
-          });
-        } else {
-          testResults.tests.push({
-            name: 'Auth Endpoint',
-            status: 'error',
-            message: `Auth endpoint error: ${errorMessage}`,
-            data: { error: errorMessage }
-          });
-        }
+      } else {
+        testResults.tests.push({
+          name: 'User Profile',
+          status: 'info',
+          message: 'No user logged in',
+          data: { authenticated: false }
+        });
       }
 
       // Determine overall success
       const hasErrors = testResults.tests.some(test => test.status === 'error');
       setResult({
         success: !hasErrors,
-        message: hasErrors ? 'Some tests failed' : 'All tests passed',
+        message: hasErrors ? 'Some Firebase tests failed' : 'All Firebase tests passed',
         details: testResults
       });
       
@@ -160,7 +109,7 @@ export const ConnectionTest: React.FC<ConnectionTestProps> = ({ onClose }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // Auto-run test on mount
   useEffect(() => {
@@ -170,8 +119,8 @@ export const ConnectionTest: React.FC<ConnectionTestProps> = ({ onClose }) => {
   return (
     <View style={styles.container}>
       <GlassContainer style={styles.content}>
-        <Text style={styles.title}>Connection Test</Text>
-        <Text style={styles.subtitle}>Test the backend API connection</Text>
+        <Text style={styles.title}>Firebase Connection Test</Text>
+        <Text style={styles.subtitle}>Test Firebase services connection</Text>
         
         <MaterialButton
           title={isLoading ? "Testing..." : "Run Connection Test"}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAIContent } from './use-ai-content';
 import { useAuth } from './use-auth';
 import { useRealTimePosts } from './use-realtime';
-import { createPost, uploadImage } from '@/lib/firebase';
+import { createPost, uploadImage, Post as FirebasePost } from '@/lib/firebase';
 import { trackPostCreated, trackPostViewed, trackPostLiked, trackPostShared } from '@/lib/analytics';
 
 export interface User {
@@ -219,7 +219,7 @@ export function usePosts() {
   const { posts: realTimePosts, loading: isLoading, error, refresh } = useRealTimePosts();
   
   // Convert Firebase posts to our Post interface
-  const posts = realTimePosts.map(firebasePost => ({
+  const posts = realTimePosts.map((firebasePost: FirebasePost) => ({
     id: firebasePost.id,
     user: {
       id: firebasePost.author?.id || firebasePost.author_id,
