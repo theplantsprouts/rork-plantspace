@@ -8,33 +8,32 @@ interface GlassContainerProps {
   style?: ViewStyle;
   intensity?: number;
   tint?: 'light' | 'dark' | 'default';
+  testID?: string;
 }
 
 export function GlassContainer({ 
   children, 
   style, 
   intensity = 20,
-  tint = 'light' 
+  tint = 'light',
+  testID 
 }: GlassContainerProps) {
   if (Platform.OS === 'web') {
     return (
-      <View style={[styles.glassContainer, styles.webGlassContainer, style]}>
-        <View style={styles.glassOverlay}>
-          {children}
-        </View>
+      <View testID={testID} style={[styles.glassContainer, styles.webGlassContainer, style]}>
+        {children}
       </View>
     );
   }
   
   return (
     <BlurView
+      testID={testID}
       intensity={intensity}
       tint={tint}
       style={[styles.glassContainer, style]}
     >
-      <View style={styles.glassOverlay}>
-        {children}
-      </View>
+      {children}
     </BlurView>
   );
 }
@@ -54,15 +53,14 @@ export function GlassCard({
 }: GlassCardProps) {
   return (
     <GlassContainer
+      testID={testID}
       style={[
         styles.glassCard,
         { padding: PlantTheme.spacing[padding] },
         style
       ]}
     >
-      <View testID={testID} style={styles.testContainer}>
-        {children}
-      </View>
+      {children}
     </GlassContainer>
   );
 }
@@ -84,15 +82,7 @@ const styles = StyleSheet.create({
     backdropFilter: 'blur(15px)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
   } as ViewStyle,
-  glassOverlay: {
-    backgroundColor: Platform.OS === 'android' ? 'transparent' : 'rgba(255, 255, 255, 0.05)',
-    flex: 1,
-  },
   glassCard: {
     ...PlantTheme.shadows.md,
-    backgroundColor: Platform.OS === 'android' ? 'transparent' : 'rgba(255, 255, 255, 0.08)',
-  },
-  testContainer: {
-    flex: 1,
   },
 });
