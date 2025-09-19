@@ -1,5 +1,5 @@
 import createContextHook from "@nkzw/create-context-hook";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Platform } from "react-native";
 import { supabase, getProfile, createProfile, updateProfile, type Profile } from "@/lib/supabase";
 import type { AuthError, User as SupabaseUser } from '@supabase/supabase-js';
@@ -37,6 +37,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   const [user, setUser] = useState<User | null>(null);
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const supabaseUserRef = useRef<SupabaseUser | null>(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    supabaseUserRef.current = supabaseUser;
+  }, [supabaseUser]);
 
 
   useEffect(() => {
@@ -276,14 +282,15 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       throw new Error("All fields are required");
     }
     
-    if (!supabaseUser) {
+    const currentSupabaseUser = supabaseUserRef.current;
+    if (!currentSupabaseUser) {
       throw new Error("Authentication required");
     }
     
     try {
       console.log('Updating profile with Supabase');
       
-      const updatedProfile = await updateProfile(supabaseUser.id, {
+      const updatedProfile = await updateProfile(currentSupabaseUser.id, {
         name: data.name.trim(),
         username: data.username.trim(),
         bio: data.bio.trim(),
@@ -314,7 +321,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       throw new Error(error?.message || 'Failed to complete profile. Please try again.');
     }
-  }, [supabaseUser]);
+  }, []);
 
   const logout = useCallback(async () => {
     try {

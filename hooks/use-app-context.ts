@@ -31,7 +31,7 @@ interface AppState {
 const mockCurrentUser: User = {
   id: '999',
   email: 'alex@example.com',
-  createdAt: new Date(),
+  created_at: new Date().toISOString(),
   name: 'Alex Johnson',
   username: '@alexjohnson',
   avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face',
@@ -68,43 +68,66 @@ export const [AppProvider, useAppContext] = createContextHook(() => {
     loadAppState();
   }, []);
 
-  const saveAppState = useCallback(async (newState: Partial<AppState>) => {
-    try {
-      const updatedState = { ...appState, ...newState };
-      await storage.setItem('appState', JSON.stringify(updatedState));
-      setAppState(updatedState);
-    } catch (error) {
-      console.log('Error saving app state:', error);
-    }
-  }, [appState]);
+
 
   const followUser = useCallback((userId: number) => {
-    const newFollowedUsers = [...appState.followedUsers, userId];
-    saveAppState({ followedUsers: newFollowedUsers });
-  }, [appState.followedUsers, saveAppState]);
+    setAppState(prevState => {
+      const newFollowedUsers = [...prevState.followedUsers, userId];
+      const updatedState = { ...prevState, followedUsers: newFollowedUsers };
+      storage.setItem('appState', JSON.stringify(updatedState)).catch(error => {
+        console.log('Error saving app state:', error);
+      });
+      return updatedState;
+    });
+  }, []);
 
   const unfollowUser = useCallback((userId: number) => {
-    const newFollowedUsers = appState.followedUsers.filter(id => id !== userId);
-    saveAppState({ followedUsers: newFollowedUsers });
-  }, [appState.followedUsers, saveAppState]);
+    setAppState(prevState => {
+      const newFollowedUsers = prevState.followedUsers.filter(id => id !== userId);
+      const updatedState = { ...prevState, followedUsers: newFollowedUsers };
+      storage.setItem('appState', JSON.stringify(updatedState)).catch(error => {
+        console.log('Error saving app state:', error);
+      });
+      return updatedState;
+    });
+  }, []);
 
   const addToSearchHistory = useCallback((query: string) => {
     if (!query.trim()) return;
-    const newHistory = [query, ...appState.searchHistory.filter(h => h !== query)].slice(0, 10);
-    saveAppState({ searchHistory: newHistory });
-  }, [appState.searchHistory, saveAppState]);
+    setAppState(prevState => {
+      const newHistory = [query, ...prevState.searchHistory.filter(h => h !== query)].slice(0, 10);
+      const updatedState = { ...prevState, searchHistory: newHistory };
+      storage.setItem('appState', JSON.stringify(updatedState)).catch(error => {
+        console.log('Error saving app state:', error);
+      });
+      return updatedState;
+    });
+  }, []);
 
   const markNotificationsAsRead = useCallback(() => {
-    saveAppState({ unreadNotifications: 0 });
-  }, [saveAppState]);
+    setAppState(prevState => {
+      const updatedState = { ...prevState, unreadNotifications: 0 };
+      storage.setItem('appState', JSON.stringify(updatedState)).catch(error => {
+        console.log('Error saving app state:', error);
+      });
+      return updatedState;
+    });
+  }, []);
 
   const addNotification = useCallback((notification: any) => {
-    const newNotifications = [notification, ...appState.notifications].slice(0, 50);
-    saveAppState({ 
-      notifications: newNotifications,
-      unreadNotifications: appState.unreadNotifications + 1
+    setAppState(prevState => {
+      const newNotifications = [notification, ...prevState.notifications].slice(0, 50);
+      const updatedState = { 
+        ...prevState,
+        notifications: newNotifications,
+        unreadNotifications: prevState.unreadNotifications + 1
+      };
+      storage.setItem('appState', JSON.stringify(updatedState)).catch(error => {
+        console.log('Error saving app state:', error);
+      });
+      return updatedState;
     });
-  }, [appState.notifications, appState.unreadNotifications, saveAppState]);
+  }, []);
 
   const isFollowing = useCallback((userId: number) => {
     return appState.followedUsers.includes(userId);
