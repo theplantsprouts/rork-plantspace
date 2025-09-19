@@ -13,24 +13,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Heading, Sparkles, Wifi, WifiOff, Sun, Droplets } from 'lucide-react-native';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
-import { BackendStatus } from '@/components/BackendStatus';
+
 import { useAuth } from '@/hooks/use-auth';
 import { useOffline } from '@/hooks/use-offline';
-import { trpc } from '@/lib/trpc';
+import { usePosts, type Post } from '@/hooks/use-posts';
 import VirtualizedList from '@/components/VirtualizedList';
 import PostItem from '@/components/PostItem';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-
-interface Post {
-  id: string;
-  userId: string;
-  content: string;
-  imageUrl?: string;
-  createdAt: Date;
-  likes: number;
-  comments: number;
-}
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -38,12 +28,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showInsights, setShowInsights] = useState(false);
-  const [posts, setPosts] = useState<Post[]>([]);
-  
-  const postsQuery = trpc.posts.list.useQuery(
-    { limit: 20, offset: 0 },
-    { enabled: isOnline }
-  );
+  const { posts, toggleLike } = usePosts();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -54,14 +39,13 @@ export default function HomeScreen() {
   }, [fadeAnim]);
 
   useEffect(() => {
-    if (postsQuery.data?.posts) {
-      setPosts(postsQuery.data.posts);
+    if (posts.length > 0) {
       // Cache posts for offline use
-      postsQuery.data.posts.forEach(cachePost);
+      posts.forEach(cachePost);
     } else if (!isOnline && cachedPosts.length > 0) {
-      setPosts(cachedPosts);
+      // Use cached posts when offline
     }
-  }, [postsQuery.data, isOnline, cachedPosts, cachePost]);
+  }, [posts, isOnline, cachedPosts, cachePost]);
 
   const handleCreatePost = useCallback(() => {
     if (!user) {
@@ -79,18 +63,13 @@ export default function HomeScreen() {
         console.log('Haptics not available:', error);
       }
     }
-    // Optimistic update
-    setPosts(prev => prev.map(post => 
-      post.id === postId 
-        ? { ...post, likes: post.likes + 1 }
-        : post
-    ));
-  }, []);
+    toggleLike(postId);
+  }, [toggleLike]);
 
   const renderPost = useCallback(({ item }: { item: Post }) => (
     <PostItem
       post={item}
-      onLike={handleLike}
+      onLike={() => handleLike(item.id)}
       testID={`post-${item.id}`}
     />
   ), [handleLike]);
@@ -132,7 +111,7 @@ export default function HomeScreen() {
           <View style={styles.headerTitleContainer}>
             <Text style={styles.headerTitle}>🌿 {PlantTerminology.home}</Text>
             <Text style={styles.headerSubtitle}>Nurture your community</Text>
-            <BackendStatus style={styles.backendStatus} />
+
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity 
@@ -324,7 +303,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: 'center',
   },
-  backendStatus: {
-    marginTop: 4,
-  },
+
 });

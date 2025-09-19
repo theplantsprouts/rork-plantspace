@@ -9,7 +9,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { OfflineProvider } from "@/hooks/use-offline";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer } from "@/components/Toast";
-import { trpc, trpcClient } from "@/lib/trpc";
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -73,20 +73,18 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <OfflineProvider>
-              <AppProvider>
-                <GestureHandlerRootView style={styles.gestureHandler}>
-                  <RootLayoutNav />
-                  <ToastContainer />
-                </GestureHandlerRootView>
-              </AppProvider>
-            </OfflineProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <OfflineProvider>
+            <AppProvider>
+              <GestureHandlerRootView style={styles.gestureHandler}>
+                <RootLayoutNav />
+                <ToastContainer />
+              </GestureHandlerRootView>
+            </AppProvider>
+          </OfflineProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

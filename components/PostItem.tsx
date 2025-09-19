@@ -4,55 +4,45 @@ import { Image } from "expo-image";
 import { Sun, Sprout, Share2 } from "lucide-react-native";
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
-
-interface Post {
-  id: string;
-  userId: string;
-  content: string;
-  imageUrl?: string;
-  createdAt: Date;
-  likes: number;
-  comments: number;
-}
+import { type Post } from "@/hooks/use-posts";
 
 interface PostItemProps {
   post: Post;
-  onLike?: (postId: string) => void;
+  onLike?: () => void;
   onComment?: (postId: string) => void;
   onShare?: (postId: string) => void;
   testID?: string;
 }
 
 function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
-    return date.toLocaleDateString();
-  };
 
   return (
     <GlassCard style={styles.container} testID={testID}>
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {post.userId.charAt(0).toUpperCase()}
-          </Text>
+          {post.user.avatar ? (
+            <Image
+              source={{ uri: post.user.avatar }}
+              style={styles.avatarImage}
+              contentFit="cover"
+            />
+          ) : (
+            <Text style={styles.avatarText}>
+              {post.user.name.charAt(0).toUpperCase()}
+            </Text>
+          )}
         </View>
         <View style={styles.userInfo}>
-          <Text style={styles.username}>User {post.userId.slice(0, 8)}</Text>
-          <Text style={styles.timestamp}>{formatDate(post.createdAt)}</Text>
+          <Text style={styles.username}>{post.user.name}</Text>
+          <Text style={styles.timestamp}>{post.timestamp}</Text>
         </View>
       </View>
 
       <Text style={styles.content}>{post.content}</Text>
 
-      {post.imageUrl && (
+      {post.image && (
         <Image
-          source={{ uri: post.imageUrl }}
+          source={{ uri: post.image }}
           style={styles.image}
           contentFit="cover"
           transition={200}
@@ -62,7 +52,7 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => onLike?.(post.id)}
+          onPress={onLike}
           testID={`like-button-${post.id}`}
         >
           <Sun size={20} color={PlantTheme.colors.accent} />
@@ -110,6 +100,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
     ...PlantTheme.shadows.sm,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
   },
   avatarText: {
     color: PlantTheme.colors.white,

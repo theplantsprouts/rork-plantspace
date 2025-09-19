@@ -15,7 +15,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { X, Camera, Image as ImageIcon, Sprout } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
-import { trpc } from "@/lib/trpc";
+import { usePosts } from "@/hooks/use-posts";
 import { router } from "expo-router";
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
@@ -26,8 +26,7 @@ export default function CreatePostScreen() {
   const [loading, setLoading] = useState(false);
   
   const { user } = useAuth();
-  const createPostMutation = trpc.posts.create.useMutation();
-  const uploadImageMutation = trpc.posts.uploadImage.useMutation();
+  const { addPost } = usePosts();
 
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -91,46 +90,26 @@ export default function CreatePostScreen() {
 
     setLoading(true);
     try {
-      let imageUrl: string | undefined;
-
-      if (selectedImage) {
-        // Convert image to base64 for upload
-        const response = await fetch(selectedImage);
-        const blob = await response.blob();
-        const base64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const result = reader.result as string;
-            resolve(result.split(",")[1]); // Remove data:image/jpeg;base64, prefix
-          };
-          reader.readAsDataURL(blob);
-        });
-
-        const uploadResult = await uploadImageMutation.mutateAsync({
-          base64,
-          filename: `post_${Date.now()}.jpg`,
-        });
-        imageUrl = uploadResult.imageUrl;
-      }
-
-      await createPostMutation.mutateAsync({
-        userId: user.id,
-        content: content.trim(),
-        imageUrl,
-      });
+      await addPost(content.trim(), selectedImage || undefined);
 
       if (Platform.OS !== 'web') {
         Alert.alert("Success", "Your seed has been planted successfully! 🌱");
       }
+      
+      // Clear form
+      setContent("");
+      setSelectedImage(null);
+      
       router.back();
     } catch (error: any) {
+      console.error('Error creating post:', error);
       if (Platform.OS !== 'web') {
         Alert.alert("Error", error.message || "Failed to plant your seed");
       }
     } finally {
       setLoading(false);
     }
-  }, [content, selectedImage, user, createPostMutation, uploadImageMutation]);
+  }, [content, selectedImage, user, addPost]);
 
   return (
     <View style={styles.container}>
