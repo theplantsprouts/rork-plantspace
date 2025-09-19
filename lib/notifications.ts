@@ -7,17 +7,21 @@ import Constants from 'expo-constants';
 // Check if running in Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
 
-// Configure notification behavior only if not in Expo Go
-if (!isExpoGo) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
+// Disable notifications completely in Expo Go to prevent errors
+if (!isExpoGo && Platform.OS !== 'web') {
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (error) {
+    console.log('Notification handler setup failed:', error);
+  }
 }
 
 export interface NotificationData {
@@ -27,15 +31,21 @@ export interface NotificationData {
 }
 
 export const registerForPushNotificationsAsync = async (userId?: string): Promise<string | null> => {
-  // Skip notifications in Expo Go
-  if (isExpoGo) {
-    console.log('Push notifications not supported in Expo Go. Use a development build instead.');
+  // Skip notifications in Expo Go or web
+  if (isExpoGo || Platform.OS === 'web') {
+    console.log('Push notifications not supported in Expo Go or web. Use a development build for mobile.');
     return null;
   }
 
   let token: string | null = null;
 
   try {
+    // Only proceed on physical devices
+    if (!Device.isDevice) {
+      console.log('Must use physical device for Push Notifications');
+      return null;
+    }
+
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -45,44 +55,41 @@ export const registerForPushNotificationsAsync = async (userId?: string): Promis
       });
     }
 
-    if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      
-      if (finalStatus !== 'granted') {
-        console.log('Failed to get push token for push notification!');
-        return null;
-      }
-      
-      const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: '969912616990', // Your Firebase project number
-      });
-      token = tokenData.data;
-      
-      // Save token to Firebase if userId is provided
-      if (userId && token) {
-        await savePushToken(userId, token);
-      }
-      
-      console.log('Push token registered:', token);
-    } else {
-      console.log('Must use physical device for Push Notifications');
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
     }
+    
+    if (finalStatus !== 'granted') {
+      console.log('Push notification permissions denied');
+      return null;
+    }
+    
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: '969912616990',
+    });
+    token = tokenData.data;
+    
+    // Save token to Firebase if userId is provided
+    if (userId && token) {
+      await savePushToken(userId, token);
+    }
+    
+    console.log('Push token registered successfully');
   } catch (error) {
-    console.error('Error getting push token:', error);
+    console.error('Push notification registration failed:', error);
+    // Don't throw error, just return null
   }
 
   return token;
 };
 
 export const sendLocalNotification = async (notification: NotificationData) => {
-  if (isExpoGo) {
-    console.log('Local notifications not fully supported in Expo Go:', notification.title);
+  if (isExpoGo || Platform.OS === 'web') {
+    console.log('Local notifications not supported in Expo Go or web:', notification.title);
     return;
   }
 
@@ -93,10 +100,10 @@ export const sendLocalNotification = async (notification: NotificationData) => {
         body: notification.body,
         data: notification.data || {},
       },
-      trigger: null, // Send immediately
+      trigger: null,
     });
   } catch (error) {
-    console.error('Error sending local notification:', error);
+    console.error('Local notification failed:', error);
   }
 };
 
@@ -145,21 +152,33 @@ export const cancelAllNotifications = async () => {
 export const addNotificationReceivedListener = (
   listener: (notification: Notifications.Notification) => void
 ) => {
-  if (isExpoGo) {
-    console.log('Notification listeners not fully supported in Expo Go');
+  if (isExpoGo || Platform.OS === 'web') {
+    console.log('Notification listeners not supported in Expo Go or web');
     return { remove: () => {} };
   }
-  return Notifications.addNotificationReceivedListener(listener);
+  
+  try {
+    return Notifications.addNotificationReceivedListener(listener);
+  } catch (error) {
+    console.error('Failed to add notification listener:', error);
+    return { remove: () => {} };
+  }
 };
 
 export const addNotificationResponseReceivedListener = (
   listener: (response: Notifications.NotificationResponse) => void
 ) => {
-  if (isExpoGo) {
-    console.log('Notification response listeners not fully supported in Expo Go');
+  if (isExpoGo || Platform.OS === 'web') {
+    console.log('Notification response listeners not supported in Expo Go or web');
     return { remove: () => {} };
   }
-  return Notifications.addNotificationResponseReceivedListener(listener);
+  
+  try {
+    return Notifications.addNotificationResponseReceivedListener(listener);
+  } catch (error) {
+    console.error('Failed to add notification response listener:', error);
+    return { remove: () => {} };
+  }
 };
 
 // Badge management

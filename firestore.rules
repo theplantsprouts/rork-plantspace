@@ -7,16 +7,17 @@ service cloud.firestore {
       allow read: if request.auth != null; // Allow reading other profiles
     }
     
-    // Posts rules
+    // Posts rules - more permissive for debugging
     match /posts/{postId} {
       // Anyone authenticated can read posts
       allow read: if request.auth != null;
       
-      // Allow authenticated users to create posts (check author_id in request data)
+      // Allow authenticated users to create posts
       allow create: if request.auth != null && 
-                   request.auth.uid == request.resource.data.author_id;
+                   request.auth.uid == request.resource.data.author_id &&
+                   request.resource.data.keys().hasAll(['content', 'author_id', 'created_at', 'updated_at', 'likes', 'comments']);
       
-      // Only the author can update/delete their posts (check existing resource)
+      // Only the author can update/delete their posts
       allow update, delete: if request.auth != null && 
                            request.auth.uid == resource.data.author_id;
     }

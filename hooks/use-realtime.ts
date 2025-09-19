@@ -21,15 +21,43 @@ export const useRealTimePosts = () => {
       setError(null);
 
       try {
-        unsubscribe = subscribeToAllPosts((newPosts) => {
-          if (!isActive) return;
-          console.log('Received real-time posts update:', newPosts.length);
-          setPosts(newPosts);
-          setLoading(false);
-          clearTimeout(timeoutId);
-        });
+        unsubscribe = subscribeToAllPosts(
+          (newPosts) => {
+            if (!isActive) return;
+            console.log('Received real-time posts update:', newPosts.length);
+            setPosts(newPosts);
+            setLoading(false);
+            clearTimeout(timeoutId);
+          },
+          (error) => {
+            if (!isActive) return;
+            console.error('Real-time posts subscription error:', error);
+            
+            if (error.code === 'permission-denied') {
+              setError('Authentication required - please log in again');
+            } else if (error.code === 'unavailable') {
+              setError('Connection lost - retrying...');
+              // Retry after 5 seconds for network issues
+              setTimeout(() => {
+                if (isActive) {
+                  setupListener();
+                }
+              }, 5000);
+            } else {
+              setError('Connection error - retrying...');
+              setTimeout(() => {
+                if (isActive) {
+                  setupListener();
+                }
+              }, 3000);
+            }
+            
+            setLoading(false);
+            trackError('realtime_posts_error', error.message || 'Unknown error');
+          }
+        );
 
-        // Set up timeout for connection issues
+        // Set up timeout for initial connection
         timeoutId = setTimeout(() => {
           if (isActive && loading) {
             console.error('Real-time connection timeout');
@@ -44,7 +72,7 @@ export const useRealTimePosts = () => {
               }
             }, 3000);
           }
-        }, 15000);
+        }, 10000); // Reduced timeout to 10 seconds
       } catch (err: any) {
         if (!isActive) return;
         console.error('Real-time posts error:', err);
@@ -57,10 +85,13 @@ export const useRealTimePosts = () => {
     // Wait for auth state before setting up listener
     const authUnsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && isActive) {
+        console.log('User authenticated, setting up real-time listener');
         setupListener();
       } else if (!user && isActive) {
-        setError('Authentication required');
+        console.log('User not authenticated');
+        setError('Please log in to view posts');
         setLoading(false);
+        setPosts([]);
       }
     });
 
@@ -112,15 +143,43 @@ export const useRealTimeUserPosts = (userId: string | null) => {
       setError(null);
 
       try {
-        unsubscribe = subscribeToUserPosts(userId, (newPosts) => {
-          if (!isActive) return;
-          console.log('Received real-time user posts update:', newPosts.length);
-          setPosts(newPosts);
-          setLoading(false);
-          clearTimeout(timeoutId);
-        });
+        unsubscribe = subscribeToUserPosts(
+          userId,
+          (newPosts) => {
+            if (!isActive) return;
+            console.log('Received real-time user posts update:', newPosts.length);
+            setPosts(newPosts);
+            setLoading(false);
+            clearTimeout(timeoutId);
+          },
+          (error) => {
+            if (!isActive) return;
+            console.error('Real-time user posts subscription error:', error);
+            
+            if (error.code === 'permission-denied') {
+              setError('Authentication required - please log in again');
+            } else if (error.code === 'unavailable') {
+              setError('Connection lost - retrying...');
+              setTimeout(() => {
+                if (isActive) {
+                  setupListener();
+                }
+              }, 5000);
+            } else {
+              setError('Connection error - retrying...');
+              setTimeout(() => {
+                if (isActive) {
+                  setupListener();
+                }
+              }, 3000);
+            }
+            
+            setLoading(false);
+            trackError('realtime_user_posts_error', error.message || 'Unknown error', { userId });
+          }
+        );
 
-        // Set up timeout for connection issues
+        // Set up timeout for initial connection
         timeoutId = setTimeout(() => {
           if (isActive && loading) {
             console.error('Real-time user posts connection timeout');
@@ -135,7 +194,7 @@ export const useRealTimeUserPosts = (userId: string | null) => {
               }
             }, 3000);
           }
-        }, 15000);
+        }, 10000);
       } catch (err: any) {
         if (!isActive) return;
         console.error('Real-time user posts error:', err);
@@ -148,10 +207,13 @@ export const useRealTimeUserPosts = (userId: string | null) => {
     // Wait for auth state before setting up listener
     const authUnsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && isActive) {
+        console.log('User authenticated, setting up real-time listener');
         setupListener();
       } else if (!user && isActive) {
-        setError('Authentication required');
+        console.log('User not authenticated');
+        setError('Please log in to view posts');
         setLoading(false);
+        setPosts([]);
       }
     });
 

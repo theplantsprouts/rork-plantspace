@@ -259,7 +259,11 @@ export const uploadImage = async (uri: string, folder: string = 'images'): Promi
 };
 
 // Real-time listeners
-export const subscribeToUserPosts = (userId: string, callback: (posts: Post[]) => void) => {
+export const subscribeToUserPosts = (
+  userId: string, 
+  callback: (posts: Post[]) => void,
+  errorCallback?: (error: any) => void
+) => {
   const postsRef = collection(db, 'posts');
   const q = query(
     postsRef, 
@@ -287,16 +291,27 @@ export const subscribeToUserPosts = (userId: string, callback: (posts: Post[]) =
       
       callback(posts);
     } catch (error) {
-      console.error('Error in subscribeToUserPosts:', error);
-      callback([]);
+      console.error('Error processing user posts snapshot:', error);
+      if (errorCallback) {
+        errorCallback(error);
+      } else {
+        callback([]);
+      }
     }
   }, (error) => {
-    console.error('Firestore subscription error:', error);
-    callback([]);
+    console.error('Firestore user posts subscription error:', error);
+    if (errorCallback) {
+      errorCallback(error);
+    } else {
+      callback([]);
+    }
   });
 };
 
-export const subscribeToAllPosts = (callback: (posts: Post[]) => void) => {
+export const subscribeToAllPosts = (
+  callback: (posts: Post[]) => void,
+  errorCallback?: (error: any) => void
+) => {
   const postsRef = collection(db, 'posts');
   const q = query(postsRef, orderBy('created_at', 'desc'), limit(20));
   
@@ -320,12 +335,20 @@ export const subscribeToAllPosts = (callback: (posts: Post[]) => void) => {
       
       callback(posts);
     } catch (error) {
-      console.error('Error in subscribeToAllPosts:', error);
-      callback([]);
+      console.error('Error processing posts snapshot:', error);
+      if (errorCallback) {
+        errorCallback(error);
+      } else {
+        callback([]);
+      }
     }
   }, (error) => {
     console.error('Firestore subscription error:', error);
-    callback([]);
+    if (errorCallback) {
+      errorCallback(error);
+    } else {
+      callback([]);
+    }
   });
 };
 
