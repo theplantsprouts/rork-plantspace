@@ -1,60 +1,89 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // More permissive rules for development and debugging
-    // IMPORTANT: Tighten these rules for production!
+    // Production-ready security rules
     
-    // Users can read and write their own profile
-    match /profiles/{userId} {
-      // Allow authenticated users to read any profile
-      allow read: if request.auth != null;
-      // Allow users to create and update their own profile
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-      // Allow users to delete their own profile
-      allow delete: if request.auth != null && request.auth.uid == userId;
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
-    // Posts rules - very permissive for debugging
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidProfile() {
+      return request.resource.data.keys().hasAll(['email', 'created_at', 'updated_at']) &&
+             request.resource.data.email is string &&
+             request.resource.data.created_at is string &&
+             request.resource.data.updated_at is string;
+    }
+    
+    function isValidPost() {
+      return request.resource.data.keys().hasAll(['content', 'author_id', 'created_at', 'updated_at', 'likes', 'comments']) &&
+             request.resource.data.content is string &&
+             request.resource.data.author_id == request.auth.uid &&
+             request.resource.data.likes is number &&
+             request.resource.data.comments is number;
+    }
+    
+    // User profiles
+    match /profiles/{userId} {
+      // Anyone can read profiles (for social features)
+      allow read: if isAuthenticated();
+      
+      // Users can only create/update their own profile
+      allow create: if isOwner(userId) && isValidProfile();
+      allow update: if isOwner(userId) && isValidProfile();
+      
+      // Users can delete their own profile
+      allow delete: if isOwner(userId);
+    }
+    
+    // Posts
     match /posts/{postId} {
       // Anyone authenticated can read posts
-      allow read: if request.auth != null;
+      allow read: if isAuthenticated();
       
-      // Allow authenticated users to create posts
-      allow create: if request.auth != null;
+      // Users can create posts with proper validation
+      allow create: if isAuthenticated() && isValidPost();
       
-      // Allow authenticated users to update/delete posts (for debugging)
-      allow update, delete: if request.auth != null;
+      // Users can only update/delete their own posts
+      allow update, delete: if isAuthenticated() && 
+                            resource.data.author_id == request.auth.uid;
     }
     
-    // Push tokens - users can only manage their own tokens
+    // Push notification tokens
     match /push_tokens/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
     
-    // Comments - permissive for development
+    // Comments on posts
     match /comments/{commentId} {
-      allow read, write: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                    request.resource.data.author_id == request.auth.uid;
+      allow update, delete: if isAuthenticated() && 
+                            resource.data.author_id == request.auth.uid;
     }
     
-    // Likes/reactions - permissive for development
+    // Likes/reactions
     match /likes/{likeId} {
-      allow read, write: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow create, delete: if isAuthenticated() && 
+                            request.resource.data.user_id == request.auth.uid;
     }
     
-    // Notifications - permissive for development
+    // User notifications
     match /notifications/{notificationId} {
-      allow read, write: if request.auth != null;
+      allow read, update: if isAuthenticated() && 
+                          resource.data.user_id == request.auth.uid;
+      allow create: if isAuthenticated();
     }
     
-    // Analytics events - write-only for authenticated users
+    // Analytics events (write-only)
     match /analytics/{eventId} {
-      allow create: if request.auth != null;
-    }
-    
-    // Allow all authenticated users to read/write for debugging
-    // REMOVE THIS IN PRODUCTION!
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow create: if isAuthenticated();
     }
   }
 }
