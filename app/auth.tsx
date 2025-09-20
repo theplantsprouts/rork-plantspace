@@ -17,6 +17,7 @@ import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { MaterialInput } from "@/components/MaterialInput";
 import { MaterialButton } from "@/components/MaterialButton";
+import { router } from "expo-router";
 
 
 export default function LoginScreen() {
@@ -70,14 +71,17 @@ export default function LoginScreen() {
     try {
       if (isLogin) {
         await login(email.trim(), password);
+        console.log('Login successful, navigating to home');
+        router.replace('/');
       } else {
         const result = await register(email.trim(), password);
         if (result?.needsVerification) {
           setErrorMessage('Please check your email and click the verification link to complete registration.');
           return;
         }
+        console.log('Registration successful, navigating to home');
+        router.replace('/');
       }
-      // Don't navigate here - let the index.tsx handle routing based on auth state
     } catch (error: any) {
       console.error('Auth error:', error);
       let message = error?.message || "Authentication failed";

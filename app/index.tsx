@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View, Text } from 'react-native';
-import { Redirect } from 'expo-router';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, isProfileComplete } from '@/hooks/use-auth';
 import { PlantTheme } from '@/constants/theme';
@@ -24,45 +24,44 @@ export default function Index() {
     });
   }
 
-  if (isLoading) {
-    console.log('Index.tsx - Showing loading screen');
-    return (
-      <View style={styles.container}>
-        <LinearGradient
-          colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
-          style={StyleSheet.absoluteFillObject}
+  // Use useEffect to handle navigation to prevent redirect loops
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        console.log('Index.tsx - Navigating to auth');
+        router.replace('/auth');
+      } else if (!profileComplete) {
+        console.log('Index.tsx - Navigating to profile setup');
+        router.replace('/profile-setup');
+      } else {
+        console.log('Index.tsx - Navigating to home');
+        router.replace('/(tabs)/home');
+      }
+    }
+  }, [user, isLoading, profileComplete]);
+
+  // Always show loading screen while determining where to navigate
+  console.log('Index.tsx - Showing loading screen');
+  return (
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <SafeAreaView style={styles.loadingContainer}>
+        <View style={styles.logoContainer}>
+          <Sprout color={PlantTheme.colors.primary} size={48} />
+        </View>
+        <Text style={styles.loadingTitle}>🌱 Garden</Text>
+        <Text style={styles.loadingSubtitle}>Growing your sustainable community</Text>
+        <ActivityIndicator 
+          size="large" 
+          color={PlantTheme.colors.primary} 
+          style={styles.spinner}
         />
-        <SafeAreaView style={styles.loadingContainer}>
-          <View style={styles.logoContainer}>
-            <Sprout color={PlantTheme.colors.primary} size={48} />
-          </View>
-          <Text style={styles.loadingTitle}>🌱 Garden</Text>
-          <Text style={styles.loadingSubtitle}>Growing your sustainable community</Text>
-          <ActivityIndicator 
-            size="large" 
-            color={PlantTheme.colors.primary} 
-            style={styles.spinner}
-          />
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  // Not authenticated - go to auth screen
-  if (!user) {
-    console.log('Index.tsx - Redirecting to auth');
-    return <Redirect href="/auth" />;
-  }
-
-  // Authenticated but profile not complete - go to profile setup
-  if (!profileComplete) {
-    console.log('Index.tsx - Redirecting to profile setup');
-    return <Redirect href="/profile-setup" />;
-  }
-
-  // Authenticated and profile complete - go to home
-  console.log('Index.tsx - Redirecting to home');
-  return <Redirect href="/(tabs)/home" />;
+      </SafeAreaView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

@@ -14,7 +14,7 @@ import { Heading, Sparkles, Wifi, WifiOff, Sun, Droplets } from 'lucide-react-na
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 
-import { useAuth } from '@/hooks/use-auth';
+// import { useAuth } from '@/hooks/use-auth'; // No longer needed at component level
 import { useOffline } from '@/hooks/use-offline';
 import { usePosts, type Post } from '@/hooks/use-posts';
 import VirtualizedList from '@/components/VirtualizedList';
@@ -23,7 +23,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Authentication handled at layout level
   const { isOnline } = useOffline();
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -44,12 +44,8 @@ export default function HomeScreen() {
 
 
   const handleCreatePost = useCallback(() => {
-    if (!user) {
-      router.push('/auth');
-      return;
-    }
     router.push('/create-post');
-  }, [user]);
+  }, []);
 
   const handleLike = useCallback(async (postId: string) => {
     if (Platform.OS !== 'web') {
@@ -81,26 +77,8 @@ export default function HomeScreen() {
 
   const keyExtractor = useCallback((item: Post) => item.id, []);
 
-  if (!user) {
-    return (
-      <View style={styles.authContainer}>
-        <LinearGradient
-          colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd, PlantTheme.colors.primaryLight]}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={[styles.authContent, { paddingTop: insets.top }]}>
-            <Text style={styles.authTitle}>🌱 Welcome to Garden</Text>
-            <Text style={styles.authSubtitle}>Grow with our sustainable community</Text>
-            <TouchableOpacity
-              style={styles.authButton}
-              onPress={() => router.push('/auth')}
-            >
-              <Text style={styles.authButtonText}>Sign In / Sign Up</Text>
-            </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+  // Authentication is now handled at the layout level
+  // This component will only render when user is authenticated
 
   return (
     <View style={styles.container}>
@@ -230,40 +208,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 15,
   },
-  authContainer: {
-    flex: 1,
-  },
-  authContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  authTitle: {
-    fontSize: 32,
-    fontWeight: 'bold' as const,
-    color: PlantTheme.colors.textDark,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  authSubtitle: {
-    fontSize: 18,
-    color: PlantTheme.colors.textSecondary,
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  authButton: {
-    backgroundColor: PlantTheme.colors.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: PlantTheme.borderRadius.md,
-    ...PlantTheme.shadows.md,
-  },
-  authButtonText: {
-    color: PlantTheme.colors.white,
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
+  // Removed auth-related styles as they're no longer needed
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
