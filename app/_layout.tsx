@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppProvider } from "@/hooks/use-app-context";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { AuthProvider, useAuth, isProfileComplete } from "@/hooks/use-auth";
 import { OfflineProvider } from "@/hooks/use-offline";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer } from "@/components/Toast";
@@ -31,6 +31,8 @@ const queryClient = new QueryClient({
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
   
+  console.log('RootLayoutNav - isLoading:', isLoading, 'user:', user ? `Present (${user.id})` : 'None');
+  
   // Show loading screen while checking auth state
   if (isLoading) {
     return (
@@ -42,6 +44,7 @@ function RootLayoutNav() {
   
   // If user is not authenticated, only show auth-related screens
   if (!user) {
+    console.log('RootLayoutNav - User not authenticated, showing auth screens');
     return (
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -50,7 +53,21 @@ function RootLayoutNav() {
     );
   }
   
-  // If user is authenticated, show all screens including tabs
+  // If user is authenticated but profile is not complete, show profile setup
+  const profileComplete = isProfileComplete(user);
+  console.log('RootLayoutNav - User authenticated, profile complete:', profileComplete);
+  
+  if (!profileComplete) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="profile-setup" />
+      </Stack>
+    );
+  }
+  
+  // If user is authenticated and profile is complete, show all screens including tabs
+  console.log('RootLayoutNav - Showing full app with tabs');
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />

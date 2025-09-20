@@ -348,7 +348,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     }
     
     try {
-      console.log('Updating profile with Firebase');
+      console.log('Updating profile with Firebase for user:', currentFirebaseUser.uid);
+      console.log('Profile data:', { name: data.name, username: data.username, bio: data.bio, hasAvatar: !!data.avatar });
       
       // Ensure auth token is ready
       await currentFirebaseUser.getIdToken(true);
@@ -369,13 +370,33 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         updateData.avatar = data.avatar.trim();
       }
       
+      console.log('Sending update to Firestore with data:', updateData);
       await updateDoc(profileRef, updateData);
+      console.log('Firestore update completed successfully');
+      
+      // Wait a bit for Firestore to process the update
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Update local state immediately with the new data
       const updatedProfile = await getProfile(currentFirebaseUser.uid);
       if (updatedProfile) {
-        console.log('Profile updated successfully, setting new user state:', updatedProfile);
+        console.log('Profile updated successfully, setting new user state:', {
+          id: updatedProfile.id,
+          name: updatedProfile.name,
+          username: updatedProfile.username,
+          bio: updatedProfile.bio,
+          isComplete: isProfileComplete(updatedProfile)
+        });
         setUser(updatedProfile);
+        
+        // Verify profile completion
+        const profileComplete = isProfileComplete(updatedProfile);
+        console.log('Profile completion check result:', profileComplete);
+        
+        if (!profileComplete) {
+          console.error('Profile completion check failed after update');
+          throw new Error('Profile completion verification failed');
+        }
       } else {
         console.error('Failed to fetch updated profile after completion');
         throw new Error('Failed to verify profile completion');
@@ -384,7 +405,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       // Track profile update
       trackProfileUpdated(['name', 'username', 'bio', ...(data.avatar ? ['avatar'] : [])]);
       
-      console.log('Profile completion successful, profile complete check:', isProfileComplete(updatedProfile));
+      console.log('Profile completion successful!');
     } catch (error: any) {
       console.error('Profile completion error:', error);
       console.error('Error code:', error.code);

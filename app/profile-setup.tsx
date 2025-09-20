@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { User, Sprout, Camera, Leaf, UserCheck, AtSign, FileText } from "lucide-react-native";
+import { router } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
 
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
@@ -85,13 +86,17 @@ export default function ProfileSetupScreen() {
         profileData.avatar = avatar.trim();
       }
       
+      console.log('Starting profile completion with data:', profileData);
       await completeProfile(profileData);
       
-      // Give a small delay to ensure state updates are processed
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('Profile setup completed successfully, navigating to home...');
       
-      console.log('Profile setup completed successfully');
-      // Don't navigate here - let the index.tsx handle routing based on profile completion
+      // Give a small delay to ensure state updates are processed, then navigate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Force navigation to home after successful profile completion
+      router.replace('/(tabs)/home');
+      
     } catch (error: any) {
       console.error('Profile setup error:', error);
       let message = error?.message || "Failed to complete profile";
