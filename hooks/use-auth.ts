@@ -371,16 +371,20 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       await updateDoc(profileRef, updateData);
       
-      // Update local state
+      // Update local state immediately with the new data
       const updatedProfile = await getProfile(currentFirebaseUser.uid);
       if (updatedProfile) {
+        console.log('Profile updated successfully, setting new user state:', updatedProfile);
         setUser(updatedProfile);
+      } else {
+        console.error('Failed to fetch updated profile after completion');
+        throw new Error('Failed to verify profile completion');
       }
       
       // Track profile update
       trackProfileUpdated(['name', 'username', 'bio', ...(data.avatar ? ['avatar'] : [])]);
       
-      console.log('Profile completion successful');
+      console.log('Profile completion successful, profile complete check:', isProfileComplete(updatedProfile));
     } catch (error: any) {
       console.error('Profile completion error:', error);
       console.error('Error code:', error.code);

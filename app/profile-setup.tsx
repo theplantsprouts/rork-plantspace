@@ -86,6 +86,11 @@ export default function ProfileSetupScreen() {
       }
       
       await completeProfile(profileData);
+      
+      // Give a small delay to ensure state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('Profile setup completed successfully');
       // Don't navigate here - let the index.tsx handle routing based on profile completion
     } catch (error: any) {
       console.error('Profile setup error:', error);
