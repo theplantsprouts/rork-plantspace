@@ -103,7 +103,7 @@ function TabLayoutContent() {
     createTabIcon(Compass)(props), [createTabIcon]);
 
   const renderCreateIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Heading, 4)(props), [createTabIcon]);
+    createTabIcon(Heading, 2)(props), [createTabIcon]);
 
   const renderNotificationsIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
     createTabIcon(Leaf)(props), [createTabIcon]);
