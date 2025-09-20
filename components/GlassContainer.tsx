@@ -26,6 +26,14 @@ export function GlassContainer({
     );
   }
   
+  if (Platform.OS === 'android') {
+    return (
+      <View testID={testID} style={[styles.glassContainer, styles.androidGlassContainer, style]}>
+        {children}
+      </View>
+    );
+  }
+  
   return (
     <BlurView
       testID={testID}
@@ -72,17 +80,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
     backgroundColor: 'transparent',
-    ...(Platform.OS === 'android' && {
-      backgroundColor: 'transparent',
-      elevation: 1,
-      shadowColor: 'transparent',
-    }),
   },
   webGlassContainer: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     backdropFilter: 'blur(20px)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   } as ViewStyle,
+  androidGlassContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    elevation: 2,
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
   glassCard: {
     ...PlantTheme.shadows.md,
   },

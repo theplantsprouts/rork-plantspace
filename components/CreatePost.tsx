@@ -129,11 +129,31 @@ export default function CreatePostScreen() {
 
           <View style={styles.form}>
             <GlassCard style={styles.formCard}>
+              {user && (
+                <View style={styles.userInfo}>
+                  <View style={styles.userAvatar}>
+                    {user.avatar ? (
+                      <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarText}>
+                          {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.userDetails}>
+                    <Text style={styles.userName}>{user.name || 'Anonymous Gardener'}</Text>
+                    <Text style={styles.userHandle}>@{user.username || 'gardener'}</Text>
+                  </View>
+                </View>
+              )}
+              
               <TextInput
                 style={styles.textInput}
                 value={content}
                 onChangeText={setContent}
-                placeholder="What's growing in your garden today? Share your agriculture insights..."
+                placeholder="What's growing in your garden today?"
                 placeholderTextColor={PlantTheme.colors.textSecondary}
                 multiline
                 numberOfLines={6}
@@ -243,6 +263,10 @@ const styles = StyleSheet.create({
     color: PlantTheme.colors.textPrimary,
     minHeight: 120,
     marginBottom: 16,
+    ...(Platform.OS === 'android' && {
+      backgroundColor: 'transparent',
+      textAlignVertical: 'top',
+    }),
   },
   imageContainer: {
     position: "relative",
@@ -301,5 +325,47 @@ const styles = StyleSheet.create({
     color: PlantTheme.colors.white,
     fontSize: 16,
     fontWeight: "600" as const,
+  },
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: PlantTheme.colors.glassBorder,
+  },
+  userAvatar: {
+    marginRight: 12,
+  },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: PlantTheme.colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    color: PlantTheme.colors.white,
+    fontSize: 18,
+    fontWeight: "600" as const,
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: PlantTheme.colors.textDark,
+    marginBottom: 2,
+  },
+  userHandle: {
+    fontSize: 14,
+    color: PlantTheme.colors.textSecondary,
   },
 });
