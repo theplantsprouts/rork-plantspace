@@ -124,6 +124,7 @@ function TabLayoutContent() {
     ...PlantTheme.shadows.sm,
     height: Platform.OS === 'ios' ? 95 : 80,
     paddingBottom: Platform.OS === 'ios' ? 30 : 18,
+    paddingTop: Platform.OS === 'ios' ? 8 : 8,
     transform: [{ translateY: tabBarAnimation }],
   }), [tabBarAnimation]);
   
@@ -138,9 +139,11 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 18,
+      paddingVertical: Platform.OS === 'ios' ? 8 : 12,
       paddingHorizontal: 8,
       marginHorizontal: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
   }), [tabBarStyle]);
 
