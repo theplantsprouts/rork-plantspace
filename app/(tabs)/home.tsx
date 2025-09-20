@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Heading, Sparkles, Wifi, WifiOff, Sun, Droplets } from 'lucide-react-native';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
+import { StoryCircles } from '@/components/StoryCircles';
 
 // import { useAuth } from '@/hooks/use-auth'; // No longer needed at component level
 import { useOffline } from '@/hooks/use-offline';
@@ -144,6 +145,10 @@ export default function HomeScreen() {
         )}
 
         <Animated.View style={[styles.postsContainer, { opacity: fadeAnim }]}>
+          {!isLoading && memoizedPosts.length > 0 && (
+            <StoryCircles posts={memoizedPosts} />
+          )}
+          
           {isLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={PlantTheme.colors.primary} />

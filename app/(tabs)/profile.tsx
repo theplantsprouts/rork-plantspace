@@ -113,22 +113,22 @@ export default function ProfileScreen() {
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
                 <Sun color={PlantTheme.colors.accent} size={20} />
-                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statNumber}>{userPosts.length}</Text>
                 <Text style={styles.statLabel}>Seeds</Text>
               </View>
               <View style={styles.statItem}>
                 <TreePine color={PlantTheme.colors.primary} size={20} />
-                <Text style={styles.statNumber}>15,400</Text>
+                <Text style={styles.statNumber}>{currentUser?.followers || 0}</Text>
                 <Text style={styles.statLabel}>Garden Friends</Text>
               </View>
               <View style={styles.statItem}>
                 <Leaf color={PlantTheme.colors.secondary} size={20} />
-                <Text style={styles.statNumber}>892</Text>
+                <Text style={styles.statNumber}>{currentUser?.following || 0}</Text>
                 <Text style={styles.statLabel}>Tending</Text>
               </View>
               <View style={styles.statItem}>
                 <Sun color={PlantTheme.colors.accent} size={20} />
-                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statNumber}>{totalLikes}</Text>
                 <Text style={styles.statLabel}>Sunshine</Text>
               </View>
             </View>
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
           </GlassCard>
 
           <View style={styles.postsSection}>
-            <Text style={styles.sectionTitle}>🌱 Your Seeds (0)</Text>
+            <Text style={styles.sectionTitle}>🌱 Your Seeds ({userPosts.length})</Text>
             {userPosts.length === 0 ? (
               <View style={styles.emptyPosts}>
                 <Text style={styles.emptyPostsText}>No seeds planted yet</Text>

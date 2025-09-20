@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,41 +9,44 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Plus } from 'lucide-react-native';
+import { usePosts } from '@/hooks/use-posts';
+import { useAppContext } from '@/hooks/use-app-context';
 
-const stories = [
-  {
-    id: 'add',
-    user: { name: 'Your Story', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' },
-    isAdd: true,
-  },
-  {
-    id: 1,
-    user: { name: 'Sarah', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face' },
-    hasStory: true,
-  },
-  {
-    id: 2,
-    user: { name: 'Marcus', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' },
-    hasStory: true,
-  },
-  {
-    id: 3,
-    user: { name: 'Emma', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face' },
-    hasStory: true,
-  },
-  {
-    id: 4,
-    user: { name: 'David', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' },
-    hasStory: true,
-  },
-  {
-    id: 5,
-    user: { name: 'Lisa', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face' },
-    hasStory: true,
-  },
-];
+interface StoryCirclesProps {
+  posts?: any[];
+}
 
-export function StoryCircles() {
+export function StoryCircles({ posts: propPosts }: StoryCirclesProps = {}) {
+  const { posts: hookPosts } = usePosts();
+  const { currentUser } = useAppContext();
+  const posts = propPosts || hookPosts;
+  
+  const stories = useMemo(() => {
+    const uniqueUsers = posts.reduce((acc: any[], post: any) => {
+      if (!acc.find(u => u.id === post.user.id)) {
+        acc.push({
+          id: post.user.id,
+          user: {
+            name: post.user.name.split(' ')[0], // First name only
+            avatar: post.user.avatar,
+          },
+          hasStory: true,
+        });
+      }
+      return acc;
+    }, []);
+    
+    const addStory = {
+      id: 'add',
+      user: {
+        name: 'Your Story',
+        avatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
+      },
+      isAdd: true,
+    };
+    
+    return [addStory, ...uniqueUsers.slice(0, 8)];
+  }, [posts, currentUser]);
   return (
     <View style={styles.container}>
       <ScrollView 

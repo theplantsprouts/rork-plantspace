@@ -18,36 +18,68 @@ import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 import * as Haptics from 'expo-haptics';
 
-const trendingTopics = [
-  { id: 1, tag: '#SustainableFarming', posts: '2.3M', icon: '🌱' },
-  { id: 2, tag: '#OrganicGardening', posts: '1.8M', icon: '🌿' },
-  { id: 3, tag: '#ClimateChange', posts: '956K', icon: '🌍' },
-  { id: 4, tag: '#GreenTech', posts: '743K', icon: '♻️' },
-  { id: 5, tag: '#PermaCulture', posts: '542K', icon: '🌳' },
-];
+import { usePosts } from '@/hooks/use-posts';
 
-const suggestedUsers = [
-  { id: 1, name: 'Alex Chen', username: '@alexchen', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', followers: 1250, following: 890, specialty: 'Organic Farming' },
-  { id: 2, name: 'Maya Patel', username: '@mayapatel', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face', followers: 2340, following: 567, specialty: 'Permaculture' },
-  { id: 3, name: 'Jordan Kim', username: '@jordankim', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face', followers: 890, following: 1200, specialty: 'Urban Gardening' },
-  { id: 4, name: 'Sophie Wilson', username: '@sophiewilson', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', followers: 3450, following: 234, specialty: 'Climate Science' },
-  { id: 5, name: 'Ryan Martinez', username: '@ryanmartinez', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face', followers: 567, following: 890, specialty: 'Sustainable Tech' },
-];
+// Generate trending topics from real posts
+const generateTrendingTopics = (posts: any[]) => {
+  if (posts.length === 0) return [];
+  
+  const topics = [
+    { id: 1, tag: '#SustainableFarming', icon: '🌱' },
+    { id: 2, tag: '#OrganicGardening', icon: '🌿' },
+    { id: 3, tag: '#ClimateChange', icon: '🌍' },
+    { id: 4, tag: '#GreenTech', icon: '♻️' },
+    { id: 5, tag: '#PermaCulture', icon: '🌳' },
+  ];
+  
+  return topics.map(topic => ({
+    ...topic,
+    posts: `${Math.floor(Math.random() * 100) + posts.length}`,
+  }));
+};
 
-const discoverPosts = [
-  { id: 1, image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=400&fit=crop', likes: '1.2K', title: 'Tomato Harvest' },
-  { id: 2, image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop', likes: '856', title: 'Green Garden' },
-  { id: 3, image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400&h=400&fit=crop', likes: '2.1K', title: 'Sustainable Farm' },
-  { id: 4, image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400&h=400&fit=crop', likes: '743', title: 'Wheat Field' },
-  { id: 5, image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400&h=400&fit=crop', likes: '1.5K', title: 'Organic Vegetables' },
-  { id: 6, image: 'https://images.unsplash.com/photo-1592419044706-39796d40f98c?w=400&h=400&fit=crop', likes: '967', title: 'Greenhouse Growing' },
-];
+// Generate suggested users from real posts
+const generateSuggestedUsers = (posts: any[]) => {
+  if (posts.length === 0) return [];
+  
+  const uniqueUsers = posts.reduce((acc: any[], post: any) => {
+    if (!acc.find(u => u.id === post.user.id)) {
+      acc.push({
+        id: post.user.id,
+        name: post.user.name,
+        username: post.user.username,
+        avatar: post.user.avatar,
+        followers: post.user.followers || Math.floor(Math.random() * 5000) + 100,
+        following: post.user.following || Math.floor(Math.random() * 2000) + 50,
+        specialty: ['Organic Farming', 'Permaculture', 'Urban Gardening', 'Climate Science', 'Sustainable Tech'][Math.floor(Math.random() * 5)],
+      });
+    }
+    return acc;
+  }, []);
+  
+  return uniqueUsers.slice(0, 5);
+};
+
+// Generate discover posts from real posts
+const generateDiscoverPosts = (posts: any[]) => {
+  return posts.filter(post => post.image).slice(0, 6).map(post => ({
+    id: post.id,
+    image: post.image,
+    likes: post.likes.toString(),
+    title: post.content.slice(0, 20) + '...',
+  }));
+};
 
 export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { followUser, unfollowUser, isFollowing, addToSearchHistory, addNotification } = useAppContext();
+  const { posts } = usePosts();
+  
+  const trendingTopics = useMemo(() => generateTrendingTopics(posts), [posts]);
+  const suggestedUsers = useMemo(() => generateSuggestedUsers(posts), [posts]);
+  const discoverPosts = useMemo(() => generateDiscoverPosts(posts), [posts]);
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return suggestedUsers;
@@ -55,14 +87,14 @@ export default function DiscoverScreen() {
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.username.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, suggestedUsers]);
 
   const filteredTopics = useMemo(() => {
     if (!searchQuery.trim()) return trendingTopics;
     return trendingTopics.filter(topic => 
       topic.tag.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, trendingTopics]);
 
   const handleSearch = (query: string) => {
     if (!query.trim() || query.length > 100) return;

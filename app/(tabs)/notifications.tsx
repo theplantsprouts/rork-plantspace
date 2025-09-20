@@ -14,47 +14,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 
-const mockNotifications = [
-  {
-    id: 1,
-    type: 'like',
-    user: { name: 'Sarah Johnson', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face' },
-    message: 'gave sunshine to your tomato harvest post',
-    time: '2m ago',
-    postImage: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=100&h=100&fit=crop',
-  },
-  {
-    id: 2,
-    type: 'comment',
-    user: { name: 'Mike Chen', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' },
-    message: 'rooted on your post: "Great sustainable farming techniques! 🌱"',
-    time: '5m ago',
-    postImage: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=100&h=100&fit=crop',
-  },
-  {
-    id: 3,
-    type: 'follow',
-    user: { name: 'Emma Wilson', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face' },
-    message: 'started tending your garden',
-    time: '1h ago',
-  },
-  {
-    id: 4,
-    type: 'share',
-    user: { name: 'Alex Rodriguez', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' },
-    message: 'spread seeds from your post',
-    time: '2h ago',
-    postImage: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=100&h=100&fit=crop',
-  },
-  {
-    id: 5,
-    type: 'like',
-    user: { name: 'Lisa Park', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face' },
-    message: 'and 12 others gave sunshine to your organic garden',
-    time: '3h ago',
-    postImage: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=100&h=100&fit=crop',
-  },
-];
+
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -84,7 +44,7 @@ export default function NotificationsScreen() {
     }
   }, [unreadNotifications, markNotificationsAsRead]);
 
-  const allNotifications = notifications.length > 0 ? notifications : mockNotifications;
+  const allNotifications = notifications;
 
   return (
     <View style={styles.container}>
