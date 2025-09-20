@@ -196,15 +196,19 @@ export const createPost = async (content: string, image?: string): Promise<Post 
       throw new Error('User not authenticated');
     }
     
-    const postData = {
+    const postData: any = {
       content,
-      image,
       author_id: user.uid,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       likes: 0,
       comments: 0,
     };
+    
+    // Only add image field if it exists and is not undefined
+    if (image) {
+      postData.image = image;
+    }
     
     const docRef = await addDoc(collection(db, 'posts'), postData);
     

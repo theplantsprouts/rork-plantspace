@@ -133,8 +133,10 @@ export function usePosts() {
         imageUrl = await uploadImage(image, 'posts');
       }
       
-      // Create post using Firebase function
-      const newFirebasePost = await createPost(content, imageUrl || undefined);
+      // Create post using Firebase function - only pass imageUrl if it exists
+      const newFirebasePost = imageUrl 
+        ? await createPost(content, imageUrl)
+        : await createPost(content);
       
       if (newFirebasePost) {
         // Track post creation
