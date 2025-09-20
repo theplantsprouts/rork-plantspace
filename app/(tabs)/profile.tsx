@@ -14,8 +14,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useAppContext } from '@/hooks/use-app-context';
 import { usePosts } from '@/hooks/use-posts';
-import { PlantTheme, PlantTerminology, PlantGrowthStage } from '@/constants/theme';
-import { PlantGrowthAnimation } from '@/components/PlantGrowthAnimation';
+import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 
 
@@ -31,20 +30,6 @@ export default function ProfileScreen() {
   
   const userPosts = posts.filter(post => post.user.id === currentUser?.id);
   const totalLikes = userPosts.reduce((sum, post) => sum + post.likes, 0);
-  
-  // Calculate engagement score for plant growth
-  const engagementScore = userPosts.length * 2 + totalLikes + (currentUser?.followers || 0) * 0.1;
-  
-  // Determine plant growth stage
-  const getPlantStage = (score: number): PlantGrowthStage => {
-    if (score >= 200) return 'tree';
-    if (score >= 100) return 'bloom';
-    if (score >= 50) return 'sapling';
-    if (score >= 10) return 'sprout';
-    return 'seed';
-  };
-  
-  const plantStage = getPlantStage(engagementScore);
 
   return (
     <View style={styles.container}>
@@ -148,15 +133,6 @@ export default function ProfileScreen() {
             </View>
           </GlassCard>
 
-          {/* Plant Growth Animation - Moved below profile details */}
-          <GlassCard style={styles.plantGrowthCard}>
-            <PlantGrowthAnimation 
-              stage={plantStage}
-              engagementScore={Math.round(engagementScore)}
-              size={120}
-            />
-          </GlassCard>
-
           <View style={styles.postsSection}>
             <Text style={styles.sectionTitle}>🌱 Your Seeds ({userPosts.length})</Text>
             {userPosts.length === 0 ? (
@@ -246,12 +222,7 @@ const styles = StyleSheet.create({
     padding: 25,
     backgroundColor: 'transparent',
   },
-  plantGrowthCard: {
-    alignItems: 'center',
-    marginBottom: 25,
-    padding: 20,
-    backgroundColor: 'transparent',
-  },
+
   profileHeader: {
     position: 'relative',
     marginBottom: 15,
