@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
   },
   notificationCard: {
     padding: 15,
+    backgroundColor: 'transparent',
   },
   notificationContent: {
     flexDirection: 'row',
@@ -285,6 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 60,
     paddingHorizontal: 40,
+    backgroundColor: 'transparent',
   },
   emptyStateText: {
     color: PlantTheme.colors.textPrimary,

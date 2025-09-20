@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     gap: 6,
+    backgroundColor: 'transparent',
   },
   createButtonText: {
     color: PlantTheme.colors.primary,
@@ -220,6 +221,7 @@ const styles = StyleSheet.create({
   },
   insightsContainer: {
     padding: 16,
+    backgroundColor: 'transparent',
   },
   insightsTitle: {
     color: PlantTheme.colors.textPrimary,

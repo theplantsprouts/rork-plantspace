@@ -239,11 +239,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 25,
     padding: 25,
+    backgroundColor: 'transparent',
   },
   plantGrowthCard: {
     alignItems: 'center',
     marginBottom: 25,
     padding: 20,
+    backgroundColor: 'transparent',
   },
   profileHeader: {
     position: 'relative',

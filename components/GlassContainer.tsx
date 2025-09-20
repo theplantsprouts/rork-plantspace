@@ -73,13 +73,13 @@ const styles = StyleSheet.create({
     borderColor: PlantTheme.colors.glassBorder,
     backgroundColor: 'transparent',
     ...(Platform.OS === 'android' && {
-      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
       elevation: 2,
       shadowColor: 'transparent',
     }),
   },
   webGlassContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     backdropFilter: 'blur(15px)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
   } as ViewStyle,

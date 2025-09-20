@@ -255,6 +255,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     gap: 12,
+    backgroundColor: 'transparent',
   },
   searchInput: {
     flex: 1,
@@ -284,6 +285,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 15,
+    backgroundColor: 'transparent',
   },
   topicIcon: {
     fontSize: 24,
@@ -307,6 +309,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 15,
+    backgroundColor: 'transparent',
   },
   userAvatar: {
     width: 60,

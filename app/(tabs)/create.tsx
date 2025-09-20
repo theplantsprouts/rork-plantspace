@@ -349,6 +349,7 @@ const styles = StyleSheet.create({
   postContainer: {
     marginBottom: 20,
     padding: 20,
+    backgroundColor: 'transparent',
   },
   userSection: {
     flexDirection: 'row',
@@ -428,6 +429,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 15,
+    backgroundColor: 'transparent',
   },
   actionText: {
     color: PlantTheme.colors.textPrimary,
@@ -436,6 +438,7 @@ const styles = StyleSheet.create({
   },
   tipsContainer: {
     padding: 20,
+    backgroundColor: 'transparent',
   },
   tipsTitle: {
     color: PlantTheme.colors.textPrimary,
