@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Animated,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,7 +29,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showInsights, setShowInsights] = useState(false);
-  const { posts, toggleLike } = usePosts();
+  const { posts, toggleLike, isLoading, error } = usePosts();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -143,13 +144,39 @@ export default function HomeScreen() {
         )}
 
         <Animated.View style={[styles.postsContainer, { opacity: fadeAnim }]}>
-          <VirtualizedList
-            data={memoizedPosts}
-            renderItem={renderPost}
-            keyExtractor={keyExtractor}
-            estimatedItemSize={Platform.OS === 'web' ? 280 : 320}
-            testID="posts-list"
-          />
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={PlantTheme.colors.primary} />
+              <Text style={styles.loadingText}>Loading your garden...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>🌱 Connection Issue</Text>
+              <Text style={styles.emptyText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => window.location.reload()}>
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : memoizedPosts.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>🌿 Welcome to Your Garden!</Text>
+              <Text style={styles.emptyText}>Your community garden is ready to grow. Start by planting your first seed!</Text>
+              <TouchableOpacity style={styles.createFirstPostButton} onPress={handleCreatePost}>
+                <GlassCard style={styles.createFirstPostGlass}>
+                  <Heading color={PlantTheme.colors.primary} size={24} />
+                  <Text style={styles.createFirstPostText}>Plant Your First Seed</Text>
+                </GlassCard>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <VirtualizedList
+              data={memoizedPosts}
+              renderItem={renderPost}
+              keyExtractor={keyExtractor}
+              estimatedItemSize={Platform.OS === 'web' ? 280 : 320}
+              testID="posts-list"
+            />
+          )}
         </Animated.View>
       </View>
     </View>
@@ -251,6 +278,68 @@ const styles = StyleSheet.create({
   insightLabel: {
     color: PlantTheme.colors.textSecondary,
     fontSize: 10,
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    color: PlantTheme.colors.textSecondary,
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: PlantTheme.colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: PlantTheme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  createFirstPostButton: {
+    marginTop: 16,
+  },
+  createFirstPostGlass: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    gap: 12,
+    backgroundColor: 'transparent',
+  },
+  createFirstPostText: {
+    color: PlantTheme.colors.primary,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: PlantTheme.colors.primary,
+    borderRadius: PlantTheme.borderRadius.md,
+  },
+  retryButtonText: {
+    color: PlantTheme.colors.white,
+    fontSize: 16,
+    fontWeight: '600',
     textAlign: 'center',
   },
 
