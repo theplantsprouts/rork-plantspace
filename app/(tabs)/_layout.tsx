@@ -122,8 +122,8 @@ function TabLayoutContent() {
     borderTopRightRadius: PlantTheme.borderRadius.lg,
     backdropFilter: 'blur(20px)',
     ...PlantTheme.shadows.sm,
-    height: Platform.OS === 'ios' ? 75 : 60,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+    height: Platform.OS === 'ios' ? 95 : 80,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 18,
     transform: [{ translateY: tabBarAnimation }],
   }), [tabBarAnimation]);
   
@@ -138,7 +138,7 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 12,
+      paddingVertical: 18,
       paddingHorizontal: 8,
       marginHorizontal: 4,
     },
