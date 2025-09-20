@@ -97,6 +97,10 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleLeaveToGarden = () => {
+    router.push('/(tabs)/home');
+  };
+
   const handleDeleteAccount = () => {
     Alert.alert(
       '🚨 Delete Garden Account',
@@ -499,6 +503,20 @@ export default function SettingsScreen() {
       >
         {settingSections.map(renderSection)}
         
+        {/* Leave to Garden Button */}
+        <GlassCard style={[styles.sectionCard, styles.leaveToGardenCard]}>
+          <TouchableOpacity
+            style={styles.leaveToGardenButton}
+            onPress={handleLeaveToGarden}
+            activeOpacity={0.7}
+          >
+            <View style={styles.leaveToGardenIconContainer}>
+              <Sprout color={PlantTheme.colors.primary} size={20} />
+            </View>
+            <Text style={styles.leaveToGardenText}>Leave to the Garden</Text>
+          </TouchableOpacity>
+        </GlassCard>
+
         {/* Logout Button */}
         <GlassCard style={[styles.sectionCard, styles.logoutCard]}>
           <TouchableOpacity
@@ -509,7 +527,7 @@ export default function SettingsScreen() {
             <View style={styles.logoutIconContainer}>
               <ArrowLeft color={PlantTheme.colors.error} size={20} />
             </View>
-            <Text style={styles.logoutText}>Leave the Garden</Text>
+            <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
         </GlassCard>
       </ScrollView>
@@ -608,6 +626,29 @@ const styles = StyleSheet.create({
   },
   destructiveText: {
     color: PlantTheme.colors.error,
+  },
+  leaveToGardenCard: {
+    marginTop: 8,
+  },
+  leaveToGardenButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  leaveToGardenIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  leaveToGardenText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: PlantTheme.colors.primary,
   },
   logoutCard: {
     marginTop: 8,
