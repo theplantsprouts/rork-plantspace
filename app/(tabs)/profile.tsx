@@ -17,14 +17,15 @@ import { usePosts } from '@/hooks/use-posts';
 import { PlantTheme, PlantTerminology, PlantGrowthStage } from '@/constants/theme';
 import { PlantGrowthAnimation } from '@/components/PlantGrowthAnimation';
 import { GlassCard } from '@/components/GlassContainer';
-import { useTabBar } from './_layout';
+
 
 
 export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const { currentUser } = useAppContext();
   const { posts } = usePosts();
-  const { handleScroll } = useTabBar();
+  // Temporarily disable scroll handling to fix hooks order issue
+  const handleScroll = () => {};
 
   const insets = useSafeAreaInsets();
   

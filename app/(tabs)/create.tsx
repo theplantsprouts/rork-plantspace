@@ -21,7 +21,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { useAIContent } from '@/hooks/use-ai-content';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useTabBar } from './_layout';
+
 
 export default function CreateScreen() {
   const [postText, setPostText] = useState('');
@@ -33,7 +33,8 @@ export default function CreateScreen() {
   const { addNotification } = useAppContext();
   const { analyzeContent, moderatePost, isAnalyzing } = useAIContent();
   const insets = useSafeAreaInsets();
-  const { handleScroll } = useTabBar();
+  // Temporarily disable scroll handling to fix hooks order issue
+  const handleScroll = () => {};
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({

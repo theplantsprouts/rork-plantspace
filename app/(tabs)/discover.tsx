@@ -17,7 +17,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 import * as Haptics from 'expo-haptics';
-import { useTabBar } from './_layout';
+
 
 import { usePosts } from '@/hooks/use-posts';
 
@@ -77,7 +77,8 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const { followUser, unfollowUser, isFollowing, addToSearchHistory, addNotification } = useAppContext();
   const { posts } = usePosts();
-  const { handleScroll } = useTabBar();
+  // Temporarily disable scroll handling to fix hooks order issue
+  const handleScroll = () => {};
   
   const trendingTopics = useMemo(() => generateTrendingTopics(posts), [posts]);
   const suggestedUsers = useMemo(() => generateSuggestedUsers(posts), [posts]);

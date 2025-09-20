@@ -23,7 +23,7 @@ import VirtualizedList from '@/components/VirtualizedList';
 import PostItem from '@/components/PostItem';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useTabBar } from './_layout';
+
 
 export default function HomeScreen() {
   // const { user } = useAuth(); // Authentication handled at layout level
@@ -32,7 +32,8 @@ export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showInsights, setShowInsights] = useState(false);
   const { posts, toggleLike, isLoading, error } = usePosts();
-  const { handleScroll } = useTabBar();
+  // Temporarily disable scroll handling to fix hooks order issue
+  const handleScroll = () => {};
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
