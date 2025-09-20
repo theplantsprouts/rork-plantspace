@@ -86,7 +86,7 @@ export function usePosts() {
     shares: 0, // Not implemented yet
     isLiked: false, // Would need to check user's likes
     isShared: false,
-    moderationStatus: 'approved' as const,
+    moderationStatus: 'approved' as 'approved' | 'pending' | 'rejected',
     isAgricultureRelated: true,
     aiScore: 0.9,
     aiTags: [],
@@ -158,7 +158,7 @@ export function usePosts() {
           shares: 0,
           isLiked: false,
           isShared: false,
-          moderationStatus: 'approved',
+          moderationStatus: 'approved' as 'approved' | 'pending' | 'rejected',
           isAgricultureRelated: true,
           aiScore: 0.9,
           aiTags: [],
