@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import { Sprout, Compass, Heading, Leaf, TreePine } from "lucide-react-native";
 import React, { useCallback, useMemo, useRef } from "react";
-import { Platform, Animated } from "react-native";
+import { Platform, Animated, View, StyleSheet } from "react-native";
 import { PlantTheme } from "@/constants/theme";
 import createContextHook from '@nkzw/create-context-hook';
 
@@ -60,25 +60,51 @@ export default function TabLayout() {
 function TabLayoutContent() {
   const { tabBarAnimation } = useTabBar();
   
-  const renderHomeIcon = useCallback(({ color, size }: { color: string; size: number }) => (
-    <Sprout color={color} size={size} />
-  ), []);
+  const tabIconStyles = StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+      borderWidth: 1,
+      minWidth: 44,
+      ...PlantTheme.material3.elevation.level1,
+    },
+    active: {
+      backgroundColor: 'rgba(76, 175, 80, 0.12)',
+      borderColor: 'rgba(76, 175, 80, 0.2)',
+    },
+    inactive: {
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+    },
+  });
 
-  const renderDiscoverIcon = useCallback(({ color, size }: { color: string; size: number }) => (
-    <Compass color={color} size={size} />
-  ), []);
+  const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, extraSize: number = 0) => 
+    ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
+      <View style={[
+        tabIconStyles.container,
+        focused ? tabIconStyles.active : tabIconStyles.inactive
+      ]}>
+        <IconComponent color={color} size={size + extraSize} />
+      </View>
+    ), [tabIconStyles]);
 
-  const renderCreateIcon = useCallback(({ color, size }: { color: string; size: number }) => (
-    <Heading color={color} size={size + 4} />
-  ), []);
+  const renderHomeIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
+    createTabIcon(Sprout)(props), [createTabIcon]);
 
-  const renderNotificationsIcon = useCallback(({ color, size }: { color: string; size: number }) => (
-    <Leaf color={color} size={size} />
-  ), []);
+  const renderDiscoverIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
+    createTabIcon(Compass)(props), [createTabIcon]);
 
-  const renderProfileIcon = useCallback(({ color, size }: { color: string; size: number }) => (
-    <TreePine color={color} size={size} />
-  ), []);
+  const renderCreateIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
+    createTabIcon(Heading, 4)(props), [createTabIcon]);
+
+  const renderNotificationsIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
+    createTabIcon(Leaf)(props), [createTabIcon]);
+
+  const renderProfileIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
+    createTabIcon(TreePine)(props), [createTabIcon]);
   
   const tabBarStyle = useMemo(() => ({
     backgroundColor: Platform.OS === 'web' 
@@ -112,7 +138,9 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 5,
+      paddingVertical: 8,
+      paddingHorizontal: 4,
+      marginHorizontal: 2,
     },
   }), [tabBarStyle]);
 
