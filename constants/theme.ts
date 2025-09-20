@@ -20,9 +20,9 @@ export const PlantTheme = {
     backgroundEnd: '#F1F8E9',
     
     // Glass morphism
-    glassBackground: 'rgba(255, 255, 255, 0.08)',
-    glassBorder: 'rgba(255, 255, 255, 0.25)',
-    glassShadow: 'rgba(0, 0, 0, 0.15)',
+    glassBackground: 'rgba(255, 255, 255, 0.03)',
+    glassBorder: 'rgba(255, 255, 255, 0.15)',
+    glassShadow: 'rgba(0, 0, 0, 0.08)',
     
     // Text colors
     textPrimary: '#2E7D32',
@@ -111,11 +111,11 @@ export const PlantTheme = {
   },
   
   glassmorphism: {
-    background: 'rgba(255, 255, 255, 0.3)',
-    border: 'rgba(255, 255, 255, 0.25)',
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    backdropFilter: 'blur(15px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+    backdropFilter: 'blur(20px)',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   },
   
   // Material 3 Design System

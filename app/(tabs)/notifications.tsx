@@ -13,6 +13,7 @@ import { Image } from 'expo-image';
 import { useAppContext } from '@/hooks/use-app-context';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
+import { useTabBar } from './_layout';
 
 
 
@@ -34,6 +35,7 @@ const getNotificationIcon = (type: string) => {
 export default function NotificationsScreen() {
   const { notifications, unreadNotifications, markNotificationsAsRead } = useAppContext();
   const insets = useSafeAreaInsets();
+  const { handleScroll } = useTabBar();
 
   useEffect(() => {
     if (unreadNotifications > 0) {
@@ -68,6 +70,8 @@ export default function NotificationsScreen() {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           {allNotifications.length === 0 ? (
             <GlassCard style={styles.emptyState}>

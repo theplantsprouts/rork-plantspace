@@ -1,10 +1,65 @@
 import { Tabs } from "expo-router";
 import { Sprout, Compass, Heading, Leaf, TreePine } from "lucide-react-native";
-import React, { useCallback, useMemo } from "react";
-import { Platform } from "react-native";
+import React, { useCallback, useMemo, useRef } from "react";
+import { Platform, Animated } from "react-native";
 import { PlantTheme } from "@/constants/theme";
+import createContextHook from '@nkzw/create-context-hook';
+
+// Create a context for tab bar animation
+const [TabBarProvider, useTabBar] = createContextHook(() => {
+  const tabBarAnimation = useRef(new Animated.Value(0)).current;
+  const lastScrollY = useRef(0);
+  const scrollDirection = useRef<'up' | 'down'>('up');
+  
+  const handleScroll = useCallback((event: any) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    const scrollDiff = currentScrollY - lastScrollY.current;
+    
+    // Only animate if scroll difference is significant and we're not at the top
+    if (Math.abs(scrollDiff) > 10 && currentScrollY > 50) {
+      const newDirection = scrollDiff > 0 ? 'down' : 'up';
+      
+      if (newDirection !== scrollDirection.current) {
+        scrollDirection.current = newDirection;
+        
+        Animated.timing(tabBarAnimation, {
+          toValue: newDirection === 'down' ? 100 : 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+    } else if (currentScrollY <= 50) {
+      // Always show tab bar when near the top
+      Animated.timing(tabBarAnimation, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+    
+    lastScrollY.current = currentScrollY;
+  }, [tabBarAnimation]);
+  
+  return useMemo(() => ({
+    tabBarAnimation,
+    handleScroll,
+  }), [tabBarAnimation, handleScroll]);
+});
+
+// Export the hook for use in screens
+export { useTabBar };
 
 export default function TabLayout() {
+  return (
+    <TabBarProvider>
+      <TabLayoutContent />
+    </TabBarProvider>
+  );
+}
+
+function TabLayoutContent() {
+  const { tabBarAnimation } = useTabBar();
+  
   const renderHomeIcon = useCallback(({ color, size }: { color: string; size: number }) => (
     <Sprout color={color} size={size} />
   ), []);
@@ -27,18 +82,21 @@ export default function TabLayout() {
   
   const tabBarStyle = useMemo(() => ({
     backgroundColor: Platform.OS === 'web' 
-      ? 'rgba(76, 175, 80, 0.15)' 
-      : 'rgba(76, 175, 80, 0.2)',
+      ? 'rgba(76, 175, 80, 0.05)' 
+      : 'rgba(76, 175, 80, 0.08)',
     borderTopWidth: 1,
     borderTopColor: PlantTheme.colors.glassBorder,
     position: 'absolute' as const,
     borderTopLeftRadius: PlantTheme.borderRadius.lg,
     borderTopRightRadius: PlantTheme.borderRadius.lg,
-    backdropFilter: 'blur(10px)',
-    ...PlantTheme.shadows.md,
+    backdropFilter: 'blur(20px)',
+    ...PlantTheme.shadows.sm,
     height: Platform.OS === 'ios' ? 85 : 65,
     paddingBottom: Platform.OS === 'ios' ? 25 : 10,
-  }), []);
+    transform: [{ translateY: tabBarAnimation }],
+  }), [tabBarAnimation]);
+  
+  // Tab bar animation is now controlled by the context
   
   const screenOptions = useMemo(() => ({
     headerShown: false,

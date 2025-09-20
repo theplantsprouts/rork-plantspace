@@ -21,6 +21,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { useAIContent } from '@/hooks/use-ai-content';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useTabBar } from './_layout';
 
 export default function CreateScreen() {
   const [postText, setPostText] = useState('');
@@ -32,6 +33,7 @@ export default function CreateScreen() {
   const { addNotification } = useAppContext();
   const { analyzeContent, moderatePost, isAnalyzing } = useAIContent();
   const insets = useSafeAreaInsets();
+  const { handleScroll } = useTabBar();
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -169,6 +171,8 @@ export default function CreateScreen() {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           <GlassCard style={styles.postContainer}>
             <View style={styles.userSection}>

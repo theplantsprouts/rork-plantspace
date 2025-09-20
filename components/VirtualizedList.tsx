@@ -14,6 +14,8 @@ interface VirtualizedListProps<T> {
   ListEmptyComponent?: React.ComponentType<any> | React.ReactElement | null;
   estimatedItemSize?: number;
   testID?: string;
+  onScroll?: (event: any) => void;
+  scrollEventThrottle?: number;
 }
 
 
@@ -31,6 +33,8 @@ function VirtualizedList<T>({
   ListEmptyComponent,
   estimatedItemSize = 200,
   testID,
+  onScroll,
+  scrollEventThrottle = 16,
 }: VirtualizedListProps<T>) {
   const { height: screenHeight } = useWindowDimensions();
   
@@ -67,7 +71,8 @@ function VirtualizedList<T>({
       keyExtractor={keyExtractor}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
-
+      onScroll={onScroll}
+      scrollEventThrottle={scrollEventThrottle}
       ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={ListFooterComponent}
       ListEmptyComponent={ListEmptyComponent}

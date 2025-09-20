@@ -17,12 +17,14 @@ import { usePosts } from '@/hooks/use-posts';
 import { PlantTheme, PlantTerminology, PlantGrowthStage } from '@/constants/theme';
 import { PlantGrowthAnimation } from '@/components/PlantGrowthAnimation';
 import { GlassCard } from '@/components/GlassContainer';
+import { useTabBar } from './_layout';
 
 
 export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const { currentUser } = useAppContext();
   const { posts } = usePosts();
+  const { handleScroll } = useTabBar();
 
   const insets = useSafeAreaInsets();
   
@@ -73,11 +75,13 @@ export default function ProfileScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           removeClippedSubviews={true}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           <GlassCard style={styles.profileCard}>
             <View style={styles.profileHeader}>
               <Image 
-                source={{ uri: currentUser?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face' }} 
+                source={{ uri: currentUser?.avatar || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=200&h=200&fit=crop&crop=face' }} 
                 style={styles.profileImage}
                 cachePolicy="memory-disk"
                 contentFit="cover"
@@ -88,25 +92,25 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.profileName}>{currentUser?.name || 'Alex Johnson'}</Text>
-            <Text style={styles.profileHandle}>{currentUser?.username || '@alexjohnson'}</Text>
+            <Text style={styles.profileName}>{currentUser?.name || 'Garden Enthusiast'}</Text>
+            <Text style={styles.profileHandle}>{currentUser?.username || '@gardener'}</Text>
             
             <Text style={styles.profileBio}>
-              Digital creator & photographer 📸 Sharing moments that matter ✨ Living life one adventure at a time 🌍
+              {currentUser?.bio || 'Passionate about sustainable farming and environmental conservation 🌱 Growing a better future one seed at a time 🌍'}
             </Text>
 
             <View style={styles.profileInfo}>
               <View style={styles.infoItem}>
                 <MapPin color={PlantTheme.colors.textSecondary} size={16} />
-                <Text style={styles.infoText}>San Francisco, CA</Text>
+                <Text style={styles.infoText}>Earth 🌍</Text>
               </View>
               <View style={styles.infoItem}>
                 <Calendar color={PlantTheme.colors.textSecondary} size={16} />
-                <Text style={styles.infoText}>Joined March 2023</Text>
+                <Text style={styles.infoText}>Joined {currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Recently'}</Text>
               </View>
               <View style={styles.infoItem}>
                 <Link color={PlantTheme.colors.textSecondary} size={16} />
-                <Text style={styles.infoText}>alexjohnson.com</Text>
+                <Text style={styles.infoText}>Growing sustainably</Text>
               </View>
             </View>
 

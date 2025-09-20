@@ -17,6 +17,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 import * as Haptics from 'expo-haptics';
+import { useTabBar } from './_layout';
 
 import { usePosts } from '@/hooks/use-posts';
 
@@ -76,6 +77,7 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const { followUser, unfollowUser, isFollowing, addToSearchHistory, addNotification } = useAppContext();
   const { posts } = usePosts();
+  const { handleScroll } = useTabBar();
   
   const trendingTopics = useMemo(() => generateTrendingTopics(posts), [posts]);
   const suggestedUsers = useMemo(() => generateSuggestedUsers(posts), [posts]);
@@ -151,6 +153,8 @@ export default function DiscoverScreen() {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           <View style={styles.searchContainer}>
             <GlassCard style={styles.searchCard}>

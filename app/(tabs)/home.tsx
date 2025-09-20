@@ -23,6 +23,7 @@ import VirtualizedList from '@/components/VirtualizedList';
 import PostItem from '@/components/PostItem';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useTabBar } from './_layout';
 
 export default function HomeScreen() {
   // const { user } = useAuth(); // Authentication handled at layout level
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showInsights, setShowInsights] = useState(false);
   const { posts, toggleLike, isLoading, error } = usePosts();
+  const { handleScroll } = useTabBar();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -180,6 +182,8 @@ export default function HomeScreen() {
               keyExtractor={keyExtractor}
               estimatedItemSize={Platform.OS === 'web' ? 280 : 320}
               testID="posts-list"
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
             />
           )}
         </Animated.View>

@@ -14,7 +14,7 @@ interface GlassContainerProps {
 export function GlassContainer({ 
   children, 
   style, 
-  intensity = 20,
+  intensity = 10,
   tint = 'light',
   testID 
 }: GlassContainerProps) {
@@ -73,15 +73,15 @@ const styles = StyleSheet.create({
     borderColor: PlantTheme.colors.glassBorder,
     backgroundColor: 'transparent',
     ...(Platform.OS === 'android' && {
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      elevation: 2,
+      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+      elevation: 1,
       shadowColor: 'transparent',
     }),
   },
   webGlassContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    backdropFilter: 'blur(15px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backdropFilter: 'blur(20px)',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   } as ViewStyle,
   glassCard: {
     ...PlantTheme.shadows.md,
