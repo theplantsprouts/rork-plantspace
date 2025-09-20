@@ -65,29 +65,34 @@ function TabLayoutContent() {
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 16,
-      borderWidth: 1,
-      minWidth: 44,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      minWidth: 48,
+      minHeight: 48,
       ...PlantTheme.material3.elevation.level1,
     },
     active: {
-      backgroundColor: 'rgba(76, 175, 80, 0.12)',
-      borderColor: 'rgba(76, 175, 80, 0.2)',
+      backgroundColor: 'rgba(76, 175, 80, 0.15)',
+      borderColor: 'rgba(76, 175, 80, 0.4)',
+      transform: [{ scale: 1.1 }],
     },
     inactive: {
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      borderColor: 'rgba(255, 255, 255, 0.08)',
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      borderColor: 'rgba(255, 255, 255, 0.12)',
     },
   });
 
   const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, extraSize: number = 0) => 
-    ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
+    ({ focused }: { color: string; size: number; focused: boolean }) => (
       <View style={[
         tabIconStyles.container,
         focused ? tabIconStyles.active : tabIconStyles.inactive
       ]}>
-        <IconComponent color={color} size={size + extraSize} />
+        <IconComponent 
+          color={focused ? PlantTheme.colors.primary : PlantTheme.colors.textPrimary} 
+          size={22 + extraSize} 
+        />
       </View>
     ), [tabIconStyles]);
 
@@ -117,8 +122,8 @@ function TabLayoutContent() {
     borderTopRightRadius: PlantTheme.borderRadius.lg,
     backdropFilter: 'blur(20px)',
     ...PlantTheme.shadows.sm,
-    height: Platform.OS === 'ios' ? 85 : 65,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+    height: Platform.OS === 'ios' ? 75 : 60,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 8,
     transform: [{ translateY: tabBarAnimation }],
   }), [tabBarAnimation]);
   
@@ -128,19 +133,14 @@ function TabLayoutContent() {
     headerShown: false,
     tabBarStyle,
     tabBarActiveTintColor: PlantTheme.colors.primary,
-    tabBarInactiveTintColor: PlantTheme.colors.textLight,
-    tabBarShowLabel: true,
-    tabBarLabelStyle: {
-      fontSize: 10,
-      fontWeight: '600' as const,
-      marginTop: 4,
-    },
+    tabBarInactiveTintColor: PlantTheme.colors.textPrimary,
+    tabBarShowLabel: false,
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 8,
-      paddingHorizontal: 4,
-      marginHorizontal: 2,
+      paddingVertical: 12,
+      paddingHorizontal: 8,
+      marginHorizontal: 4,
     },
   }), [tabBarStyle]);
 
