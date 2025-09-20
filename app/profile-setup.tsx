@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     marginBottom: 20,
     padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
     borderRadius: PlantTheme.borderRadius.full,
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   formCard: {
     padding: 24,
     ...(Platform.OS === 'android' && {
-      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+      backgroundColor: 'transparent',
       borderRadius: PlantTheme.material3.shapes.corner.large,
       elevation: 3,
       shadowColor: 'transparent',
@@ -297,13 +297,13 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
   },
   avatarPlaceholder: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: PlantTheme.colors.glassBorder,
     alignItems: "center",
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
     borderRadius: Platform.OS === 'android' ? PlantTheme.borderRadius.sm : PlantTheme.borderRadius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
     paddingHorizontal: 16,
     ...(Platform.OS === 'android' && {
       elevation: 2,
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   glassInput: {
-    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
     ...PlantTheme.shadows.sm,
