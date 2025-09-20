@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
-import { User } from './use-auth';
+import { User, useAuth } from './use-auth';
 
 const storage = {
   getItem: async (key: string) => {
@@ -28,19 +28,10 @@ interface AppState {
   unreadNotifications: number;
 }
 
-const mockCurrentUser: User = {
-  id: '999',
-  email: 'alex@example.com',
-  created_at: new Date().toISOString(),
-  name: 'Alex Johnson',
-  username: '@alexjohnson',
-  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=face',
-  bio: 'Digital creator & photographer 📸 Sharing moments that matter ✨ Living life one adventure at a time 🌍',
-  followers: 15400,
-  following: 892,
-};
+
 
 export const [AppProvider, useAppContext] = createContextHook(() => {
+  const { user: authUser } = useAuth();
   const [appState, setAppState] = useState<AppState>({
     currentUser: null,
     followedUsers: [],
@@ -49,19 +40,23 @@ export const [AppProvider, useAppContext] = createContextHook(() => {
     unreadNotifications: 0,
   });
 
+  // Update currentUser when auth user changes
+  useEffect(() => {
+    setAppState(prev => ({ ...prev, currentUser: authUser }));
+  }, [authUser]);
+
   useEffect(() => {
     const loadAppState = async () => {
       try {
         const storedState = await storage.getItem('appState');
         if (storedState) {
           const parsed = JSON.parse(storedState);
-          setAppState(prev => ({ ...prev, ...parsed }));
-        } else {
-          setAppState(prev => ({ ...prev, currentUser: mockCurrentUser }));
+          // Don't override currentUser from storage, use auth user instead
+          const { currentUser, ...otherState } = parsed;
+          setAppState(prev => ({ ...prev, ...otherState }));
         }
       } catch (error) {
         console.log('Error loading app state:', error);
-        setAppState(prev => ({ ...prev, currentUser: mockCurrentUser }));
       }
     };
 
