@@ -182,27 +182,45 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     const unsubscribe = onAuthStateChanged(auth, async (currentFirebaseUser) => {
       if (!mounted) return;
       
-      console.log('Auth state changed:', currentFirebaseUser ? 'signed in' : 'signed out');
+      console.log('Auth state changed:', currentFirebaseUser ? `signed in (${currentFirebaseUser.uid})` : 'signed out');
       
       if (currentFirebaseUser) {
         setFirebaseUser(currentFirebaseUser);
         
-        // Get or create profile
-        let profile = await getProfile(currentFirebaseUser.uid);
-        if (!profile) {
-          console.log('Creating new profile for user');
-          profile = await createProfile(currentFirebaseUser.uid, currentFirebaseUser.email || '');
-        }
-        
-        if (profile && mounted) {
-          setUser(profile);
+        try {
+          // Get or create profile
+          let profile = await getProfile(currentFirebaseUser.uid);
+          if (!profile) {
+            console.log('Creating new profile for user:', currentFirebaseUser.uid);
+            profile = await createProfile(currentFirebaseUser.uid, currentFirebaseUser.email || '');
+          }
+          
+          if (profile && mounted) {
+            console.log('Setting user profile:', {
+              id: profile.id,
+              email: profile.email,
+              hasName: !!profile.name,
+              hasUsername: !!profile.username,
+              hasBio: !!profile.bio
+            });
+            setUser(profile);
+          }
+        } catch (error) {
+          console.error('Error handling auth state change:', error);
+          // Still set loading to false even if profile operations fail
+          if (mounted) {
+            setIsLoading(false);
+          }
+          return;
         }
       } else {
         setFirebaseUser(null);
         setUser(null);
       }
       
-      setIsLoading(false);
+      if (mounted) {
+        setIsLoading(false);
+      }
     });
     
     return () => {

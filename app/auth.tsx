@@ -17,7 +17,7 @@ import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { MaterialInput } from "@/components/MaterialInput";
 import { MaterialButton } from "@/components/MaterialButton";
-import { router } from "expo-router";
+
 
 
 export default function LoginScreen() {
@@ -28,16 +28,9 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   
-  const { login, register } = useAuth();
-
-
-
-
-
-
+  const { user, login, register } = useAuth();
 
   React.useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -46,6 +39,13 @@ export default function LoginScreen() {
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
+  
+  // If user is already authenticated, don't show the login screen
+  // The navigation will be handled by the root layout
+  if (user) {
+    console.log('LoginScreen - User already authenticated, should redirect');
+    return null;
+  }
 
   const handleSubmit = async () => {
     setErrorMessage('');
@@ -71,16 +71,16 @@ export default function LoginScreen() {
     try {
       if (isLogin) {
         await login(email.trim(), password);
-        console.log('Login successful, navigating to home');
-        router.replace('/');
+        console.log('Login successful, auth state will handle navigation');
+        // Don't navigate here - let the auth state change handle it
       } else {
         const result = await register(email.trim(), password);
         if (result?.needsVerification) {
           setErrorMessage('Please check your email and click the verification link to complete registration.');
           return;
         }
-        console.log('Registration successful, navigating to home');
-        router.replace('/');
+        console.log('Registration successful, auth state will handle navigation');
+        // Don't navigate here - let the auth state change handle it
       }
     } catch (error: any) {
       console.error('Auth error:', error);
