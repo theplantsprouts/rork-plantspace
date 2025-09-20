@@ -13,18 +13,14 @@ service cloud.firestore {
     }
     
     function isValidProfile() {
-      return request.resource.data.keys().hasAll(['email', 'created_at', 'updated_at']) &&
-             request.resource.data.email is string &&
-             request.resource.data.created_at is string &&
-             request.resource.data.updated_at is string;
+      return request.resource.data.keys().hasAll(['email']) &&
+             request.resource.data.email is string;
     }
     
     function isValidPost() {
-      return request.resource.data.keys().hasAll(['content', 'author_id', 'created_at', 'updated_at', 'likes', 'comments']) &&
+      return request.resource.data.keys().hasAll(['content', 'author_id']) &&
              request.resource.data.content is string &&
-             request.resource.data.author_id == request.auth.uid &&
-             request.resource.data.likes is number &&
-             request.resource.data.comments is number;
+             request.resource.data.author_id == request.auth.uid;
     }
     
     // User profiles
@@ -33,8 +29,8 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       
       // Users can only create/update their own profile
-      allow create: if isOwner(userId) && isValidProfile();
-      allow update: if isOwner(userId) && isValidProfile();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
       
       // Users can delete their own profile
       allow delete: if isOwner(userId);
