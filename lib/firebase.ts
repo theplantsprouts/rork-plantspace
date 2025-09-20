@@ -6,13 +6,14 @@ import { getAnalytics, logEvent, Analytics } from 'firebase/analytics';
 import { Platform } from 'react-native';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDzPmgJia4ZKtbuKM6wiSPPK27023HRqFs",
-  authDomain: "plantspace-5a93d.firebaseapp.com",
-  projectId: "plantspace-5a93d",
-  storageBucket: "plantspace-5a93d.firebasestorage.app",
-  messagingSenderId: "969912616990",
-  appId: "1:969912616990:web:7c9bccb8ca7d7996bbc60f",
-  measurementId: "G-W39QPM2BQK"
+  apiKey: "AIzaSyDL85ZR6bK_4824GM94vlnHt0M94-9QE3k",
+  authDomain: "plantspace78.firebaseapp.com",
+  databaseURL: "https://plantspace78-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "plantspace78",
+  storageBucket: "plantspace78.firebasestorage.app",
+  messagingSenderId: "229616605757",
+  appId: "1:229616605757:web:7bfe4f0387cd2e8a43a854",
+  measurementId: "G-EMMJ0SZ05N"
 };
 
 const app = initializeApp(firebaseConfig);
