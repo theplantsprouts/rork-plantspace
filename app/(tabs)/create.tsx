@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { usePosts } from '@/hooks/use-posts';
 import { useAppContext } from '@/hooks/use-app-context';
 import { useAIContent } from '@/hooks/use-ai-content';
+import { useAuth } from '@/hooks/use-auth';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
@@ -32,6 +33,7 @@ export default function CreateScreen() {
   const { addPost } = usePosts();
   const { addNotification } = useAppContext();
   const { analyzeContent, moderatePost, isAnalyzing } = useAIContent();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   // Temporarily disable scroll handling to fix hooks order issue
   const handleScroll = () => {};
@@ -105,7 +107,7 @@ export default function CreateScreen() {
       addNotification({
         id: Date.now(),
         type: 'post',
-        user: { name: 'You', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' },
+        user: { name: user?.name || 'You', avatar: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' },
         message: moderatedPost.moderationStatus === 'approved' 
           ? 'shared a new post about agriculture/environment' 
           : 'submitted a post for review',
@@ -178,12 +180,12 @@ export default function CreateScreen() {
           <GlassCard style={styles.postContainer}>
             <View style={styles.userSection}>
               <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' }} 
+                source={{ uri: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' }} 
                 style={styles.userAvatar}
               />
               <View>
-                <Text style={styles.userName}>You</Text>
-                <Text style={styles.userHandle}>@yourhandle</Text>
+                <Text style={styles.userName}>{user?.name || 'You'}</Text>
+                <Text style={styles.userHandle}>@{user?.username || 'yourhandle'}</Text>
               </View>
             </View>
 
