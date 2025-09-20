@@ -128,7 +128,7 @@ export default function ProfileSetupScreen() {
               <View style={styles.logoContainer}>
                 <Sprout color={PlantTheme.colors.primary} size={48} />
               </View>
-              <Text style={styles.title}>🌱 Complete Your {PlantTerminology.home} Profile</Text>
+              <Text style={styles.title}>Complete Your {PlantTerminology.home} Profile</Text>
               <Text style={styles.subtitle}>
                 Let&apos;s set up your profile to join our sustainable community
               </Text>
@@ -167,7 +167,7 @@ export default function ProfileSetupScreen() {
               </View>
 
               <MaterialInput
-                label="🌿 Display Name *"
+                label="Display Name *"
                 value={name}
                 onChangeText={setName}
                 placeholder="Your full name"
@@ -178,7 +178,7 @@ export default function ProfileSetupScreen() {
               />
 
               <MaterialInput
-                label="🏷️ Username *"
+                label="Username *"
                 value={username}
                 onChangeText={(text) => setUsername(text.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                 placeholder="unique_username"
@@ -191,7 +191,7 @@ export default function ProfileSetupScreen() {
               />
 
               <MaterialInput
-                label="📝 Bio *"
+                label="Bio *"
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Tell us about your passion for sustainable agriculture..."
@@ -210,7 +210,7 @@ export default function ProfileSetupScreen() {
               ) : null}
 
               <MaterialButton
-                title={loading ? "🌱 Planting Your Profile..." : `🌿 Join the ${PlantTerminology.home}`}
+                title={loading ? "Planting Your Profile..." : `Join the ${PlantTerminology.home}`}
                 onPress={handleSubmit}
                 disabled={loading}
                 size="large"
