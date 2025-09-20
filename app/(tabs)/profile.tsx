@@ -50,7 +50,7 @@ export default function ProfileScreen() {
             >
               <Bug color={PlantTheme.colors.textSecondary} size={20} />
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/settings')}>
               <Settings color={PlantTheme.colors.textPrimary} size={24} />
             </TouchableOpacity>
           </View>
