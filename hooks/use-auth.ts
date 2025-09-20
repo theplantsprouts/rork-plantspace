@@ -355,13 +355,21 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.log('Auth token verified for profile update');
       
       const profileRef = doc(db, 'profiles', currentFirebaseUser.uid);
-      await updateDoc(profileRef, {
+      
+      // Filter out undefined values to avoid Firebase errors
+      const updateData: any = {
         name: data.name.trim(),
         username: data.username.trim(),
         bio: data.bio.trim(),
-        avatar: data.avatar,
         updated_at: serverTimestamp(),
-      });
+      };
+      
+      // Only include avatar if it has a value
+      if (data.avatar && data.avatar.trim()) {
+        updateData.avatar = data.avatar.trim();
+      }
+      
+      await updateDoc(profileRef, updateData);
       
       // Update local state
       const updatedProfile = await getProfile(currentFirebaseUser.uid);

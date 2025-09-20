@@ -74,12 +74,18 @@ export default function ProfileSetupScreen() {
 
     setLoading(true);
     try {
-      await completeProfile({
+      const profileData: { name: string; username: string; bio: string; avatar?: string } = {
         name: name.trim(),
         username: username.trim(),
         bio: bio.trim(),
-        avatar: avatar.trim() || undefined,
-      });
+      };
+      
+      // Only include avatar if it has a value
+      if (avatar.trim()) {
+        profileData.avatar = avatar.trim();
+      }
+      
+      await completeProfile(profileData);
       // Don't navigate here - let the index.tsx handle routing based on profile completion
     } catch (error: any) {
       console.error('Profile setup error:', error);
