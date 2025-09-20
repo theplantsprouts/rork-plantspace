@@ -29,8 +29,9 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       
       // Users can only create/update their own profile
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      // More permissive rule for profile creation to handle token propagation delays
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
       
       // Users can delete their own profile
       allow delete: if isOwner(userId);
