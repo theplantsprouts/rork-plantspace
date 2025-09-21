@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     marginBottom: 16,
     padding: 12,
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+    backgroundColor: Platform.OS === 'android' ? 'transparent' : 'rgba(244, 67, 54, 0.1)',
     borderRadius: PlantTheme.borderRadius.md,
     borderWidth: 1,
     borderColor: 'rgba(244, 67, 54, 0.3)',

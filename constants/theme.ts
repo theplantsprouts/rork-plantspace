@@ -42,8 +42,6 @@ export const PlantTheme = {
     gray: '#9E9E9E',
     lightGray: '#F5F5F5',
     darkGray: '#424242',
-    
-
   },
   
   spacing: {
@@ -94,9 +92,6 @@ export const PlantTheme = {
     backdropFilter: 'blur(20px)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   },
-  
-
-
 };
 
 export const PlantTerminology = {

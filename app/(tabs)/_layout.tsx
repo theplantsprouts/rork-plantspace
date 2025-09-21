@@ -70,7 +70,7 @@ function TabLayoutContent() {
       borderWidth: 1.5,
       minWidth: 48,
       minHeight: 48,
-      ...(Platform.OS === 'android' ? PlantTheme.shadows.sm : PlantTheme.shadows.sm),
+      ...PlantTheme.shadows.sm,
     },
     active: {
       backgroundColor: 'transparent',
@@ -130,19 +130,21 @@ function TabLayoutContent() {
     createTabIcon(TreePine)(props), [createTabIcon]);
   
   const tabBarStyle = useMemo(() => ({
-    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+    backgroundColor: 'transparent',
     borderTopWidth: 1,
-    borderTopColor: PlantTheme.colors.glassBorder,
+    borderTopColor: Platform.OS === 'android' 
+      ? 'rgba(255, 255, 255, 0.15)' 
+      : PlantTheme.colors.glassBorder,
     position: 'absolute' as const,
     borderTopLeftRadius: PlantTheme.borderRadius.lg,
     borderTopRightRadius: PlantTheme.borderRadius.lg,
     backdropFilter: 'blur(20px)',
     ...(Platform.OS === 'android' ? {
-      elevation: 8,
-      shadowColor: 'rgba(0, 0, 0, 0.15)',
+      elevation: 4,
+      shadowColor: 'rgba(0, 0, 0, 0.1)',
       shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
     } : PlantTheme.shadows.sm),
     height: Platform.OS === 'ios' ? 95 : 80,
     paddingBottom: Platform.OS === 'ios' ? 30 : 18,
