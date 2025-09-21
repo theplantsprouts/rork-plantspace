@@ -95,6 +95,20 @@ export const PlantTheme = {
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   },
   
+  // Material 3 design tokens
+  material3: {
+    shapes: {
+      corner: {
+        none: 0,
+        extraSmall: 4,
+        small: 8,
+        medium: 12,
+        large: 16,
+        extraLarge: 28,
+        full: 9999,
+      },
+    },
+  },
 
 };
 

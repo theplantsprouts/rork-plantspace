@@ -278,12 +278,7 @@ const styles = StyleSheet.create({
   },
   formCard: {
     padding: 24,
-    ...(Platform.OS === 'android' && {
-      backgroundColor: 'transparent',
-      borderRadius: PlantTheme.material3.shapes.corner.large,
-      elevation: 3,
-      shadowColor: 'transparent',
-    }),
+    backgroundColor: 'transparent',
   },
   avatarSection: {
     alignItems: "center",
@@ -428,9 +423,9 @@ const styles = StyleSheet.create({
     borderColor: PlantTheme.colors.glassBorder,
     ...PlantTheme.shadows.sm,
     ...(Platform.OS === 'android' && {
-      elevation: 1,
+      elevation: 0,
       shadowColor: 'transparent',
-      borderRadius: PlantTheme.material3.shapes.corner.medium,
+      borderRadius: PlantTheme.borderRadius.md,
     }),
   },
   errorContainer: {

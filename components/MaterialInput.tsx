@@ -146,10 +146,10 @@ const styles = StyleSheet.create({
   },
   
   materialAndroid: {
-    borderRadius: PlantTheme.material3.shapes.corner.medium,
-    elevation: 1,
+    borderRadius: PlantTheme.borderRadius.md,
+    elevation: 0,
     shadowColor: 'transparent',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'transparent',
   },
   
   focused: {

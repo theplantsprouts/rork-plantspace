@@ -108,8 +108,8 @@ const styles = StyleSheet.create({
   
   // Material 3 Android specific
   materialAndroid: {
-    borderRadius: PlantTheme.material3.shapes.corner.large,
-    elevation: 3,
+    borderRadius: PlantTheme.borderRadius.lg,
+    elevation: 0,
     shadowColor: 'transparent',
   },
   

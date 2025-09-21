@@ -265,12 +265,6 @@ const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 16,
     backgroundColor: 'transparent',
-    ...(Platform.OS === 'android' && {
-      backgroundColor: 'transparent',
-      borderRadius: PlantTheme.material3.shapes.corner.large,
-      elevation: 3,
-      shadowColor: 'transparent',
-    }),
   },
   inputSection: {
     marginBottom: 8,
@@ -283,12 +277,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
-    ...(Platform.OS === 'android' && {
-      backgroundColor: 'transparent',
-      borderRadius: PlantTheme.material3.shapes.corner.large,
-      elevation: 2,
-      shadowColor: 'transparent',
-    }),
   },
   glassInput: {
     backgroundColor: 'transparent',
@@ -299,7 +287,7 @@ const styles = StyleSheet.create({
       backgroundColor: 'transparent',
       elevation: 1,
       shadowColor: 'transparent',
-      borderRadius: PlantTheme.material3.shapes.corner.medium,
+      borderRadius: PlantTheme.borderRadius.md,
     }),
   },
   inputWrapper: {

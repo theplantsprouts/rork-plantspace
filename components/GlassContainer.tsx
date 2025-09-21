@@ -86,12 +86,11 @@ const styles = StyleSheet.create({
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   } as ViewStyle,
   androidGlassContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    elevation: 3,
-    shadowColor: 'rgba(0, 0, 0, 0.15)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    elevation: 0,
+    shadowColor: 'transparent',
   },
   glassCard: {
     ...PlantTheme.shadows.md,
