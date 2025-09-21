@@ -106,11 +106,12 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   
-  // Material 3 Android specific
+  // Android specific - transparent glassmorphic style
   materialAndroid: {
     borderRadius: PlantTheme.borderRadius.lg,
     elevation: 0,
     shadowColor: 'transparent',
+    backgroundColor: 'transparent',
   },
   
   // States
