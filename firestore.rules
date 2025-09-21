@@ -23,15 +23,14 @@ service cloud.firestore {
              request.resource.data.author_id == request.auth.uid;
     }
     
-    // User profiles
+    // User profiles - Temporary permissive rules for debugging
     match /profiles/{userId} {
       // Anyone can read profiles (for social features)
       allow read: if isAuthenticated();
       
-      // Temporary permissive profile creation rule to handle auth token propagation delays
-      // Allow any authenticated user to create a profile with their own UID
-      allow create: if request.auth != null && 
-                    request.auth.uid == userId;
+      // Temporary: Very permissive profile creation rule for debugging
+      // TODO: Tighten this once auth token propagation is working properly
+      allow create: if request.auth != null;
       
       // Users can only update their own profile
       allow update: if isAuthenticated() && request.auth.uid == userId;

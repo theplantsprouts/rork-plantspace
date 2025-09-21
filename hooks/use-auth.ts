@@ -86,9 +86,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     }
   };
 
-  const createProfile = async (userId: string, email: string): Promise<User> => {
+  const createProfile = async (userId: string, email: string, retryCount: number = 0): Promise<User> => {
+    const maxRetries = 3;
+    
     try {
-      console.log(`Creating profile for user: ${userId}`);
+      console.log(`Creating profile for user: ${userId} (attempt ${retryCount + 1}/${maxRetries})`);
       
       // Ensure we have a valid auth token
       const user = auth.currentUser;
@@ -98,10 +100,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       // Get a fresh auth token to ensure it's valid
       console.log('Getting fresh auth token...');
-      await user.getIdToken(true);
+      const token = await user.getIdToken(true);
+      console.log('Auth token obtained, length:', token.length);
       
-      // Small delay to ensure token propagation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Progressive delay based on retry count
+      const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+      console.log(`Waiting ${delay}ms for token propagation...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
       
       const profileData = {
         email,
@@ -110,7 +115,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         following: 0,
       };
       
-      console.log('Creating profile document...');
+      console.log('Creating profile document with data:', profileData);
       await setDoc(doc(db, 'profiles', userId), profileData);
       
       console.log('Profile created successfully for user:', userId);
@@ -124,9 +129,20 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       };
       
     } catch (error: any) {
-      console.error('Profile creation failed:', error);
+      console.error(`Profile creation attempt ${retryCount + 1} failed:`, error);
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
+      
+      if (error.code === 'permission-denied' && retryCount < maxRetries - 1) {
+        console.log(`Permission denied, retrying in ${1000 * (retryCount + 1)}ms...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+        return createProfile(userId, email, retryCount + 1);
+      }
+      
+      if (retryCount >= maxRetries - 1) {
+        console.error('All profile creation attempts failed');
+        throw new Error('Failed to create profile after multiple attempts. Please try logging out and back in.');
+      }
       
       if (error.code === 'permission-denied') {
         throw new Error('Permission denied. Please try logging out and back in, or contact support if the issue persists.');
