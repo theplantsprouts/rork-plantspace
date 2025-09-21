@@ -28,7 +28,7 @@ export function GlassContainer({
   
   if (Platform.OS === 'android') {
     return (
-      <View testID={testID} style={[styles.glassContainer, styles.androidGlassContainer, style]}>
+      <View testID={testID} style={[styles.glassContainer, styles.androidContainer, style]}>
         {children}
       </View>
     );
@@ -85,24 +85,27 @@ const styles = StyleSheet.create({
     backdropFilter: 'blur(20px)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   } as ViewStyle,
-  androidGlassContainer: {
-    backgroundColor: 'transparent',
+  androidContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    elevation: 2,
-    shadowColor: 'rgba(0, 0, 0, 0.08)',
+    borderColor: PlantTheme.colors.primary,
+    elevation: 3,
+    shadowColor: PlantTheme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
   },
   glassCard: {
     ...(Platform.OS === 'android' ? {
-      elevation: 3,
-      shadowColor: 'rgba(0, 0, 0, 0.15)',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
+      elevation: 4,
+      shadowColor: PlantTheme.colors.primary,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.2,
       shadowRadius: 6,
-    } : PlantTheme.shadows.md),
-    backgroundColor: 'transparent',
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    } : {
+      ...PlantTheme.shadows.md,
+      backgroundColor: 'transparent',
+    }),
   },
 });

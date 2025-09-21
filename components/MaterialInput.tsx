@@ -135,24 +135,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: Platform.OS === 'android' ? PlantTheme.colors.primary : PlantTheme.colors.glassBorder,
     borderRadius: PlantTheme.borderRadius.md,
-    backgroundColor: 'transparent',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
     paddingHorizontal: 16,
     minHeight: 56,
-    ...(Platform.OS !== 'android' && {
+    ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(10px)',
     }),
   },
   
   materialAndroid: {
     borderRadius: PlantTheme.borderRadius.md,
-    elevation: 1,
-    shadowColor: 'rgba(0, 0, 0, 0.08)',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    backgroundColor: 'transparent',
+    elevation: 2,
+    shadowColor: PlantTheme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderColor: PlantTheme.colors.primary,
   },
   
   focused: {

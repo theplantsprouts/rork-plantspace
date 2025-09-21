@@ -106,14 +106,14 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   
-  // Android specific - glassmorphic style
+  // Android specific - solid style
   materialAndroid: {
     borderRadius: PlantTheme.borderRadius.lg,
-    elevation: 2,
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 4,
+    shadowColor: PlantTheme.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   
   // States
