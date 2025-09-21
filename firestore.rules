@@ -28,9 +28,12 @@ service cloud.firestore {
       // Anyone can read profiles (for social features)
       allow read: if isAuthenticated();
       
-      // Users can only create/update their own profile
-      // More permissive rule for profile creation to handle token propagation delays
-      allow create: if isAuthenticated() && request.auth.uid == userId;
+      // Temporary permissive profile creation rule to handle auth token propagation delays
+      // Allow any authenticated user to create a profile with their own UID
+      allow create: if request.auth != null && 
+                    request.auth.uid == userId;
+      
+      // Users can only update their own profile
       allow update: if isAuthenticated() && request.auth.uid == userId;
       
       // Users can delete their own profile

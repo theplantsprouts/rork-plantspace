@@ -87,76 +87,53 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   };
 
   const createProfile = async (userId: string, email: string): Promise<User> => {
-    const maxRetries = 3;
-    let lastError: any;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`Creating profile for user: ${userId} (attempt ${attempt}/${maxRetries})`);
-        
-        // Wait for auth state to be fully ready
-        const currentUser = auth.currentUser;
-        if (!currentUser || currentUser.uid !== userId) {
-          console.log('Waiting for auth state to be ready...');
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-        
-        // Ensure we have a valid auth token
-        const user = auth.currentUser;
-        if (!user) {
-          throw new Error('User not authenticated');
-        }
-        
-        // Force token refresh and wait for it to propagate
-        console.log('Refreshing auth token...');
-        await user.getIdToken(true);
-        
-        // Additional wait for token propagation to Firestore
-        const waitTime = attempt * 1000; // Exponential backoff
-        console.log(`Waiting ${waitTime}ms for token propagation...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-        
-        const profileData = {
-          email,
-          created_at: serverTimestamp(),
-          followers: 0,
-          following: 0,
-        };
-        
-        console.log('Attempting to create profile document...');
-        await setDoc(doc(db, 'profiles', userId), profileData);
-        
-        console.log('Profile created successfully for user:', userId);
-        
-        return {
-          id: userId,
-          email,
-          created_at: new Date().toISOString(),
-          followers: 0,
-          following: 0,
-        };
-        
-      } catch (error: any) {
-        console.error(`Profile creation attempt ${attempt} failed:`, error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        
-        lastError = error;
-        
-        // If it's a permission error and we have retries left, continue
-        if (error.code === 'permission-denied' && attempt < maxRetries) {
-          console.log(`Permission denied on attempt ${attempt}, retrying...`);
-          continue;
-        }
-        
-        // If it's not a permission error or we're out of retries, throw
-        break;
+    try {
+      console.log(`Creating profile for user: ${userId}`);
+      
+      // Ensure we have a valid auth token
+      const user = auth.currentUser;
+      if (!user || user.uid !== userId) {
+        throw new Error('User not authenticated or UID mismatch');
       }
+      
+      // Get a fresh auth token to ensure it's valid
+      console.log('Getting fresh auth token...');
+      await user.getIdToken(true);
+      
+      // Small delay to ensure token propagation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const profileData = {
+        email,
+        created_at: serverTimestamp(),
+        followers: 0,
+        following: 0,
+      };
+      
+      console.log('Creating profile document...');
+      await setDoc(doc(db, 'profiles', userId), profileData);
+      
+      console.log('Profile created successfully for user:', userId);
+      
+      return {
+        id: userId,
+        email,
+        created_at: new Date().toISOString(),
+        followers: 0,
+        following: 0,
+      };
+      
+    } catch (error: any) {
+      console.error('Profile creation failed:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      
+      if (error.code === 'permission-denied') {
+        throw new Error('Permission denied. Please try logging out and back in, or contact support if the issue persists.');
+      }
+      
+      throw new Error(`Failed to create profile: ${error.message || 'Unknown error'}`);
     }
-    
-    // If we get here, all retries failed
-    console.error('All profile creation attempts failed');
-    throw new Error('Failed to create profile after multiple attempts. Please try logging out and back in.');
   };
 
   useEffect(() => {
@@ -176,13 +153,29 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         try {
           // Wait for auth token to be ready
           console.log('Waiting for auth token to be ready...');
-          await currentFirebaseUser.getIdToken();
+          const token = await currentFirebaseUser.getIdToken();
+          console.log('Auth token obtained, length:', token.length);
           
           // Get or create profile
           let profile = await getProfile(currentFirebaseUser.uid);
           if (!profile) {
-            console.log('Creating new profile for user:', currentFirebaseUser.uid);
-            profile = await createProfile(currentFirebaseUser.uid, currentFirebaseUser.email || '');
+            console.log('No existing profile found, creating new profile for user:', currentFirebaseUser.uid);
+            try {
+              profile = await createProfile(currentFirebaseUser.uid, currentFirebaseUser.email || '');
+              console.log('Profile created successfully');
+            } catch (createError: any) {
+              console.error('Profile creation failed:', createError);
+              
+              // If profile creation fails, we still want to set the Firebase user
+              // but show an error state that allows retry
+              if (mounted) {
+                setUser(null);
+                setIsLoading(false);
+              }
+              return;
+            }
+          } else {
+            console.log('Existing profile found for user:', currentFirebaseUser.uid);
           }
           
           if (profile && mounted) {
