@@ -106,12 +106,14 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   
-  // Android specific - transparent glassmorphic style
+  // Android specific - glassmorphic style
   materialAndroid: {
     borderRadius: PlantTheme.borderRadius.lg,
-    elevation: 0,
-    shadowColor: 'transparent',
-    backgroundColor: 'transparent',
+    elevation: 2,
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   
   // States

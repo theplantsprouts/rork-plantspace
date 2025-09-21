@@ -130,7 +130,7 @@ function TabLayoutContent() {
     createTabIcon(TreePine)(props), [createTabIcon]);
   
   const tabBarStyle = useMemo(() => ({
-    backgroundColor: 'transparent',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
     borderTopWidth: 1,
     borderTopColor: PlantTheme.colors.glassBorder,
     position: 'absolute' as const,
@@ -139,9 +139,9 @@ function TabLayoutContent() {
     backdropFilter: 'blur(20px)',
     ...(Platform.OS === 'android' ? {
       elevation: 8,
-      shadowColor: '#000',
+      shadowColor: 'rgba(0, 0, 0, 0.15)',
       shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.1,
+      shadowOpacity: 0.15,
       shadowRadius: 8,
     } : PlantTheme.shadows.sm),
     height: Platform.OS === 'ios' ? 95 : 80,

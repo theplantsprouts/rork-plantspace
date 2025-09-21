@@ -147,9 +147,12 @@ const styles = StyleSheet.create({
   
   materialAndroid: {
     borderRadius: PlantTheme.borderRadius.md,
-    elevation: 0,
-    shadowColor: 'transparent',
-    backgroundColor: 'transparent',
+    elevation: 1,
+    shadowColor: 'rgba(0, 0, 0, 0.08)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   
   focused: {
