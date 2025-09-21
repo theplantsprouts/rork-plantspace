@@ -28,7 +28,7 @@ export function GlassContainer({
   
   if (Platform.OS === 'android') {
     return (
-      <View testID={testID} style={[styles.glassContainer, styles.androidContainer, style]}>
+      <View testID={testID} style={[styles.androidContainer, style]}>
         {children}
       </View>
     );
@@ -86,14 +86,15 @@ const styles = StyleSheet.create({
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   } as ViewStyle,
   androidContainer: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: PlantTheme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
-    elevation: 2,
-    shadowColor: PlantTheme.colors.glassShadow,
+    borderColor: PlantTheme.colors.primary + '20',
+    elevation: 3,
+    shadowColor: PlantTheme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   glassCard: {
     backgroundColor: 'transparent',

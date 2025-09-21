@@ -60,28 +60,56 @@ export default function TabLayout() {
 function TabLayoutContent() {
   const { tabBarAnimation } = useTabBar();
   
-  const tabIconStyles = StyleSheet.create({
-    container: {
-      alignItems: 'center',
-      justifyContent: 'center',
+  const tabIconStyles = useMemo(() => {
+    const baseContainer = {
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
       paddingHorizontal: 12,
       paddingVertical: 8,
       borderRadius: 20,
       borderWidth: 1.5,
       minWidth: 48,
       minHeight: 48,
-      ...PlantTheme.shadows.sm,
-    },
-    active: {
-      backgroundColor: 'transparent',
-      borderColor: 'rgba(76, 175, 80, 0.5)',
-      transform: [{ scale: 1.1 }],
-    },
-    inactive: {
-      backgroundColor: 'transparent',
-      borderColor: 'rgba(255, 255, 255, 0.18)',
-    },
-  });
+    };
+
+    if (Platform.OS === 'android') {
+      return StyleSheet.create({
+        container: {
+          ...baseContainer,
+          elevation: 2,
+          shadowColor: PlantTheme.colors.primary,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 2,
+        },
+        active: {
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          borderColor: PlantTheme.colors.primary,
+          transform: [{ scale: 1.05 }],
+        },
+        inactive: {
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderColor: 'rgba(76, 175, 80, 0.3)',
+        },
+      });
+    }
+
+    return StyleSheet.create({
+      container: {
+        ...baseContainer,
+        ...PlantTheme.shadows.sm,
+      },
+      active: {
+        backgroundColor: 'transparent',
+        borderColor: 'rgba(76, 175, 80, 0.5)',
+        transform: [{ scale: 1.1 }],
+      },
+      inactive: {
+        backgroundColor: 'transparent',
+        borderColor: 'rgba(255, 255, 255, 0.18)',
+      },
+    });
+  }, []);
 
   const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, extraSize: number = 0) => 
     ({ focused }: { color: string; size: number; focused: boolean }) => (
@@ -111,22 +139,41 @@ function TabLayoutContent() {
   const renderProfileIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
     createTabIcon(TreePine)(props), [createTabIcon]);
   
-  const tabBarStyle = useMemo(() => ({
-    backgroundColor: 'transparent',
-    borderTopWidth: 1,
-    borderTopColor: PlantTheme.colors.glassBorder,
-    position: 'absolute' as const,
-    borderTopLeftRadius: PlantTheme.borderRadius.lg,
-    borderTopRightRadius: PlantTheme.borderRadius.lg,
-    ...(Platform.OS === 'web' ? {
-      backdropFilter: 'blur(20px)',
-    } : {}),
-    ...PlantTheme.shadows.sm,
-    height: Platform.OS === 'ios' ? 95 : 80,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 18,
-    paddingTop: Platform.OS === 'ios' ? 8 : 8,
-    transform: [{ translateY: tabBarAnimation }],
-  }), [tabBarAnimation]);
+  const tabBarStyle = useMemo(() => {
+    const baseStyle = {
+      borderTopWidth: 1,
+      position: 'absolute' as const,
+      borderTopLeftRadius: PlantTheme.borderRadius.lg,
+      borderTopRightRadius: PlantTheme.borderRadius.lg,
+      height: Platform.OS === 'ios' ? 95 : 80,
+      paddingBottom: Platform.OS === 'ios' ? 30 : 18,
+      paddingTop: Platform.OS === 'ios' ? 8 : 8,
+      transform: [{ translateY: tabBarAnimation }],
+    };
+
+    if (Platform.OS === 'android') {
+      return {
+        ...baseStyle,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderTopColor: PlantTheme.colors.primary + '30',
+        elevation: 8,
+        shadowColor: PlantTheme.colors.primary,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      };
+    }
+
+    return {
+      ...baseStyle,
+      backgroundColor: 'transparent',
+      borderTopColor: PlantTheme.colors.glassBorder,
+      ...(Platform.OS === 'web' ? {
+        backdropFilter: 'blur(20px)',
+      } : {}),
+      ...PlantTheme.shadows.sm,
+    };
+  }, [tabBarAnimation]);
   
   // Tab bar animation is now controlled by the context
   
