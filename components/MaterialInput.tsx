@@ -211,9 +211,6 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderRadius: PlantTheme.borderRadius.sm,
     backgroundColor: 'transparent',
-    ...(Platform.OS === 'android' && {
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    }),
   },
   
   errorText: {

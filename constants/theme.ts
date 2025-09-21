@@ -21,7 +21,7 @@ export const PlantTheme = {
     
     // Glass morphism
     glassBackground: 'transparent',
-    glassBorder: 'rgba(255, 255, 255, 0.15)',
+    glassBorder: 'rgba(255, 255, 255, 0.2)',
     glassShadow: 'rgba(0, 0, 0, 0.08)',
     
     // Text colors
