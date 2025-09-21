@@ -86,26 +86,17 @@ const styles = StyleSheet.create({
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   } as ViewStyle,
   androidContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: PlantTheme.colors.primary,
-    elevation: 3,
-    shadowColor: PlantTheme.colors.primary,
+    borderColor: PlantTheme.colors.glassBorder,
+    elevation: 2,
+    shadowColor: PlantTheme.colors.glassShadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   glassCard: {
-    ...(Platform.OS === 'android' ? {
-      elevation: 4,
-      shadowColor: PlantTheme.colors.primary,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.2,
-      shadowRadius: 6,
-      backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    } : {
-      ...PlantTheme.shadows.md,
-      backgroundColor: 'transparent',
-    }),
+    backgroundColor: 'transparent',
+    ...PlantTheme.shadows.md,
   },
 });
