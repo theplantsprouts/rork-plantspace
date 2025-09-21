@@ -19,10 +19,10 @@ export const PlantTheme = {
     backgroundStart: '#E8F5E8',
     backgroundEnd: '#F1F8E9',
     
-    // Container styles
-    containerBackground: 'rgba(255, 255, 255, 0.95)',
-    containerBorder: 'rgba(76, 175, 80, 0.2)',
-    containerShadow: 'rgba(0, 0, 0, 0.08)',
+    // Glass morphism
+    glassBackground: 'transparent',
+    glassBorder: 'rgba(255, 255, 255, 0.2)',
+    glassShadow: 'rgba(0, 0, 0, 0.08)',
     
     // Text colors
     textPrimary: '#2E7D32',
@@ -85,7 +85,13 @@ export const PlantTheme = {
     },
   },
   
-
+  glassmorphism: {
+    background: 'transparent',
+    border: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    backdropFilter: 'blur(20px)',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+  },
 };
 
 export const PlantTerminology = {
