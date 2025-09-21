@@ -555,7 +555,6 @@ const styles = StyleSheet.create({
   sectionCard: {
     padding: 0,
     overflow: 'hidden',
-    backgroundColor: 'transparent',
   },
   sectionHeader: {
     flexDirection: 'row',

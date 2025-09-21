@@ -43,30 +43,7 @@ export const PlantTheme = {
     lightGray: '#F5F5F5',
     darkGray: '#424242',
     
-    // Material 3 specific colors for Android
-    material3: {
-      primary: '#4CAF50',
-      onPrimary: '#FFFFFF',
-      primaryContainer: '#C8E6C9',
-      onPrimaryContainer: '#1B5E20',
-      secondary: '#8BC34A',
-      onSecondary: '#FFFFFF',
-      secondaryContainer: '#DCEDC8',
-      onSecondaryContainer: '#33691E',
-      tertiary: '#FF7043',
-      onTertiary: '#FFFFFF',
-      tertiaryContainer: '#FFCCBC',
-      onTertiaryContainer: '#BF360C',
-      surface: '#FEFBFF',
-      onSurface: '#1C1B1F',
-      surfaceVariant: '#E7E0EC',
-      onSurfaceVariant: '#49454F',
-      outline: '#79747E',
-      outlineVariant: '#CAC4D0',
-      inverseSurface: '#313033',
-      inverseOnSurface: '#F4EFF4',
-      inversePrimary: '#81C784',
-    },
+
   },
   
   spacing: {
@@ -118,88 +95,7 @@ export const PlantTheme = {
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   },
   
-  // Material 3 Design System
-  material3: {
-    // Shape tokens
-    shapes: {
-      corner: {
-        none: 0,
-        extraSmall: 4,
-        small: 8,
-        medium: 12,
-        large: 16,
-        extraLarge: 28,
-        full: 9999,
-      },
-    },
-    // Motion tokens
-    motion: {
-      easing: {
-        standard: 'cubic-bezier(0.2, 0.0, 0, 1.0)',
-        decelerate: 'cubic-bezier(0.0, 0.0, 0.2, 1.0)',
-        accelerate: 'cubic-bezier(0.4, 0.0, 1.0, 1.0)',
-      },
-      duration: {
-        short1: 50,
-        short2: 100,
-        short3: 150,
-        short4: 200,
-        medium1: 250,
-        medium2: 300,
-        medium3: 350,
-        medium4: 400,
-        long1: 450,
-        long2: 500,
-        long3: 550,
-        long4: 600,
-      },
-    },
-    // Elevation tokens
-    elevation: {
-      level0: {
-        shadowColor: 'transparent',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0,
-        shadowRadius: 0,
-        elevation: 0,
-      },
-      level1: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
-      },
-      level2: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 3,
-        elevation: 2,
-      },
-      level3: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
-        elevation: 3,
-      },
-      level4: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 4,
-      },
-      level5: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
-        elevation: 5,
-      },
-    },
-  },
+
 };
 
 export const PlantTerminology = {

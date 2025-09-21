@@ -79,7 +79,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: PlantTheme.colors.glassBorder,
-    backgroundColor: 'transparent',
   },
   webGlassContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -87,12 +86,12 @@ const styles = StyleSheet.create({
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   } as ViewStyle,
   androidGlassContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    elevation: 2,
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    elevation: 3,
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   glassCard: {
     ...PlantTheme.shadows.md,
