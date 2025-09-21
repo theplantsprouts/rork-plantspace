@@ -70,22 +70,16 @@ function TabLayoutContent() {
       borderWidth: 1.5,
       minWidth: 48,
       minHeight: 48,
-      ...(Platform.OS === 'android' ? {
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      } : PlantTheme.shadows.sm),
+      ...(Platform.OS === 'android' ? {} : PlantTheme.shadows.sm),
     },
     active: {
-      backgroundColor: 'rgba(76, 175, 80, 0.2)',
-      borderColor: 'rgba(76, 175, 80, 0.5)',
+      backgroundColor: 'rgba(76, 175, 80, 0.15)',
+      borderColor: 'rgba(76, 175, 80, 0.4)',
       transform: [{ scale: 1.1 }],
     },
     inactive: {
-      backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.18)',
-      borderColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.3)',
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      borderColor: 'rgba(255, 255, 255, 0.12)',
     },
   });
 
@@ -119,25 +113,15 @@ function TabLayoutContent() {
   
   const tabBarStyle = useMemo(() => ({
     backgroundColor: Platform.OS === 'web' 
-      ? 'rgba(255, 255, 255, 0.18)' 
-      : Platform.OS === 'android'
-      ? 'rgba(255, 255, 255, 0.12)'
-      : 'rgba(76, 175, 80, 0.12)',
+      ? 'rgba(76, 175, 80, 0.05)' 
+      : 'rgba(76, 175, 80, 0.08)',
     borderTopWidth: 1,
-    borderTopColor: Platform.OS === 'android' 
-      ? 'rgba(255, 255, 255, 0.2)' 
-      : PlantTheme.colors.glassBorder,
+    borderTopColor: PlantTheme.colors.glassBorder,
     position: 'absolute' as const,
     borderTopLeftRadius: PlantTheme.borderRadius.lg,
     borderTopRightRadius: PlantTheme.borderRadius.lg,
     backdropFilter: 'blur(20px)',
-    ...(Platform.OS === 'android' ? {
-      elevation: 8,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 6,
-    } : PlantTheme.shadows.sm),
+    ...(Platform.OS === 'android' ? {} : PlantTheme.shadows.sm),
     height: Platform.OS === 'ios' ? 95 : 80,
     paddingBottom: Platform.OS === 'ios' ? 30 : 18,
     paddingTop: Platform.OS === 'ios' ? 8 : 8,

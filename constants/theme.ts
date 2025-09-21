@@ -20,9 +20,9 @@ export const PlantTheme = {
     backgroundEnd: '#F1F8E9',
     
     // Glass morphism
-    glassBackground: 'rgba(255, 255, 255, 0.2)',
-    glassBorder: 'rgba(255, 255, 255, 0.25)',
-    glassShadow: 'rgba(0, 0, 0, 0.1)',
+    glassBackground: 'transparent',
+    glassBorder: 'rgba(255, 255, 255, 0.15)',
+    glassShadow: 'rgba(0, 0, 0, 0.08)',
     
     // Text colors
     textPrimary: '#2E7D32',
