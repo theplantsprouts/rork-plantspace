@@ -78,8 +78,8 @@ function TabLayoutContent() {
       transform: [{ scale: 1.1 }],
     },
     inactive: {
-      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-      borderColor: 'rgba(255, 255, 255, 0.12)',
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      borderColor: 'rgba(255, 255, 255, 0.25)',
     },
   });
 
@@ -113,15 +113,25 @@ function TabLayoutContent() {
   
   const tabBarStyle = useMemo(() => ({
     backgroundColor: Platform.OS === 'web' 
-      ? 'rgba(76, 175, 80, 0.05)' 
+      ? 'rgba(255, 255, 255, 0.15)' 
+      : Platform.OS === 'android'
+      ? 'rgba(255, 255, 255, 0.2)'
       : 'rgba(76, 175, 80, 0.08)',
     borderTopWidth: 1,
-    borderTopColor: PlantTheme.colors.glassBorder,
+    borderTopColor: Platform.OS === 'android' 
+      ? 'rgba(255, 255, 255, 0.25)' 
+      : PlantTheme.colors.glassBorder,
     position: 'absolute' as const,
     borderTopLeftRadius: PlantTheme.borderRadius.lg,
     borderTopRightRadius: PlantTheme.borderRadius.lg,
     backdropFilter: 'blur(20px)',
-    ...(Platform.OS === 'android' ? {} : PlantTheme.shadows.sm),
+    ...(Platform.OS === 'android' ? {
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    } : PlantTheme.shadows.sm),
     height: Platform.OS === 'ios' ? 95 : 80,
     paddingBottom: Platform.OS === 'ios' ? 30 : 18,
     paddingTop: Platform.OS === 'ios' ? 8 : 8,
