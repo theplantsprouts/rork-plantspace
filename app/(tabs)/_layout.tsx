@@ -78,8 +78,8 @@ function TabLayoutContent() {
       transform: [{ scale: 1.1 }],
     },
     inactive: {
-      backgroundColor: 'rgba(255, 255, 255, 0.15)',
-      borderColor: 'rgba(255, 255, 255, 0.25)',
+      backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.15)',
+      borderColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.25)',
     },
   });
 
@@ -115,11 +115,11 @@ function TabLayoutContent() {
     backgroundColor: Platform.OS === 'web' 
       ? 'rgba(255, 255, 255, 0.15)' 
       : Platform.OS === 'android'
-      ? 'rgba(255, 255, 255, 0.2)'
+      ? 'rgba(255, 255, 255, 0.08)'
       : 'rgba(76, 175, 80, 0.08)',
     borderTopWidth: 1,
     borderTopColor: Platform.OS === 'android' 
-      ? 'rgba(255, 255, 255, 0.25)' 
+      ? 'rgba(255, 255, 255, 0.15)' 
       : PlantTheme.colors.glassBorder,
     position: 'absolute' as const,
     borderTopLeftRadius: PlantTheme.borderRadius.lg,
