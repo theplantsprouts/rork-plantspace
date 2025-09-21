@@ -79,7 +79,7 @@ function TabLayoutContent() {
     },
     inactive: {
       backgroundColor: 'transparent',
-      borderColor: 'rgba(255, 255, 255, 0.18)',
+      borderColor: PlantTheme.colors.containerBorder,
     },
   });
 
@@ -112,15 +112,12 @@ function TabLayoutContent() {
     createTabIcon(TreePine)(props), [createTabIcon]);
   
   const tabBarStyle = useMemo(() => ({
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.containerBackground,
     borderTopWidth: 1,
-    borderTopColor: PlantTheme.colors.glassBorder,
+    borderTopColor: PlantTheme.colors.containerBorder,
     position: 'absolute' as const,
     borderTopLeftRadius: PlantTheme.borderRadius.lg,
     borderTopRightRadius: PlantTheme.borderRadius.lg,
-    ...(Platform.OS === 'web' ? {
-      backdropFilter: 'blur(20px)',
-    } : {}),
     ...PlantTheme.shadows.sm,
     height: Platform.OS === 'ios' ? 95 : 80,
     paddingBottom: Platform.OS === 'ios' ? 30 : 18,
