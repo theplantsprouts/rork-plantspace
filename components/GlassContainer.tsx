@@ -1,52 +1,26 @@
 import React from 'react';
-import { View, ViewStyle, StyleSheet, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View, ViewStyle, StyleSheet } from 'react-native';
 import { PlantTheme } from '@/constants/theme';
 
-interface GlassContainerProps {
+interface CardContainerProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  intensity?: number;
-  tint?: 'light' | 'dark' | 'default';
   testID?: string;
 }
 
 export function GlassContainer({ 
   children, 
   style, 
-  intensity = 10,
-  tint = 'light',
   testID 
-}: GlassContainerProps) {
-  if (Platform.OS === 'web') {
-    return (
-      <View testID={testID} style={[styles.glassContainer, styles.webGlassContainer, style]}>
-        {children}
-      </View>
-    );
-  }
-  
-  if (Platform.OS === 'android') {
-    return (
-      <View testID={testID} style={[styles.androidContainer, style]}>
-        {children}
-      </View>
-    );
-  }
-  
+}: CardContainerProps) {
   return (
-    <BlurView
-      testID={testID}
-      intensity={intensity}
-      tint={tint}
-      style={[styles.glassContainer, style]}
-    >
+    <View testID={testID} style={[styles.cardContainer, style]}>
       {children}
-    </BlurView>
+    </View>
   );
 }
 
-interface GlassCardProps {
+interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   padding?: keyof typeof PlantTheme.spacing;
@@ -58,46 +32,38 @@ export function GlassCard({
   style, 
   padding = 'md',
   testID 
-}: GlassCardProps) {
+}: CardProps) {
   return (
-    <GlassContainer
+    <View
       testID={testID}
       style={[
-        styles.glassCard,
+        styles.card,
         { padding: PlantTheme.spacing[padding] },
         style
       ]}
     >
       {children}
-    </GlassContainer>
+    </View>
   );
 }
 
+// Keep the old names for backward compatibility
+export const CardContainer = GlassContainer;
+export const Card = GlassCard;
+
 const styles = StyleSheet.create({
-  glassContainer: {
-    borderRadius: PlantTheme.borderRadius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
-  },
-  webGlassContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(20px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-  } as ViewStyle,
-  androidContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  cardContainer: {
+    backgroundColor: PlantTheme.colors.cardBackground,
     borderRadius: PlantTheme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.primary + '20',
-    elevation: 3,
-    shadowColor: PlantTheme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    borderColor: PlantTheme.colors.cardBorder,
+    ...PlantTheme.shadows.sm,
   },
-  glassCard: {
-    backgroundColor: 'transparent',
+  card: {
+    backgroundColor: PlantTheme.colors.cardBackground,
+    borderRadius: PlantTheme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.cardBorder,
     ...PlantTheme.shadows.md,
   },
 });

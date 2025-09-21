@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     gap: 12,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   searchInput: {
     flex: 1,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 15,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   topicIcon: {
     fontSize: 24,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 15,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   userAvatar: {
     width: 60,
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   followingButton: {
-    backgroundColor: PlantTheme.colors.glassBackground,
+    backgroundColor: PlantTheme.colors.cardBackground,
     borderWidth: 1,
     borderColor: PlantTheme.colors.primary,
   },

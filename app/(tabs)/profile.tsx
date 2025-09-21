@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 25,
     padding: 25,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
 
   profileHeader: {
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
   },
   statItem: {
     alignItems: 'center',
@@ -319,12 +319,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   shareButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: PlantTheme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
   },
   shareButtonText: {
     color: PlantTheme.colors.textPrimary,
@@ -385,14 +385,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   textPost: {
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     height: '100%',
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
   },
   textPostContent: {
     color: PlantTheme.colors.textPrimary,

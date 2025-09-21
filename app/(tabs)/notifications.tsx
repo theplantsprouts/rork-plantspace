@@ -152,12 +152,12 @@ const styles = StyleSheet.create({
     color: PlantTheme.colors.textSecondary,
   },
   markAllButton: {
-    backgroundColor: PlantTheme.colors.glassBackground,
+    backgroundColor: PlantTheme.colors.cardBackground,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: PlantTheme.borderRadius.md,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
   },
   markAllRead: {
     color: PlantTheme.colors.primary,
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   notificationCard: {
     padding: 15,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   notificationContent: {
     flexDirection: 'row',
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: PlantTheme.borderRadius.md,
     marginLeft: 10,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
   },
   endMessage: {
     alignItems: 'center',
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 60,
     paddingHorizontal: 40,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   emptyStateText: {
     color: PlantTheme.colors.textPrimary,

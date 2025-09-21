@@ -100,13 +100,13 @@ function TabLayoutContent() {
         ...PlantTheme.shadows.sm,
       },
       active: {
-        backgroundColor: 'transparent',
-        borderColor: 'rgba(76, 175, 80, 0.5)',
+        backgroundColor: PlantTheme.colors.cardBackground,
+        borderColor: PlantTheme.colors.primary,
         transform: [{ scale: 1.1 }],
       },
       inactive: {
-        backgroundColor: 'transparent',
-        borderColor: 'rgba(255, 255, 255, 0.18)',
+        backgroundColor: PlantTheme.colors.cardBackground,
+        borderColor: PlantTheme.colors.cardBorder,
       },
     });
   }, []);
@@ -140,7 +140,7 @@ function TabLayoutContent() {
     createTabIcon(TreePine)(props), [createTabIcon]);
   
   const tabBarStyle = useMemo(() => {
-    const baseStyle = {
+    return {
       borderTopWidth: 1,
       position: 'absolute' as const,
       borderTopLeftRadius: PlantTheme.borderRadius.lg,
@@ -149,29 +149,9 @@ function TabLayoutContent() {
       paddingBottom: Platform.OS === 'ios' ? 30 : 18,
       paddingTop: Platform.OS === 'ios' ? 8 : 8,
       transform: [{ translateY: tabBarAnimation }],
-    };
-
-    if (Platform.OS === 'android') {
-      return {
-        ...baseStyle,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderTopColor: PlantTheme.colors.primary + '30',
-        elevation: 8,
-        shadowColor: PlantTheme.colors.primary,
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-      };
-    }
-
-    return {
-      ...baseStyle,
-      backgroundColor: 'transparent',
-      borderTopColor: PlantTheme.colors.glassBorder,
-      ...(Platform.OS === 'web' ? {
-        backdropFilter: 'blur(20px)',
-      } : {}),
-      ...PlantTheme.shadows.sm,
+      backgroundColor: PlantTheme.colors.cardBackground,
+      borderTopColor: PlantTheme.colors.cardBorder,
+      ...PlantTheme.shadows.md,
     };
   }, [tabBarAnimation]);
   

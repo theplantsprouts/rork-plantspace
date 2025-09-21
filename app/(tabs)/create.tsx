@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   postContainer: {
     marginBottom: 20,
     padding: 20,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   userSection: {
     flexDirection: 'row',
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 15,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   actionText: {
     color: PlantTheme.colors.textPrimary,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   },
   tipsContainer: {
     padding: 20,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   tipsTitle: {
     color: PlantTheme.colors.textPrimary,
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   aiAnalyzeButton: {
-    backgroundColor: PlantTheme.colors.glassBackground,
+    backgroundColor: PlantTheme.colors.cardBackground,
     borderRadius: PlantTheme.borderRadius.md,
     padding: 12,
     alignItems: 'center',
@@ -474,12 +474,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   aiInsights: {
-    backgroundColor: PlantTheme.colors.glassBackground,
+    backgroundColor: PlantTheme.colors.cardBackground,
     borderRadius: PlantTheme.borderRadius.md,
     padding: 15,
     marginTop: 15,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
   },
   aiInsightsTitle: {
     color: PlantTheme.colors.textPrimary,
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   aiTag: {
-    backgroundColor: PlantTheme.colors.glassBackground,
+    backgroundColor: PlantTheme.colors.cardBackground,
     borderRadius: PlantTheme.borderRadius.sm,
     paddingHorizontal: 8,
     paddingVertical: 4,

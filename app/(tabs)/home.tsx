@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     gap: 6,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   createButtonText: {
     color: PlantTheme.colors.primary,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   insightsContainer: {
     padding: 16,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   insightsTitle: {
     color: PlantTheme.colors.textPrimary,
@@ -272,13 +272,13 @@ const styles = StyleSheet.create({
   },
   insightCard: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
     borderRadius: PlantTheme.borderRadius.md,
     padding: 12,
     alignItems: 'center',
     gap: 4,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
   },
   insightValue: {
     color: PlantTheme.colors.textPrimary,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     gap: 12,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
   createFirstPostText: {
     color: PlantTheme.colors.primary,

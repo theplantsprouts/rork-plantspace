@@ -19,14 +19,10 @@ export const PlantTheme = {
     backgroundStart: '#E8F5E8',
     backgroundEnd: '#F1F8E9',
     
-    // Glass morphism (iOS/Web) and Android alternatives
-    glassBackground: 'transparent',
-    glassBorder: 'rgba(255, 255, 255, 0.2)',
-    glassShadow: 'rgba(0, 0, 0, 0.08)',
-    
-    // Android-specific colors
-    androidCardBackground: 'rgba(255, 255, 255, 0.95)',
-    androidBorder: 'rgba(76, 175, 80, 0.2)',
+    // Card backgrounds
+    cardBackground: '#FFFFFF',
+    cardBorder: 'rgba(76, 175, 80, 0.2)',
+    cardShadow: 'rgba(0, 0, 0, 0.08)',
     
     // Text colors
     textPrimary: '#2E7D32',
@@ -89,13 +85,7 @@ export const PlantTheme = {
     },
   },
   
-  glassmorphism: {
-    background: 'transparent',
-    border: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1,
-    backdropFilter: 'blur(20px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-  },
+
 };
 
 export const PlantTerminology = {

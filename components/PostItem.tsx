@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.cardBackground,
     borderWidth: 2,
     borderColor: PlantTheme.colors.primary,
     alignItems: "center",
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: PlantTheme.colors.glassBorder,
+    borderTopColor: PlantTheme.colors.cardBorder,
   },
   actionButton: {
     flexDirection: "row",
