@@ -70,7 +70,7 @@ function TabLayoutContent() {
       borderWidth: 1.5,
       minWidth: 48,
       minHeight: 48,
-      ...PlantTheme.material3.elevation.level1,
+      ...(Platform.OS === 'android' ? {} : PlantTheme.shadows.sm),
     },
     active: {
       backgroundColor: 'rgba(76, 175, 80, 0.15)',
@@ -121,7 +121,7 @@ function TabLayoutContent() {
     borderTopLeftRadius: PlantTheme.borderRadius.lg,
     borderTopRightRadius: PlantTheme.borderRadius.lg,
     backdropFilter: 'blur(20px)',
-    ...PlantTheme.shadows.sm,
+    ...(Platform.OS === 'android' ? {} : PlantTheme.shadows.sm),
     height: Platform.OS === 'ios' ? 95 : 80,
     paddingBottom: Platform.OS === 'ios' ? 30 : 18,
     paddingTop: Platform.OS === 'ios' ? 8 : 8,

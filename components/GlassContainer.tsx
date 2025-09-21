@@ -88,11 +88,15 @@ const styles = StyleSheet.create({
   androidGlassContainer: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     elevation: 0,
     shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
   },
   glassCard: {
-    ...PlantTheme.shadows.md,
+    ...(Platform.OS === 'android' ? {} : PlantTheme.shadows.md),
+    backgroundColor: 'transparent',
   },
 });
