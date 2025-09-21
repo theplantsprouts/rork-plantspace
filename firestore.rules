@@ -23,20 +23,20 @@ service cloud.firestore {
              request.resource.data.author_id == request.auth.uid;
     }
     
-    // User profiles - Temporary permissive rules for debugging
+    // User profiles - Temporary very permissive rules for debugging
     match /profiles/{userId} {
       // Anyone can read profiles (for social features)
-      allow read: if isAuthenticated();
+      allow read: if true;
       
-      // Temporary: Very permissive profile creation rule for debugging
-      // TODO: Tighten this once auth token propagation is working properly
+      // Temporary: Allow any authenticated user to create profiles
+      // This is to debug the permission denied issue
       allow create: if request.auth != null;
       
       // Users can only update their own profile
-      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
       
       // Users can delete their own profile
-      allow delete: if isOwner(userId);
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
     // Posts

@@ -87,7 +87,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   };
 
   const createProfile = async (userId: string, email: string, retryCount: number = 0): Promise<User> => {
-    const maxRetries = 3;
+    const maxRetries = 5;
     
     try {
       console.log(`Creating profile for user: ${userId} (attempt ${retryCount + 1}/${maxRetries})`);
@@ -103,8 +103,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       const token = await user.getIdToken(true);
       console.log('Auth token obtained, length:', token.length);
       
-      // Progressive delay based on retry count
-      const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+      // Progressive delay based on retry count - longer delays for auth propagation
+      const delay = Math.min(2000 * Math.pow(1.5, retryCount), 10000);
       console.log(`Waiting ${delay}ms for token propagation...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       
@@ -134,8 +134,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.error('Error message:', error.message);
       
       if (error.code === 'permission-denied' && retryCount < maxRetries - 1) {
-        console.log(`Permission denied, retrying in ${1000 * (retryCount + 1)}ms...`);
-        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+        console.log(`Permission denied, retrying in ${2000 * (retryCount + 1)}ms...`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * (retryCount + 1)));
         return createProfile(userId, email, retryCount + 1);
       }
       
