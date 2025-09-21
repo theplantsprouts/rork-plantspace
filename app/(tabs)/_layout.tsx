@@ -70,16 +70,38 @@ function TabLayoutContent() {
       borderWidth: 1.5,
       minWidth: 48,
       minHeight: 48,
-      ...(Platform.OS === 'android' ? {} : PlantTheme.shadows.sm),
+      ...(Platform.OS === 'android' ? PlantTheme.shadows.sm : PlantTheme.shadows.sm),
     },
     active: {
-      backgroundColor: 'rgba(76, 175, 80, 0.15)',
-      borderColor: 'rgba(76, 175, 80, 0.4)',
+      backgroundColor: Platform.OS === 'android' 
+        ? 'rgba(76, 175, 80, 0.18)' 
+        : 'rgba(76, 175, 80, 0.15)',
+      borderColor: Platform.OS === 'android'
+        ? 'rgba(76, 175, 80, 0.5)'
+        : 'rgba(76, 175, 80, 0.4)',
       transform: [{ scale: 1.1 }],
+      ...(Platform.OS === 'android' ? {
+        elevation: 3,
+        shadowColor: PlantTheme.colors.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      } : {}),
     },
     inactive: {
-      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-      borderColor: 'rgba(255, 255, 255, 0.12)',
+      backgroundColor: Platform.OS === 'android'
+        ? 'rgba(255, 255, 255, 0.12)'
+        : 'rgba(255, 255, 255, 0.08)',
+      borderColor: Platform.OS === 'android'
+        ? 'rgba(255, 255, 255, 0.18)'
+        : 'rgba(255, 255, 255, 0.12)',
+      ...(Platform.OS === 'android' ? {
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      } : {}),
     },
   });
 
@@ -114,6 +136,8 @@ function TabLayoutContent() {
   const tabBarStyle = useMemo(() => ({
     backgroundColor: Platform.OS === 'web' 
       ? 'rgba(76, 175, 80, 0.05)' 
+      : Platform.OS === 'android'
+      ? 'rgba(76, 175, 80, 0.12)'
       : 'rgba(76, 175, 80, 0.08)',
     borderTopWidth: 1,
     borderTopColor: PlantTheme.colors.glassBorder,
@@ -121,7 +145,13 @@ function TabLayoutContent() {
     borderTopLeftRadius: PlantTheme.borderRadius.lg,
     borderTopRightRadius: PlantTheme.borderRadius.lg,
     backdropFilter: 'blur(20px)',
-    ...(Platform.OS === 'android' ? {} : PlantTheme.shadows.sm),
+    ...(Platform.OS === 'android' ? {
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+    } : PlantTheme.shadows.sm),
     height: Platform.OS === 'ios' ? 95 : 80,
     paddingBottom: Platform.OS === 'ios' ? 30 : 18,
     paddingTop: Platform.OS === 'ios' ? 8 : 8,
