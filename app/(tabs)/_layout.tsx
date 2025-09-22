@@ -83,13 +83,13 @@ function TabLayoutContent() {
           shadowRadius: 2,
         },
         active: {
-          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          backgroundColor: PlantTheme.colors.cardBackground,
           borderColor: PlantTheme.colors.primary,
           transform: [{ scale: 1.05 }],
         },
         inactive: {
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          borderColor: 'rgba(76, 175, 80, 0.3)',
+          backgroundColor: PlantTheme.colors.cardBackground,
+          borderColor: PlantTheme.colors.cardBorder,
         },
       });
     }
@@ -152,6 +152,11 @@ function TabLayoutContent() {
       backgroundColor: PlantTheme.colors.cardBackground,
       borderTopColor: PlantTheme.colors.cardBorder,
       ...PlantTheme.shadows.md,
+      ...(Platform.OS === 'android' && {
+        elevation: 8,
+        shadowColor: 'transparent',
+        backgroundColor: PlantTheme.colors.cardBackground,
+      }),
     };
   }, [tabBarAnimation]);
   

@@ -24,6 +24,10 @@ export const PlantTheme = {
     cardBorder: 'rgba(76, 175, 80, 0.2)',
     cardShadow: 'rgba(0, 0, 0, 0.08)',
     
+    // Glass effect (removed for Android)
+    glassBorder: 'rgba(76, 175, 80, 0.3)',
+    glassBackground: 'rgba(255, 255, 255, 0.1)',
+    
     // Text colors
     textPrimary: '#2E7D32',
     textSecondary: '#558B2F',

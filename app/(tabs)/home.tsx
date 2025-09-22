@@ -31,9 +31,12 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showInsights, setShowInsights] = useState(false);
-  const { posts, toggleLike, isLoading, error } = usePosts();
-  // Temporarily disable scroll handling to fix hooks order issue
-  const handleScroll = () => {};
+  const { posts, toggleLike, toggleShare, addComment, isLoading, error } = usePosts();
+  // Enable scroll handling for tab bar animation
+  const handleScroll = useCallback((event: any) => {
+    // This would be used for tab bar animation if needed
+    console.log('Home screen scrolling:', event.nativeEvent.contentOffset.y);
+  }, []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -64,16 +67,33 @@ export default function HomeScreen() {
   }, [toggleLike]);
 
 
+  const handleComment = useCallback((postId: string) => {
+    console.log('Comment functionality for post:', postId);
+    // Here you would implement comment functionality
+    // For now, just add a mock comment
+    addComment(postId, 'Great post! 🌱');
+  }, [addComment]);
+
+  const handleShare = useCallback((postId: string) => {
+    console.log('Share functionality for post:', postId);
+    toggleShare(postId);
+  }, [toggleShare]);
+
   const renderPost = useCallback(({ item }: { item: Post }) => {
     const onLike = () => handleLike(item.id);
+    const onComment = () => handleComment(item.id);
+    const onShare = () => handleShare(item.id);
+    
     return (
       <PostItem
         post={item}
         onLike={onLike}
+        onComment={onComment}
+        onShare={onShare}
         testID={`post-${item.id}`}
       />
     );
-  }, [handleLike]);
+  }, [handleLike, handleComment, handleShare]);
 
   const memoizedPosts = useMemo(() => {
     // Limit posts for better performance on mobile

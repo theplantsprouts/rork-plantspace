@@ -5,10 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Plus } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { usePosts } from '@/hooks/use-posts';
 import { useAppContext } from '@/hooks/use-app-context';
 
@@ -20,6 +23,48 @@ export function StoryCircles({ posts: propPosts }: StoryCirclesProps = {}) {
   const { posts: hookPosts } = usePosts();
   const { currentUser } = useAppContext();
   const posts = propPosts || hookPosts;
+
+  const handleAddStory = () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Story Feature', 'Story creation is coming soon!');
+      return;
+    }
+
+    Alert.alert(
+      'Add Story',
+      'What would you like to share?',
+      [
+        { text: 'Text Story', onPress: () => handleCreateStory('text') },
+        { text: 'Photo Story', onPress: () => handleCreateStory('photo') },
+        { text: 'Both', onPress: () => handleCreateStory('both') },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const handleCreateStory = async (type: 'text' | 'photo' | 'both') => {
+    if (type === 'photo' || type === 'both') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'We need photo permissions to add images to your story.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [9, 16],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        console.log('Story image:', result.assets[0].uri);
+      }
+    }
+
+    // Here you would implement story creation logic
+    Alert.alert('Story Created', 'Your story will disappear in 24 hours!');
+  };
   
   const stories = useMemo(() => {
     const uniqueUsers = posts.reduce((acc: any[], post: any) => {
@@ -55,7 +100,11 @@ export function StoryCircles({ posts: propPosts }: StoryCirclesProps = {}) {
         contentContainerStyle={styles.scrollContent}
       >
         {stories.map((story) => (
-          <TouchableOpacity key={story.id} style={styles.storyItem}>
+          <TouchableOpacity 
+            key={story.id} 
+            style={styles.storyItem}
+            onPress={story.isAdd ? handleAddStory : undefined}
+          >
             {story.isAdd ? (
               <View style={styles.addStoryContainer}>
                 <Image source={{ uri: story.user.avatar }} style={styles.addStoryAvatar} />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ViewStyle, StyleSheet } from 'react-native';
+import { View, ViewStyle, StyleSheet, Platform } from 'react-native';
 import { PlantTheme } from '@/constants/theme';
 
 interface CardContainerProps {
@@ -58,6 +58,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PlantTheme.colors.cardBorder,
     ...PlantTheme.shadows.sm,
+    ...(Platform.OS === 'android' && {
+      backgroundColor: PlantTheme.colors.cardBackground,
+      elevation: 2,
+      shadowColor: 'transparent',
+    }),
   },
   card: {
     backgroundColor: PlantTheme.colors.cardBackground,
@@ -65,5 +70,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PlantTheme.colors.cardBorder,
     ...PlantTheme.shadows.md,
+    ...(Platform.OS === 'android' && {
+      backgroundColor: PlantTheme.colors.cardBackground,
+      elevation: 3,
+      shadowColor: 'transparent',
+    }),
   },
 });

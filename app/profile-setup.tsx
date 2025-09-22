@@ -258,10 +258,14 @@ const styles = StyleSheet.create({
   logoContainer: {
     marginBottom: 20,
     padding: 16,
-    backgroundColor: 'transparent',
+    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
     borderRadius: PlantTheme.borderRadius.full,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
+    ...(Platform.OS === 'android' && {
+      elevation: 2,
+      shadowColor: 'transparent',
+    }),
   },
   title: {
     fontSize: 28,
@@ -278,7 +282,7 @@ const styles = StyleSheet.create({
   },
   formCard: {
     padding: 24,
-    backgroundColor: 'transparent',
+    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
   },
   avatarSection: {
     alignItems: "center",
@@ -298,9 +302,9 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'transparent',
+    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
     borderWidth: 2,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -340,9 +344,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
     borderRadius: Platform.OS === 'android' ? PlantTheme.borderRadius.sm : PlantTheme.borderRadius.md,
-    backgroundColor: 'transparent',
+    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
     paddingHorizontal: 16,
     ...(Platform.OS === 'android' && {
       elevation: 2,
@@ -418,9 +422,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   glassInput: {
-    backgroundColor: 'transparent',
+    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
     borderWidth: 1,
-    borderColor: PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.cardBorder,
     ...PlantTheme.shadows.sm,
     ...(Platform.OS === 'android' && {
       elevation: 0,

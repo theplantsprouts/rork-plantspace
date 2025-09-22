@@ -16,14 +16,17 @@ interface PostItemProps {
 
 function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
   const handleLike = useCallback(() => {
+    console.log('Sunshine (like) pressed for post:', post.id);
     onLike?.();
-  }, [onLike]);
+  }, [onLike, post.id]);
   
   const handleComment = useCallback(() => {
+    console.log('Roots (comment) pressed for post:', post.id);
     onComment?.(post.id);
   }, [onComment, post.id]);
   
   const handleShare = useCallback(() => {
+    console.log('Spread Seeds (share) pressed for post:', post.id);
     onShare?.(post.id);
   }, [onShare, post.id]);
 

@@ -6,12 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   useWindowDimensions,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Settings, Edit3, MapPin, Calendar, Link, TreePine, Leaf, Sun, Bug } from 'lucide-react-native';
+import { Settings, Edit3, MapPin, Calendar, Link, TreePine, Leaf, Sun, Bug, Camera, Plus } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useAppContext } from '@/hooks/use-app-context';
 import { usePosts } from '@/hooks/use-posts';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
@@ -23,6 +26,7 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const { currentUser } = useAppContext();
   const { posts } = usePosts();
+
   // Temporarily disable scroll handling to fix hooks order issue
   const handleScroll = () => {};
 
@@ -30,6 +34,118 @@ export default function ProfileScreen() {
   
   const userPosts = posts.filter(post => post.user.id === currentUser?.id);
   const totalLikes = userPosts.reduce((sum, post) => sum + post.likes, 0);
+
+  const handleEditProfilePicture = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'We need camera roll permissions to change your profile picture.');
+        return;
+      }
+    }
+
+    Alert.alert(
+      'Change Profile Picture',
+      'Choose an option',
+      [
+        { text: 'Camera', onPress: openCamera },
+        { text: 'Photo Library', onPress: openImagePicker },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const openCamera = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not supported', 'Camera is not supported on web. Please use photo library.');
+      return;
+    }
+
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'We need camera permissions to take a photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      // Here you would upload the image and update the user profile
+      console.log('New profile picture:', result.assets[0].uri);
+      Alert.alert('Success', 'Profile picture updated!');
+    }
+  };
+
+  const openImagePicker = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      // Here you would upload the image and update the user profile
+      console.log('New profile picture:', result.assets[0].uri);
+      Alert.alert('Success', 'Profile picture updated!');
+    }
+  };
+
+  const handleEditProfile = () => {
+    router.push('/profile-setup');
+  };
+
+  const handleShareProfile = () => {
+    Alert.alert('Share Profile', 'Profile sharing functionality coming soon!');
+  };
+
+  const handlePostPress = (post: any) => {
+    // Navigate to post detail view
+    console.log('Opening post:', post.id);
+    Alert.alert('Post Details', `Opening post: ${post.content.substring(0, 50)}...`);
+  };
+
+  const handleAddStory = () => {
+    Alert.alert(
+      'Add Story',
+      'What would you like to share?',
+      [
+        { text: 'Text Story', onPress: () => handleCreateStory('text') },
+        { text: 'Photo Story', onPress: () => handleCreateStory('photo') },
+        { text: 'Both', onPress: () => handleCreateStory('both') },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const handleCreateStory = async (type: 'text' | 'photo' | 'both') => {
+    if (type === 'photo' || type === 'both') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'We need photo permissions to add images to your story.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [9, 16],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        console.log('Story image:', result.assets[0].uri);
+      }
+    }
+
+    // Here you would implement story creation logic
+    Alert.alert('Story Created', 'Your story will disappear in 24 hours!');
+  };
 
   return (
     <View style={styles.container}>
@@ -73,8 +189,12 @@ export default function ProfileScreen() {
                 contentFit="cover"
                 transition={200}
               />
-              <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
-                <Edit3 color={PlantTheme.colors.white} size={16} />
+              <TouchableOpacity 
+                style={styles.editButton} 
+                activeOpacity={0.7}
+                onPress={handleEditProfilePicture}
+              >
+                <Camera color={PlantTheme.colors.white} size={16} />
               </TouchableOpacity>
             </View>
 
@@ -124,13 +244,40 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.editProfileButton} activeOpacity={0.8}>
+              <TouchableOpacity 
+                style={styles.editProfileButton} 
+                activeOpacity={0.8}
+                onPress={handleEditProfile}
+              >
+                <Edit3 color={PlantTheme.colors.white} size={16} style={styles.editIcon} />
                 <Text style={styles.editProfileText}>Tend Garden</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton} activeOpacity={0.8}>
+              <TouchableOpacity 
+                style={styles.shareButton} 
+                activeOpacity={0.8}
+                onPress={handleShareProfile}
+              >
                 <Text style={styles.shareButtonText}>Spread Seeds</Text>
               </TouchableOpacity>
             </View>
+          </GlassCard>
+
+          {/* Story Section */}
+          <GlassCard style={styles.storyCard}>
+            <View style={styles.storyHeader}>
+              <Text style={styles.sectionTitle}>📖 My Story</Text>
+              <TouchableOpacity 
+                style={styles.addStoryButton}
+                onPress={handleAddStory}
+                activeOpacity={0.7}
+              >
+                <Plus color={PlantTheme.colors.primary} size={20} />
+                <Text style={styles.addStoryText}>Add Story</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.storyDescription}>
+              Share your daily garden moments that disappear in 24 hours
+            </Text>
           </GlassCard>
 
           <View style={styles.postsSection}>
@@ -147,6 +294,7 @@ export default function ProfileScreen() {
                     key={post.id} 
                     style={[styles.postItem, { width: (width - 50) / 3, height: (width - 50) / 3 }]}
                     activeOpacity={0.8}
+                    onPress={() => handlePostPress(post)}
                   >
                     {post.image ? (
                       <Image 
@@ -221,6 +369,10 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     padding: 25,
     backgroundColor: PlantTheme.colors.cardBackground,
+    ...(Platform.OS === 'android' && {
+      elevation: 3,
+      shadowColor: 'transparent',
+    }),
   },
 
   profileHeader: {
@@ -311,7 +463,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: PlantTheme.borderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
     ...PlantTheme.shadows.sm,
+    ...(Platform.OS === 'android' && {
+      elevation: 2,
+      shadowColor: 'transparent',
+    }),
   },
   editProfileText: {
     color: PlantTheme.colors.white,
@@ -399,5 +557,44 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  storyCard: {
+    marginBottom: 20,
+    padding: 20,
+    backgroundColor: PlantTheme.colors.cardBackground,
+    ...(Platform.OS === 'android' && {
+      elevation: 2,
+      shadowColor: 'transparent',
+    }),
+  },
+  storyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  addStoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: PlantTheme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.primary,
+  },
+  addStoryText: {
+    color: PlantTheme.colors.primary,
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  storyDescription: {
+    color: PlantTheme.colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  editIcon: {
+    marginRight: 8,
   },
 });
