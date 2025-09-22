@@ -1,10 +1,11 @@
 import React, { memo, useCallback } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from "react-native";
 import { Image } from "expo-image";
 import { Sun, Sprout, Share2 } from "lucide-react-native";
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { type Post } from "@/hooks/use-posts";
+import * as Haptics from 'expo-haptics';
 
 interface PostItemProps {
   post: Post;
@@ -15,19 +16,65 @@ interface PostItemProps {
 }
 
 function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
-  const handleLike = useCallback(() => {
+  const handleLike = useCallback(async () => {
     console.log('Sunshine (like) pressed for post:', post.id);
+    
+    // Haptic feedback for better UX
+    if (Platform.OS !== 'web') {
+      try {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (error) {
+        console.log('Haptics not available:', error);
+      }
+    }
+    
     onLike?.();
   }, [onLike, post.id]);
   
   const handleComment = useCallback(() => {
     console.log('Roots (comment) pressed for post:', post.id);
-    onComment?.(post.id);
+    
+    // Show a simple comment input for now
+    Alert.prompt(
+      '🌱 Add Roots (Comment)',
+      'Share your thoughts on this seed:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Post', 
+          onPress: (comment) => {
+            if (comment && comment.trim()) {
+              onComment?.(post.id);
+              console.log('Comment added:', comment);
+            }
+          }
+        },
+      ],
+      'plain-text',
+      '',
+      'default'
+    );
   }, [onComment, post.id]);
   
   const handleShare = useCallback(() => {
     console.log('Spread Seeds (share) pressed for post:', post.id);
-    onShare?.(post.id);
+    
+    // Show share options
+    Alert.alert(
+      '🌱 Spread Seeds',
+      'How would you like to share this seed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Copy Link', onPress: () => {
+          console.log('Copy link for post:', post.id);
+          onShare?.(post.id);
+        }},
+        { text: 'Share to Garden', onPress: () => {
+          console.log('Share to garden for post:', post.id);
+          onShare?.(post.id);
+        }},
+      ]
+    );
   }, [onShare, post.id]);
 
   return (

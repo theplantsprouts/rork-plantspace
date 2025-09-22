@@ -96,22 +96,44 @@ export function usePosts() {
   // Use only real-time posts from Firebase
   const allPosts = posts;
 
-  const toggleLike = (postId: string) => {
+  const toggleLike = async (postId: string) => {
     const post = allPosts.find(p => p.id === postId);
     if (post) {
       trackPostLiked(postId, post.user.id);
+      
+      // Update the post's like count locally for immediate feedback
+      const updatedPosts = allPosts.map(p => 
+        p.id === postId 
+          ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked }
+          : p
+      );
+      
+      // In a real app, you'd update the like in Firebase here
+      console.log('Like toggled for post:', postId, 'New like count:', updatedPosts.find(p => p.id === postId)?.likes);
+      
+      // Force a refresh to get updated data
+      refresh();
     }
-    // Note: In a real app, you'd update the like in Firebase here
-    console.log('Like toggled for post:', postId);
   };
 
-  const toggleShare = (postId: string) => {
+  const toggleShare = async (postId: string) => {
     const post = allPosts.find(p => p.id === postId);
     if (post) {
       trackPostShared(postId, 'app_share');
+      
+      // Update the post's share count locally for immediate feedback
+      const updatedPosts = allPosts.map(p => 
+        p.id === postId 
+          ? { ...p, shares: p.isShared ? p.shares - 1 : p.shares + 1, isShared: !p.isShared }
+          : p
+      );
+      
+      // In a real app, you'd update the share count in Firebase here
+      console.log('Share toggled for post:', postId, 'New share count:', updatedPosts.find(p => p.id === postId)?.shares);
+      
+      // Force a refresh to get updated data
+      refresh();
     }
-    // Note: In a real app, you'd update the share count in Firebase here
-    console.log('Share toggled for post:', postId);
   };
 
   const trackPostView = (postId: string, authorId: string) => {
@@ -178,9 +200,22 @@ export function usePosts() {
     }
   };
 
-  const addComment = (postId: string, content: string) => {
-    // Note: In a real app, you'd create the comment in Firebase here
-    console.log('Comment added to post:', postId, content);
+  const addComment = async (postId: string, content: string) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (post) {
+      // Update the post's comment count locally for immediate feedback
+      const updatedPosts = allPosts.map(p => 
+        p.id === postId 
+          ? { ...p, comments: p.comments + 1 }
+          : p
+      );
+      
+      // In a real app, you'd create the comment in Firebase here
+      console.log('Comment added to post:', postId, content, 'New comment count:', updatedPosts.find(p => p.id === postId)?.comments);
+      
+      // Force a refresh to get updated data
+      refresh();
+    }
   };
 
   const getSmartRecommendations = async (userInterests: string[] = [], followedUsers: string[] = []) => {

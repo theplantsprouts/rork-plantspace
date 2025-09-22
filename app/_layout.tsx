@@ -116,6 +116,7 @@ function RootLayoutNav() {
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="profile-setup" options={{ headerShown: false }} />
       <Stack.Screen name="create-post" options={{ title: "Create Post" }} />
+      <Stack.Screen name="post-detail" options={{ title: "Seed Details", headerShown: false }} />
       <Stack.Screen name="firebase-test" options={{ title: "Firebase Test" }} />
       <Stack.Screen name="debug" options={{ title: "Debug" }} />
       <Stack.Screen name="modal" options={{ presentation: "modal" }} />

@@ -75,9 +75,19 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      // Here you would upload the image and update the user profile
-      console.log('New profile picture:', result.assets[0].uri);
-      Alert.alert('Success', 'Profile picture updated!');
+      try {
+        // Here you would upload the image and update the user profile
+        console.log('New profile picture:', result.assets[0].uri);
+        
+        // TODO: Implement actual profile picture upload to Firebase
+        // const imageUrl = await uploadImage(result.assets[0].uri, 'profile-pictures');
+        // await updateUserProfile({ avatar: imageUrl });
+        
+        Alert.alert('Success', 'Profile picture will be updated soon!');
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        Alert.alert('Error', 'Failed to update profile picture. Please try again.');
+      }
     }
   };
 
@@ -90,9 +100,19 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      // Here you would upload the image and update the user profile
-      console.log('New profile picture:', result.assets[0].uri);
-      Alert.alert('Success', 'Profile picture updated!');
+      try {
+        // Here you would upload the image and update the user profile
+        console.log('New profile picture:', result.assets[0].uri);
+        
+        // TODO: Implement actual profile picture upload to Firebase
+        // const imageUrl = await uploadImage(result.assets[0].uri, 'profile-pictures');
+        // await updateUserProfile({ avatar: imageUrl });
+        
+        Alert.alert('Success', 'Profile picture will be updated soon!');
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        Alert.alert('Error', 'Failed to update profile picture. Please try again.');
+      }
     }
   };
 
@@ -107,7 +127,7 @@ export default function ProfileScreen() {
   const handlePostPress = (post: any) => {
     // Navigate to post detail view
     console.log('Opening post:', post.id);
-    Alert.alert('Post Details', `Opening post: ${post.content.substring(0, 50)}...`);
+    router.push(`/post-detail?postId=${post.id}`);
   };
 
   const handleAddStory = () => {
