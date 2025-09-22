@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Settings, Edit3, MapPin, Calendar, Link, TreePine, Leaf, Sun, Bug, Came
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { useTabBar } from './_layout';
 import { useAppContext } from '@/hooks/use-app-context';
 import { usePosts } from '@/hooks/use-posts';
 import { PlantTheme, PlantTerminology } from '@/constants/theme';
@@ -27,8 +28,15 @@ export default function ProfileScreen() {
   const { currentUser } = useAppContext();
   const { posts } = usePosts();
 
-  // Temporarily disable scroll handling to fix hooks order issue
-  const handleScroll = () => {};
+  // Enable scroll handling for tab bar animation
+  const { handleScroll } = useTabBar();
+  
+  const onScroll = useCallback((event: any) => {
+    if (event?.nativeEvent?.contentOffset?.y !== undefined) {
+      handleScroll(event);
+      console.log('Profile screen scrolling:', event.nativeEvent.contentOffset.y);
+    }
+  }, [handleScroll]);
 
   const insets = useSafeAreaInsets();
   
@@ -124,11 +132,13 @@ export default function ProfileScreen() {
     Alert.alert('Share Profile', 'Profile sharing functionality coming soon!');
   };
 
-  const handlePostPress = (post: any) => {
+  const handlePostPress = useCallback((post: any) => {
     // Navigate to post detail view
-    console.log('Opening post:', post.id);
-    router.push(`/post-detail?postId=${post.id}`);
-  };
+    if (post?.id) {
+      console.log('Opening post:', post.id);
+      router.push(`/post-detail?postId=${post.id}`);
+    }
+  }, []);
 
   const handleAddStory = () => {
     Alert.alert(
@@ -197,7 +207,7 @@ export default function ProfileScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           removeClippedSubviews={true}
-          onScroll={handleScroll}
+          onScroll={onScroll}
           scrollEventThrottle={16}
         >
           <GlassCard style={styles.profileCard}>

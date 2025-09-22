@@ -23,6 +23,7 @@ import VirtualizedList from '@/components/VirtualizedList';
 import PostItem from '@/components/PostItem';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useTabBar } from './_layout';
 
 
 export default function HomeScreen() {
@@ -31,12 +32,16 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showInsights, setShowInsights] = useState(false);
-  const { posts, toggleLike, toggleShare, addComment, isLoading, error } = usePosts();
+  const { posts, toggleLike, toggleShare, addComment, isLoading, error, refresh } = usePosts();
   // Enable scroll handling for tab bar animation
-  const handleScroll = useCallback((event: any) => {
-    // This would be used for tab bar animation if needed
-    console.log('Home screen scrolling:', event.nativeEvent.contentOffset.y);
-  }, []);
+  const { handleScroll } = useTabBar();
+  
+  const onScroll = useCallback((event: any) => {
+    if (event?.nativeEvent?.contentOffset?.y !== undefined) {
+      handleScroll(event);
+      console.log('Home screen scrolling:', event.nativeEvent.contentOffset.y);
+    }
+  }, [handleScroll]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -181,7 +186,13 @@ export default function HomeScreen() {
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyTitle}>🌱 Connection Issue</Text>
               <Text style={styles.emptyText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={() => window.location.reload()}>
+              <TouchableOpacity style={styles.retryButton} onPress={() => {
+                if (Platform.OS === 'web') {
+                  window.location.reload();
+                } else {
+                  refresh();
+                }
+              }}>
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
             </View>
@@ -203,7 +214,7 @@ export default function HomeScreen() {
               keyExtractor={keyExtractor}
               estimatedItemSize={Platform.OS === 'web' ? 280 : 320}
               testID="posts-list"
-              onScroll={handleScroll}
+              onScroll={onScroll}
               scrollEventThrottle={16}
             />
           )}

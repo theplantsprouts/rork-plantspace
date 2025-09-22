@@ -99,40 +99,46 @@ export function usePosts() {
   const toggleLike = async (postId: string) => {
     const post = allPosts.find(p => p.id === postId);
     if (post) {
-      trackPostLiked(postId, post.user.id);
-      
-      // Update the post's like count locally for immediate feedback
-      const updatedPosts = allPosts.map(p => 
-        p.id === postId 
-          ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked }
-          : p
-      );
-      
-      // In a real app, you'd update the like in Firebase here
-      console.log('Like toggled for post:', postId, 'New like count:', updatedPosts.find(p => p.id === postId)?.likes);
-      
-      // Force a refresh to get updated data
-      refresh();
+      try {
+        trackPostLiked(postId, post.user.id);
+        
+        // TODO: Implement actual like toggle in Firebase
+        // For now, just log the action
+        console.log('Like toggled for post:', postId, 'Current likes:', post.likes);
+        
+        // In a real implementation, you would:
+        // 1. Update the like count in Firestore
+        // 2. Add/remove the user's like record
+        // 3. The real-time listener will automatically update the UI
+        
+        // Simulate the action for now
+        console.log('✅ Like action processed successfully');
+      } catch (error) {
+        console.error('Error toggling like:', error);
+      }
     }
   };
 
   const toggleShare = async (postId: string) => {
     const post = allPosts.find(p => p.id === postId);
     if (post) {
-      trackPostShared(postId, 'app_share');
-      
-      // Update the post's share count locally for immediate feedback
-      const updatedPosts = allPosts.map(p => 
-        p.id === postId 
-          ? { ...p, shares: p.isShared ? p.shares - 1 : p.shares + 1, isShared: !p.isShared }
-          : p
-      );
-      
-      // In a real app, you'd update the share count in Firebase here
-      console.log('Share toggled for post:', postId, 'New share count:', updatedPosts.find(p => p.id === postId)?.shares);
-      
-      // Force a refresh to get updated data
-      refresh();
+      try {
+        trackPostShared(postId, 'app_share');
+        
+        // TODO: Implement actual share functionality
+        // For now, just log the action
+        console.log('Share action for post:', postId, 'Content:', post.content.substring(0, 50) + '...');
+        
+        // In a real implementation, you would:
+        // 1. Open native share dialog
+        // 2. Update share count in Firestore
+        // 3. Track sharing analytics
+        
+        // Simulate the action for now
+        console.log('✅ Share action processed successfully');
+      } catch (error) {
+        console.error('Error sharing post:', error);
+      }
     }
   };
 
@@ -202,19 +208,23 @@ export function usePosts() {
 
   const addComment = async (postId: string, content: string) => {
     const post = allPosts.find(p => p.id === postId);
-    if (post) {
-      // Update the post's comment count locally for immediate feedback
-      const updatedPosts = allPosts.map(p => 
-        p.id === postId 
-          ? { ...p, comments: p.comments + 1 }
-          : p
-      );
-      
-      // In a real app, you'd create the comment in Firebase here
-      console.log('Comment added to post:', postId, content, 'New comment count:', updatedPosts.find(p => p.id === postId)?.comments);
-      
-      // Force a refresh to get updated data
-      refresh();
+    if (post && content.trim()) {
+      try {
+        // TODO: Implement actual comment creation in Firebase
+        // For now, just log the action
+        console.log('Comment added to post:', postId, 'Comment:', content);
+        
+        // In a real implementation, you would:
+        // 1. Create comment document in Firestore
+        // 2. Update post's comment count
+        // 3. Send notification to post author
+        // 4. The real-time listener will automatically update the UI
+        
+        // Simulate the action for now
+        console.log('✅ Comment action processed successfully');
+      } catch (error) {
+        console.error('Error adding comment:', error);
+      }
     }
   };
 
