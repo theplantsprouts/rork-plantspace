@@ -53,10 +53,12 @@ export default function PostDetailScreen() {
   };
   
   const handleComment = () => {
-    addComment(post.id, 'Great seed! 🌱');
+    console.log('Adding roots (comment) to post:', post.id);
+    addComment(post.id, 'Great seed! 🌱 Keep growing!');
   };
   
   const handleShare = () => {
+    console.log('Spreading seeds (sharing) for post:', post.id);
     toggleShare(post.id);
   };
   

@@ -39,7 +39,6 @@ export default function HomeScreen() {
   const onScroll = useCallback((event: any) => {
     if (event?.nativeEvent?.contentOffset?.y !== undefined) {
       handleScroll(event);
-      console.log('Home screen scrolling:', event.nativeEvent.contentOffset.y);
     }
   }, [handleScroll]);
 
@@ -73,14 +72,12 @@ export default function HomeScreen() {
 
 
   const handleComment = useCallback((postId: string) => {
-    console.log('Comment functionality for post:', postId);
-    // Here you would implement comment functionality
-    // For now, just add a mock comment
-    addComment(postId, 'Great post! 🌱');
+    console.log('Adding roots (comment) to post:', postId);
+    addComment(postId, 'Great seed! 🌱 Keep growing!');
   }, [addComment]);
 
   const handleShare = useCallback((postId: string) => {
-    console.log('Share functionality for post:', postId);
+    console.log('Spreading seeds (sharing) for post:', postId);
     toggleShare(postId);
   }, [toggleShare]);
 

@@ -52,15 +52,27 @@ export default function ProfileScreen() {
       }
     }
 
-    Alert.alert(
-      'Change Profile Picture',
-      'Choose an option',
-      [
-        { text: 'Camera', onPress: openCamera },
-        { text: 'Photo Library', onPress: openImagePicker },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    if (Platform.OS === 'web') {
+      // On web, only show photo library option
+      Alert.alert(
+        'Change Profile Picture',
+        'Choose an option',
+        [
+          { text: 'Photo Library', onPress: openImagePicker },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Change Profile Picture',
+        'Choose an option',
+        [
+          { text: 'Camera', onPress: openCamera },
+          { text: 'Photo Library', onPress: openImagePicker },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    }
   };
 
   const openCamera = async () => {
@@ -84,17 +96,18 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets[0]) {
       try {
-        // Here you would upload the image and update the user profile
-        console.log('New profile picture:', result.assets[0].uri);
+        console.log('New profile picture from camera:', result.assets[0].uri);
         
-        // TODO: Implement actual profile picture upload to Firebase
-        // const imageUrl = await uploadImage(result.assets[0].uri, 'profile-pictures');
-        // await updateUserProfile({ avatar: imageUrl });
+        // For now, just show success message
+        // In a real implementation, you would:
+        // 1. Upload the image to Firebase Storage
+        // 2. Update the user's profile with the new avatar URL
+        // 3. Update the local state
         
-        Alert.alert('Success', 'Profile picture will be updated soon!');
+        Alert.alert('Success', 'Profile picture captured! Upload functionality will be implemented soon.');
       } catch (error) {
-        console.error('Error uploading profile picture:', error);
-        Alert.alert('Error', 'Failed to update profile picture. Please try again.');
+        console.error('Error processing profile picture:', error);
+        Alert.alert('Error', 'Failed to process profile picture. Please try again.');
       }
     }
   };
@@ -109,17 +122,18 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets[0]) {
       try {
-        // Here you would upload the image and update the user profile
-        console.log('New profile picture:', result.assets[0].uri);
+        console.log('New profile picture from library:', result.assets[0].uri);
         
-        // TODO: Implement actual profile picture upload to Firebase
-        // const imageUrl = await uploadImage(result.assets[0].uri, 'profile-pictures');
-        // await updateUserProfile({ avatar: imageUrl });
+        // For now, just show success message
+        // In a real implementation, you would:
+        // 1. Upload the image to Firebase Storage
+        // 2. Update the user's profile with the new avatar URL
+        // 3. Update the local state
         
-        Alert.alert('Success', 'Profile picture will be updated soon!');
+        Alert.alert('Success', 'Profile picture selected! Upload functionality will be implemented soon.');
       } catch (error) {
-        console.error('Error uploading profile picture:', error);
-        Alert.alert('Error', 'Failed to update profile picture. Please try again.');
+        console.error('Error processing profile picture:', error);
+        Alert.alert('Error', 'Failed to process profile picture. Please try again.');
       }
     }
   };

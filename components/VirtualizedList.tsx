@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo } from "react";
-import { FlatList, View, StyleSheet, useWindowDimensions, Platform } from "react-native";
+import { FlatList, StyleSheet, useWindowDimensions, Platform } from "react-native";
 
 interface VirtualizedListProps<T> {
   data: T[];
@@ -59,7 +59,7 @@ function VirtualizedList<T>({
 
   const memoizedRenderItem = useCallback(
     ({ item, index }: { item: T; index: number }) => {
-      return <View style={styles.itemContainer}>{renderItem({ item, index })}</View>;
+      return renderItem({ item, index });
     },
     [renderItem]
   );
@@ -94,9 +94,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  itemContainer: {
-    flex: 1,
-  },
+
 });
 
 export default memo(VirtualizedList) as <T>(

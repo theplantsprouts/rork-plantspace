@@ -10,8 +10,8 @@ import * as Haptics from 'expo-haptics';
 interface PostItemProps {
   post: Post;
   onLike?: () => void;
-  onComment?: (postId: string) => void;
-  onShare?: (postId: string) => void;
+  onComment?: () => void;
+  onShare?: () => void;
   testID?: string;
 }
 
@@ -34,26 +34,35 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
   const handleComment = useCallback(() => {
     console.log('Roots (comment) pressed for post:', post.id);
     
-    // Show a simple comment input for now
-    Alert.prompt(
-      '🌱 Add Roots (Comment)',
-      'Share your thoughts on this seed:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Post', 
-          onPress: (comment) => {
-            if (comment && comment.trim()) {
-              onComment?.(post.id);
-              console.log('Comment added:', comment);
+    if (Platform.OS === 'web') {
+      // For web, use a simple prompt
+      const comment = prompt('🌱 Add Roots (Comment)\nShare your thoughts on this seed:');
+      if (comment && comment.trim()) {
+        onComment?.();
+        console.log('Comment added:', comment);
+      }
+    } else {
+      // For mobile, use Alert.prompt
+      Alert.prompt(
+        '🌱 Add Roots (Comment)',
+        'Share your thoughts on this seed:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Post', 
+            onPress: (comment) => {
+              if (comment && comment.trim()) {
+                onComment?.();
+                console.log('Comment added:', comment);
+              }
             }
-          }
-        },
-      ],
-      'plain-text',
-      '',
-      'default'
-    );
+          },
+        ],
+        'plain-text',
+        '',
+        'default'
+      );
+    }
   }, [onComment, post.id]);
   
   const handleShare = useCallback(() => {
@@ -67,11 +76,11 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
         { text: 'Cancel', style: 'cancel' },
         { text: 'Copy Link', onPress: () => {
           console.log('Copy link for post:', post.id);
-          onShare?.(post.id);
+          onShare?.();
         }},
         { text: 'Share to Garden', onPress: () => {
           console.log('Share to garden for post:', post.id);
-          onShare?.(post.id);
+          onShare?.();
         }},
       ]
     );
