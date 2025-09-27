@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-
 });
 
 export default memo(VirtualizedList) as <T>(

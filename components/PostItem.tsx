@@ -35,11 +35,29 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
     console.log('Roots (comment) pressed for post:', post.id);
     
     if (Platform.OS === 'web') {
-      // For web, use a simple prompt
-      const comment = prompt('🌱 Add Roots (Comment)\nShare your thoughts on this seed:');
-      if (comment && comment.trim()) {
-        onComment?.();
-        console.log('Comment added:', comment);
+      // For web, use window.prompt if available, otherwise use Alert
+      if (typeof window !== 'undefined' && window.prompt) {
+        const comment = window.prompt('🌱 Add Roots (Comment)\nShare your thoughts on this seed:');
+        if (comment && comment.trim()) {
+          onComment?.();
+          console.log('Comment added:', comment);
+        }
+      } else {
+        // Fallback to Alert for web environments without prompt
+        Alert.alert(
+          '🌱 Add Roots (Comment)',
+          'Share your thoughts on this seed:',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Post', 
+              onPress: () => {
+                onComment?.();
+                console.log('Comment action triggered');
+              }
+            },
+          ]
+        );
       }
     } else {
       // For mobile, use Alert.alert with input simulation
