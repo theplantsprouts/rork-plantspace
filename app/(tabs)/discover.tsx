@@ -20,10 +20,13 @@ import * as Haptics from 'expo-haptics';
 
 
 import { usePosts } from '@/hooks/use-posts';
+import { mockUsers, mockTrendingTopics, mockDiscoverPosts } from '@/constants/mock-data';
 
-// Generate trending topics from real posts
+// Generate trending topics from real posts or use mock data
 const generateTrendingTopics = (posts: any[]) => {
-  if (posts.length === 0) return [];
+  if (posts.length === 0) {
+    return mockTrendingTopics;
+  }
   
   const topics = [
     { id: 1, tag: '#SustainableFarming', icon: '🌱' },
@@ -39,9 +42,11 @@ const generateTrendingTopics = (posts: any[]) => {
   }));
 };
 
-// Generate suggested users from real posts
+// Generate suggested users from real posts or use mock data
 const generateSuggestedUsers = (posts: any[]) => {
-  if (posts.length === 0) return [];
+  if (posts.length === 0) {
+    return mockUsers;
+  }
   
   const uniqueUsers = posts.reduce((acc: any[], post: any) => {
     if (!acc.find(u => u.id === post.user.id)) {
@@ -61,9 +66,15 @@ const generateSuggestedUsers = (posts: any[]) => {
   return uniqueUsers.slice(0, 5);
 };
 
-// Generate discover posts from real posts
+// Generate discover posts from real posts or use mock data
 const generateDiscoverPosts = (posts: any[]) => {
-  return posts.filter(post => post.image).slice(0, 6).map(post => ({
+  const postsWithImages = posts.filter(post => post.image);
+  
+  if (postsWithImages.length === 0) {
+    return mockDiscoverPosts;
+  }
+  
+  return postsWithImages.slice(0, 6).map(post => ({
     id: post.id,
     image: post.image,
     likes: post.likes.toString(),
@@ -108,7 +119,7 @@ export default function DiscoverScreen() {
     }
   };
 
-  const handleFollowToggle = async (userId: number) => {
+  const handleFollowToggle = async (userId: string | number) => {
     if (Platform.OS !== 'web') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -116,8 +127,11 @@ export default function DiscoverScreen() {
     const user = suggestedUsers.find(u => u.id === userId);
     if (!user) return;
     
-    if (isFollowing(userId)) {
-      unfollowUser(userId);
+    // Convert string ID to number for compatibility with existing follow system
+    const numericUserId = typeof userId === 'string' ? parseInt(userId.replace('mock-', ''), 10) || Date.now() : userId;
+    
+    if (isFollowing(numericUserId)) {
+      unfollowUser(numericUserId);
       addNotification({
         id: Date.now(),
         type: 'unfollow',
@@ -126,7 +140,7 @@ export default function DiscoverScreen() {
         time: 'now',
       });
     } else {
-      followUser(userId);
+      followUser(numericUserId);
       addNotification({
         id: Date.now(),
         type: 'follow',
@@ -205,15 +219,15 @@ export default function DiscoverScreen() {
                     <TouchableOpacity 
                       style={[
                         styles.followButton,
-                        isFollowing(user.id) && styles.followingButton
+                        isFollowing(typeof user.id === 'string' ? parseInt(user.id.replace('mock-', ''), 10) || Date.now() : user.id) && styles.followingButton
                       ]}
                       onPress={() => handleFollowToggle(user.id)}
                     >
                       <Text style={[
                         styles.followButtonText,
-                        isFollowing(user.id) && styles.followingButtonText
+                        isFollowing(typeof user.id === 'string' ? parseInt(user.id.replace('mock-', ''), 10) || Date.now() : user.id) && styles.followingButtonText
                       ]}>
-                        {isFollowing(user.id) ? PlantTerminology.following : 'Connect'}
+                        {isFollowing(typeof user.id === 'string' ? parseInt(user.id.replace('mock-', ''), 10) || Date.now() : user.id) ? PlantTerminology.following : 'Connect'}
                       </Text>
                     </TouchableOpacity>
                   </GlassCard>

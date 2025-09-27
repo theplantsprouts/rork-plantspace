@@ -4,6 +4,7 @@ import { useAuth } from './use-auth';
 import { useRealTimePosts } from './use-realtime';
 import { createPost, uploadImage, Post as FirebasePost } from '@/lib/firebase';
 import { trackPostCreated, trackPostViewed, trackPostLiked, trackPostShared } from '@/lib/analytics';
+import { mockPosts } from '@/constants/mock-data';
 
 export interface User {
   id: string;
@@ -68,7 +69,7 @@ export function usePosts() {
   const { posts: realTimePosts, loading: isLoading, error, refresh } = useRealTimePosts();
   
   // Convert Firebase posts to our Post interface
-  const posts = realTimePosts.map((firebasePost: FirebasePost) => ({
+  const firebasePosts = realTimePosts.map((firebasePost: FirebasePost) => ({
     id: firebasePost.id,
     user: {
       id: firebasePost.author?.id || firebasePost.author_id,
@@ -93,8 +94,8 @@ export function usePosts() {
     recommendationScore: 0.8,
   }));
   
-  // Use only real-time posts from Firebase
-  const allPosts = posts;
+  // Use Firebase posts if available, otherwise use mock data
+  const allPosts = firebasePosts.length > 0 ? firebasePosts : mockPosts;
 
   const toggleLike = async (postId: string) => {
     const post = allPosts.find(p => p.id === postId);
