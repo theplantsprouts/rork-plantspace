@@ -69,7 +69,7 @@ export function usePosts() {
   const { posts: realTimePosts, loading: isLoading, error, refresh } = useRealTimePosts();
   
   // Convert Firebase posts to our Post interface
-  const firebasePosts = realTimePosts.map((firebasePost: FirebasePost) => ({
+  const firebasePosts = realTimePosts.map((firebasePost: FirebasePost): Post => ({
     id: firebasePost.id,
     user: {
       id: firebasePost.author?.id || firebasePost.author_id,
@@ -87,6 +87,7 @@ export function usePosts() {
     shares: 0, // Not implemented yet
     isLiked: false, // Would need to check user's likes
     isShared: false,
+    postComments: [],
     moderationStatus: 'approved' as 'approved' | 'pending' | 'rejected',
     isAgricultureRelated: true,
     aiScore: 0.9,
@@ -95,7 +96,7 @@ export function usePosts() {
   }));
   
   // Use Firebase posts if available, otherwise use mock data
-  const allPosts = firebasePosts.length > 0 ? firebasePosts : mockPosts;
+  const allPosts: Post[] = firebasePosts.length > 0 ? firebasePosts : mockPosts;
 
   const toggleLike = async (postId: string) => {
     const post = allPosts.find(p => p.id === postId);
@@ -104,16 +105,14 @@ export function usePosts() {
         trackPostLiked(postId, post.user.id);
         
         // TODO: Implement actual like toggle in Firebase
-        // For now, just log the action
+        // For now, simulate the action by updating local state
         console.log('Like toggled for post:', postId, 'Current likes:', post.likes);
         
-        // In a real implementation, you would:
-        // 1. Update the like count in Firestore
-        // 2. Add/remove the user's like record
-        // 3. The real-time listener will automatically update the UI
+        // Simulate like toggle - in a real app this would update Firebase
+        post.likes = post.isLiked ? post.likes - 1 : post.likes + 1;
+        post.isLiked = !post.isLiked;
         
-        // Simulate the action for now
-        console.log('✅ Like action processed successfully');
+        console.log('✅ Like action processed successfully - New likes:', post.likes);
       } catch (error) {
         console.error('Error toggling like:', error);
       }
@@ -126,17 +125,14 @@ export function usePosts() {
       try {
         trackPostShared(postId, 'app_share');
         
-        // TODO: Implement actual share functionality
-        // For now, just log the action
+        // Simulate share functionality
         console.log('Share action for post:', postId, 'Content:', post.content.substring(0, 50) + '...');
         
-        // In a real implementation, you would:
-        // 1. Open native share dialog
-        // 2. Update share count in Firestore
-        // 3. Track sharing analytics
+        // Simulate share count increment
+        post.shares = (post.shares || 0) + 1;
+        post.isShared = true;
         
-        // Simulate the action for now
-        console.log('✅ Share action processed successfully');
+        console.log('✅ Share action processed successfully - New shares:', post.shares);
       } catch (error) {
         console.error('Error sharing post:', error);
       }
@@ -211,18 +207,35 @@ export function usePosts() {
     const post = allPosts.find(p => p.id === postId);
     if (post && content.trim()) {
       try {
-        // TODO: Implement actual comment creation in Firebase
-        // For now, just log the action
+        // Simulate comment creation
         console.log('Comment added to post:', postId, 'Comment:', content);
         
-        // In a real implementation, you would:
-        // 1. Create comment document in Firestore
-        // 2. Update post's comment count
-        // 3. Send notification to post author
-        // 4. The real-time listener will automatically update the UI
+        // Simulate comment count increment
+        post.comments = (post.comments || 0) + 1;
         
-        // Simulate the action for now
-        console.log('✅ Comment action processed successfully');
+        // Create a mock comment object
+        const newComment: Comment = {
+          id: `comment-${Date.now()}`,
+          user: {
+            id: user?.id || 'current-user',
+            name: user?.name || 'You',
+            username: user?.username || '@you',
+            avatar: user?.avatar,
+            followers: 0,
+            following: 0,
+          },
+          content: content.trim(),
+          timestamp: 'now',
+          likes: 0,
+        };
+        
+        // Add to post comments if array exists
+        if (!post.postComments) {
+          post.postComments = [];
+        }
+        post.postComments.unshift(newComment);
+        
+        console.log('✅ Comment action processed successfully - New comment count:', post.comments);
       } catch (error) {
         console.error('Error adding comment:', error);
       }

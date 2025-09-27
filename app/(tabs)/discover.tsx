@@ -70,16 +70,21 @@ const generateSuggestedUsers = (posts: any[]) => {
 const generateDiscoverPosts = (posts: any[]) => {
   const postsWithImages = posts.filter(post => post.image);
   
+  // Always show mock data if no real posts with images, or combine both
   if (postsWithImages.length === 0) {
+    console.log('No posts with images found, using mock discover posts');
     return mockDiscoverPosts;
   }
   
-  return postsWithImages.slice(0, 6).map(post => ({
+  const realPosts = postsWithImages.slice(0, 3).map(post => ({
     id: post.id,
     image: post.image,
     likes: post.likes.toString(),
     title: post.content.slice(0, 20) + '...',
   }));
+  
+  // Combine real posts with mock posts for better content
+  return [...realPosts, ...mockDiscoverPosts.slice(0, 6 - realPosts.length)];
 };
 
 export default function DiscoverScreen() {
@@ -91,9 +96,22 @@ export default function DiscoverScreen() {
   // Temporarily disable scroll handling to fix hooks order issue
   const handleScroll = () => {};
   
-  const trendingTopics = useMemo(() => generateTrendingTopics(posts), [posts]);
-  const suggestedUsers = useMemo(() => generateSuggestedUsers(posts), [posts]);
-  const discoverPosts = useMemo(() => generateDiscoverPosts(posts), [posts]);
+  const trendingTopics = useMemo(() => {
+    console.log('Generating trending topics with', posts.length, 'posts');
+    return generateTrendingTopics(posts);
+  }, [posts]);
+  
+  const suggestedUsers = useMemo(() => {
+    console.log('Generating suggested users with', posts.length, 'posts');
+    return generateSuggestedUsers(posts);
+  }, [posts]);
+  
+  const discoverPosts = useMemo(() => {
+    console.log('Generating discover posts with', posts.length, 'posts');
+    const result = generateDiscoverPosts(posts);
+    console.log('Generated', result.length, 'discover posts');
+    return result;
+  }, [posts]);
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return suggestedUsers;

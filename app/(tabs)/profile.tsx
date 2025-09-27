@@ -98,16 +98,22 @@ export default function ProfileScreen() {
       try {
         console.log('New profile picture from camera:', result.assets[0].uri);
         
-        // For now, just show success message
-        // In a real implementation, you would:
-        // 1. Upload the image to Firebase Storage
-        // 2. Update the user's profile with the new avatar URL
-        // 3. Update the local state
+        // Upload the image to Firebase Storage
+        const { uploadImage } = await import('@/lib/firebase');
+        const imageUrl = await uploadImage(result.assets[0].uri, 'avatars');
         
-        Alert.alert('Success', 'Profile picture captured! Upload functionality will be implemented soon.');
+        if (imageUrl && currentUser) {
+          // Update the user's profile with the new avatar URL
+          const { updateProfile } = await import('@/lib/firebase');
+          await updateProfile(currentUser.id, { avatar: imageUrl });
+          
+          Alert.alert('Success', 'Profile picture updated successfully!');
+        } else {
+          throw new Error('Failed to upload image');
+        }
       } catch (error) {
         console.error('Error processing profile picture:', error);
-        Alert.alert('Error', 'Failed to process profile picture. Please try again.');
+        Alert.alert('Error', 'Failed to update profile picture. Please try again.');
       }
     }
   };
@@ -124,16 +130,22 @@ export default function ProfileScreen() {
       try {
         console.log('New profile picture from library:', result.assets[0].uri);
         
-        // For now, just show success message
-        // In a real implementation, you would:
-        // 1. Upload the image to Firebase Storage
-        // 2. Update the user's profile with the new avatar URL
-        // 3. Update the local state
+        // Upload the image to Firebase Storage
+        const { uploadImage } = await import('@/lib/firebase');
+        const imageUrl = await uploadImage(result.assets[0].uri, 'avatars');
         
-        Alert.alert('Success', 'Profile picture selected! Upload functionality will be implemented soon.');
+        if (imageUrl && currentUser) {
+          // Update the user's profile with the new avatar URL
+          const { updateProfile } = await import('@/lib/firebase');
+          await updateProfile(currentUser.id, { avatar: imageUrl });
+          
+          Alert.alert('Success', 'Profile picture updated successfully!');
+        } else {
+          throw new Error('Failed to upload image');
+        }
       } catch (error) {
         console.error('Error processing profile picture:', error);
-        Alert.alert('Error', 'Failed to process profile picture. Please try again.');
+        Alert.alert('Error', 'Failed to update profile picture. Please try again.');
       }
     }
   };

@@ -34,43 +34,35 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
   const handleComment = useCallback(() => {
     console.log('Roots (comment) pressed for post:', post.id);
     
+    // For now, simulate adding a comment without using Alert.prompt
+    // In a real app, you'd want to implement a proper input modal
     if (Platform.OS === 'web') {
-      // For web, use window.prompt if available, otherwise use Alert
-      if (typeof window !== 'undefined' && window.prompt) {
-        const comment = window.prompt('🌱 Add Roots (Comment)\nShare your thoughts on this seed:');
-        if (comment && comment.trim()) {
-          onComment?.();
-          console.log('Comment added:', comment);
-        }
-      } else {
-        // Fallback to Alert for web environments without prompt
-        Alert.alert(
-          '🌱 Add Roots (Comment)',
-          'Share your thoughts on this seed:',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Post', 
-              onPress: () => {
-                onComment?.();
-                console.log('Comment action triggered');
-              }
-            },
-          ]
-        );
-      }
-    } else {
-      // For mobile, use Alert.alert with input simulation
+      // For web, show a simple confirmation
       Alert.alert(
         '🌱 Add Roots (Comment)',
-        'Share your thoughts on this seed:',
+        'Comment functionality will open a modal in the full version.',
         [
           { text: 'Cancel', style: 'cancel' },
           { 
-            text: 'Post', 
+            text: 'Add Comment', 
             onPress: () => {
-              // For now, just trigger the callback
-              // In a real app, you'd want to implement a proper input modal
+              onComment?.();
+              console.log('Comment action triggered');
+            }
+          },
+        ]
+      );
+    } else {
+      // For mobile, use Alert.alert with simulated comment
+      Alert.alert(
+        '🌱 Add Roots (Comment)',
+        'Comment functionality will open a modal in the full version.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Add Comment', 
+            onPress: () => {
+              // Simulate adding a comment
               onComment?.();
               console.log('Comment action triggered');
             }
