@@ -1,8 +1,8 @@
-import React, { memo, useCallback } from "react";
+import React, { memo, useCallback, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from "react-native";
 import { Image } from "expo-image";
-import { Sun, Sprout, Share2 } from "lucide-react-native";
-import { PlantTheme, PlantTerminology } from "@/constants/theme";
+import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react-native";
+import { PlantTheme } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { type Post } from "@/hooks/use-posts";
 import * as Haptics from 'expo-haptics';
@@ -12,10 +12,12 @@ interface PostItemProps {
   onLike?: () => void;
   onComment?: () => void;
   onShare?: () => void;
+  onBookmark?: () => void;
   testID?: string;
 }
 
-function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
+function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: PostItemProps) {
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const handleLike = useCallback(async () => {
     console.log('Sunshine (like) pressed for post:', post.id);
     
@@ -92,6 +94,22 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
       ]
     );
   }, [onShare, post.id]);
+  
+  const handleBookmark = useCallback(async () => {
+    console.log('Bookmark pressed for post:', post.id);
+    
+    // Haptic feedback
+    if (Platform.OS !== 'web') {
+      try {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (error) {
+        console.log('Haptics not available:', error);
+      }
+    }
+    
+    setIsBookmarked(!isBookmarked);
+    onBookmark?.();
+  }, [isBookmarked, onBookmark, post.id]);
 
   return (
     <GlassCard style={styles.container} testID={testID}>
@@ -115,6 +133,18 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
           <Text style={styles.username}>{post.user.name}</Text>
           <Text style={styles.timestamp}>{post.timestamp}</Text>
         </View>
+        <TouchableOpacity
+          style={styles.bookmarkButton}
+          onPress={handleBookmark}
+          testID={`bookmark-button-${post.id}`}
+          activeOpacity={0.7}
+        >
+          <Bookmark 
+            size={20} 
+            color={isBookmarked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
+            fill={isBookmarked ? PlantTheme.colors.primary : 'none'}
+          />
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.content}>{post.content}</Text>
@@ -137,8 +167,12 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
           testID={`like-button-${post.id}`}
           activeOpacity={0.7}
         >
-          <Sun size={20} color={PlantTheme.colors.accent} />
-          <Text style={styles.actionText}>{post.likes} {PlantTerminology.likes}</Text>
+          <Heart 
+            size={20} 
+            color={post.isLiked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
+            fill={post.isLiked ? PlantTheme.colors.primary : 'none'}
+          />
+          <Text style={styles.actionText}>{post.likes}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -147,8 +181,8 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
           testID={`comment-button-${post.id}`}
           activeOpacity={0.7}
         >
-          <Sprout size={20} color={PlantTheme.colors.primary} />
-          <Text style={styles.actionText}>{post.comments} {PlantTerminology.comments}</Text>
+          <MessageCircle size={20} color={PlantTheme.colors.onSurfaceVariant} />
+          <Text style={styles.actionText}>{post.comments}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -157,8 +191,8 @@ function PostItem({ post, onLike, onComment, onShare, testID }: PostItemProps) {
           testID={`share-button-${post.id}`}
           activeOpacity={0.7}
         >
-          <Share2 size={20} color={PlantTheme.colors.secondary} />
-          <Text style={styles.actionText}>{PlantTerminology.share}</Text>
+          <Share2 size={20} color={PlantTheme.colors.onSurfaceVariant} />
+          <Text style={styles.actionText}>{post.shares || 0}</Text>
         </TouchableOpacity>
       </View>
     </GlassCard>
@@ -199,6 +233,9 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     flex: 1,
+  },
+  bookmarkButton: {
+    padding: 8,
   },
   username: {
     fontSize: 16,

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { Leaf } from 'lucide-react-native';
+import { Heart, MessageCircle, Share2 } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
 import { usePosts, type Post } from '@/hooks/use-posts';
 import { router } from 'expo-router';
@@ -136,21 +136,25 @@ function PostCard({ post, onLike }: PostCardProps) {
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.actionButton} onPress={onLike}>
           <View style={styles.actionIconContainer}>
-            <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
+            <Heart 
+              size={20} 
+              color={post.isLiked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
+              fill={post.isLiked ? PlantTheme.colors.primary : 'none'}
+            />
           </View>
           <Text style={styles.actionText}>{post.likes}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <View style={styles.actionIconContainer}>
-            <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
+            <MessageCircle size={20} color={PlantTheme.colors.onSurfaceVariant} />
           </View>
           <Text style={styles.actionText}>{post.comments}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <View style={styles.actionIconContainer}>
-            <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
+            <Share2 size={20} color={PlantTheme.colors.onSurfaceVariant} />
           </View>
-          <Text style={styles.actionText}>{post.shares || 2}</Text>
+          <Text style={styles.actionText}>{post.shares || 0}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -49,7 +49,7 @@ export default function Index() {
         <View style={styles.header}>
           <View style={styles.logoRow}>
             <Sprout color={PlantTheme.colors.primary} size={36} />
-            <Text style={styles.logoText}>Sprout</Text>
+            <Text style={styles.logoText}>PlantSpace</Text>
           </View>
         </View>
 

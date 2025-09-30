@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppProvider } from "@/hooks/use-app-context";
 import { AuthProvider, useAuth, isProfileComplete } from "@/hooks/use-auth";
@@ -11,9 +11,6 @@ import { SettingsProvider } from "@/hooks/use-settings";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer } from "@/components/Toast";
 import { PlantTheme } from "@/constants/theme";
-import { LinearGradient } from "expo-linear-gradient";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { RefreshCw } from "lucide-react-native";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -34,20 +31,9 @@ const queryClient = new QueryClient({
 });
 
 function RootLayoutNav() {
-  const { user, isLoading, firebaseUser, logout } = useAuth();
-  const [authError, setAuthError] = useState<string | null>(null);
+  const { user, isLoading } = useAuth();
   
-  console.log('RootLayoutNav - isLoading:', isLoading, 'user:', user ? `Present (${user.id})` : 'None', 'firebaseUser:', firebaseUser ? `Present (${firebaseUser.uid})` : 'None');
-  
-  // Check for auth inconsistency (Firebase user exists but no profile)
-  useEffect(() => {
-    if (!isLoading && firebaseUser && !user) {
-      console.log('Auth inconsistency detected: Firebase user exists but no profile');
-      setAuthError('Profile creation failed. Please try logging out and back in.');
-    } else {
-      setAuthError(null);
-    }
-  }, [isLoading, firebaseUser, user]);
+  console.log('RootLayoutNav - isLoading:', isLoading, 'user:', user ? `Present (${user.id})` : 'None');
   
   // Show loading screen while checking auth state
   if (isLoading) {
@@ -55,32 +41,6 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
       </Stack>
-    );
-  }
-  
-  // Show auth error screen if there's an inconsistency
-  if (authError) {
-    return (
-      <View style={styles.container}>
-        <LinearGradient
-          colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <SafeAreaView style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Authentication Issue</Text>
-          <Text style={styles.errorMessage}>{authError}</Text>
-          <TouchableOpacity 
-            style={styles.retryButton} 
-            onPress={async () => {
-              setAuthError(null);
-              await logout();
-            }}
-          >
-            <RefreshCw color={PlantTheme.colors.white} size={20} style={styles.retryIcon} />
-            <Text style={styles.retryButtonText}>Logout & Try Again</Text>
-          </TouchableOpacity>
-        </SafeAreaView>
-      </View>
     );
   }
   
@@ -193,41 +153,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: 'bold' as const,
-    color: PlantTheme.colors.textDark,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  errorMessage: {
-    fontSize: 16,
-    color: PlantTheme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  retryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: PlantTheme.colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: PlantTheme.borderRadius.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  retryIcon: {
-    marginRight: 8,
-  },
-  retryButtonText: {
-    color: PlantTheme.colors.white,
-    fontSize: 16,
-    fontWeight: '600' as const,
   },
   errorText: {
     fontSize: 18,
