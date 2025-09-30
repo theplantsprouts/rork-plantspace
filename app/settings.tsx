@@ -86,7 +86,7 @@ export default function SettingsScreen() {
           subtitle: 'Manage your privacy settings',
           icon: Lock,
           type: 'navigation',
-          onPress: () => Alert.alert('Coming Soon', 'Privacy settings will be available soon!'),
+          onPress: () => router.push('/privacy-settings' as any),
         },
         {
           id: 'notifications',
