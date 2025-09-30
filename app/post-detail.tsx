@@ -19,10 +19,24 @@ import * as Haptics from 'expo-haptics';
 
 export default function PostDetailScreen() {
   const { postId } = useLocalSearchParams<{ postId: string }>();
-  const { posts, toggleLike, toggleShare, addComment } = usePosts();
+  const { posts, toggleLike, toggleShare, addComment, isLoading } = usePosts();
   const insets = useSafeAreaInsets();
   
   const post = posts.find(p => p.id === postId);
+  
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={[styles.errorContainer, { paddingTop: insets.top }]}>
+          <Text style={styles.errorText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
   
   if (!post) {
     return (
