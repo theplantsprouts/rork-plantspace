@@ -1,41 +1,61 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  Platform,
+  useColorScheme,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search } from 'lucide-react-native';
+import { ArrowLeft, Heart, MessageCircle, UserPlus } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { PlantTheme } from '@/constants/theme';
+import { router } from 'expo-router';
 
-type Conversation = {
+type NotificationType = 'like' | 'comment' | 'follow';
+
+type Notification = {
   id: string;
+  type: NotificationType;
   user: {
     name: string;
     avatar: string;
   };
-  lastMessage: string;
+  message: string;
   timestamp: string;
-  unread?: boolean;
 };
 
-export default function LeavesScreen() {
+export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [conversations] = useState<Conversation[]>([]);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const notifications: Notification[] = [];
+
+  const getNotificationIcon = (type: NotificationType) => {
+    const iconColor = isDark ? '#c1fbb0' : '#002202';
+    const iconSize = 14;
+    
+    switch (type) {
+      case 'like':
+        return <Heart size={iconSize} color={iconColor} fill={iconColor} />;
+      case 'comment':
+        return <MessageCircle size={iconSize} color={iconColor} />;
+      case 'follow':
+        return <UserPlus size={iconSize} color={iconColor} />;
+    }
+  };
+
+  const backgroundColor = isDark ? '#112111' : '#f6f8f6';
+  const textColor = isDark ? '#e1e3e0' : '#191d19';
+  const secondaryTextColor = isDark ? '#c2c8c1' : '#424842';
+  const containerBg = isDark ? '#1d211d' : '#eef2ee';
+  const iconBg = isDark ? '#005307' : '#a6f8a5';
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor }]}>
       <LinearGradient
         colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
         style={StyleSheet.absoluteFillObject}
@@ -43,24 +63,14 @@ export default function LeavesScreen() {
       
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={styles.headerTitle}>Leaves</Text>
-          </View>
-          
-          <View style={styles.searchContainer}>
-            <Search 
-              color={PlantTheme.colors.primary} 
-              size={20} 
-              style={styles.searchIcon}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search Leaves"
-              placeholderTextColor={`${PlantTheme.colors.primary}CC`}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color={textColor} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: textColor }]}>Notifications</Text>
+          <View style={styles.placeholder} />
         </View>
 
         <ScrollView 
@@ -68,35 +78,40 @@ export default function LeavesScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {filteredConversations.length === 0 ? (
+          {notifications.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateEmoji}>🍃</Text>
-              <Text style={styles.emptyStateTitle}>No conversations yet</Text>
-              <Text style={styles.emptyStateText}>
-                Start connecting with your garden friends
+              <Text style={styles.emptyStateEmoji}>🔔</Text>
+              <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                No notifications yet
+              </Text>
+              <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                When someone likes, comments, or follows you, you&apos;ll see it here
               </Text>
             </View>
           ) : (
-            filteredConversations.map((conversation) => (
+            notifications.map((notification) => (
               <TouchableOpacity 
-                key={conversation.id} 
-                style={styles.conversationItem}
+                key={notification.id} 
+                style={[styles.notificationItem, { backgroundColor: containerBg }]}
                 activeOpacity={0.7}
               >
-                <Image 
-                  source={{ uri: conversation.user.avatar }} 
-                  style={styles.avatar}
-                />
-                <View style={styles.conversationContent}>
-                  <View style={styles.conversationHeader}>
-                    <Text style={styles.userName}>{conversation.user.name}</Text>
-                    <Text style={styles.timestamp}>{conversation.timestamp}</Text>
+                <View style={styles.avatarContainer}>
+                  <Image 
+                    source={{ uri: notification.user.avatar }} 
+                    style={styles.avatar}
+                  />
+                  <View style={[styles.iconBadge, { backgroundColor: iconBg }]}>
+                    {getNotificationIcon(notification.type)}
                   </View>
-                  <Text 
-                    style={styles.lastMessage}
-                    numberOfLines={1}
-                  >
-                    {conversation.lastMessage}
+                </View>
+                <View style={styles.notificationContent}>
+                  <Text style={[styles.notificationText, { color: textColor }]}>
+                    <Text style={styles.userName}>{notification.user.name}</Text>
+                    {' '}
+                    {notification.message}
+                  </Text>
+                  <Text style={[styles.timestamp, { color: secondaryTextColor }]}>
+                    {notification.timestamp}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -116,38 +131,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: 'transparent',
-  },
-  headerTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backButton: {
+    padding: 8,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: PlantTheme.colors.textDark,
-  },
-
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: `${PlantTheme.colors.primary}1A`,
-    borderRadius: PlantTheme.borderRadius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
     flex: 1,
-    fontSize: 16,
-    color: PlantTheme.colors.textDark,
-    padding: 0,
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginRight: 40,
+  },
+  placeholder: {
+    width: 40,
   },
   scrollView: {
     flex: 1,
@@ -156,43 +156,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 100,
   },
-  conversationItem: {
+  notificationItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 16,
     padding: 12,
-    borderRadius: PlantTheme.borderRadius.lg,
-    backgroundColor: PlantTheme.colors.cardBackground,
-    marginBottom: 8,
-    ...PlantTheme.shadows.sm,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  avatarContainer: {
+    position: 'relative',
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
-  conversationContent: {
+  iconBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationContent: {
     flex: 1,
   },
-  conversationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  notificationText: {
+    fontSize: 15,
+    lineHeight: 20,
     marginBottom: 4,
   },
   userName: {
-    fontSize: 16,
     fontWeight: '700',
-    color: PlantTheme.colors.textDark,
   },
   timestamp: {
-    fontSize: 12,
-    color: PlantTheme.colors.textSecondary,
-  },
-  lastMessage: {
-    fontSize: 14,
-    color: PlantTheme.colors.textSecondary,
-    lineHeight: 20,
+    fontSize: 13,
   },
   emptyState: {
     alignItems: 'center',
@@ -207,13 +209,11 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: PlantTheme.colors.textDark,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyStateText: {
     fontSize: 16,
-    color: PlantTheme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
