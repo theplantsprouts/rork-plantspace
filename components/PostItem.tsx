@@ -70,6 +70,8 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
               contentFit="cover"
               cachePolicy="memory-disk"
               transition={100}
+              priority="high"
+              recyclingKey={post.user.avatar}
             />
           ) : (
             <Text style={styles.avatarText}>
@@ -104,7 +106,9 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
           contentFit="cover"
           transition={Platform.OS === 'web' ? 0 : 200}
           cachePolicy="memory-disk"
-          priority="normal"
+          priority="high"
+          recyclingKey={post.image}
+          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
         />
       )}
 

@@ -163,10 +163,10 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>): 
 };
 
 // Post functions
-export const getPosts = async (): Promise<Post[]> => {
+export const getPosts = async (limitCount: number = 20): Promise<Post[]> => {
   try {
     const postsRef = collection(db, 'posts');
-    const q = query(postsRef, orderBy('created_at', 'desc'));
+    const q = query(postsRef, orderBy('created_at', 'desc'), limit(limitCount));
     const querySnapshot = await getDocs(q);
     
     const posts: Post[] = [];
@@ -332,7 +332,8 @@ export const subscribeToUserPosts = (
 
 export const subscribeToAllPosts = (
   callback: (posts: Post[]) => void,
-  errorCallback?: (error: any) => void
+  errorCallback?: (error: any) => void,
+  limitCount: number = 20
 ) => {
   const currentUser = auth.currentUser;
   if (!currentUser) {
@@ -340,33 +341,41 @@ export const subscribeToAllPosts = (
     if (errorCallback) {
       errorCallback(new Error('Authentication required'));
     }
-    return () => {}; // Return empty unsubscribe function
+    return () => {};
   }
 
   const postsRef = collection(db, 'posts');
-  const q = query(postsRef, orderBy('created_at', 'desc'), limit(20));
+  const q = query(postsRef, orderBy('created_at', 'desc'), limit(limitCount));
   
   console.log('Setting up Firestore listener for all posts with user:', currentUser.uid);
+  
+  const profileCache = new Map<string, any>();
   
   return onSnapshot(q, async (snapshot) => {
     try {
       console.log('Processing posts snapshot with', snapshot.docs.length, 'documents');
       const posts: Post[] = [];
       
+      const uniqueAuthorIds = [...new Set(snapshot.docs.map(doc => doc.data().author_id).filter(Boolean))];
+      
+      await Promise.all(
+        uniqueAuthorIds.map(async (authorId) => {
+          if (!profileCache.has(authorId)) {
+            try {
+              const profile = await getProfile(authorId);
+              if (profile) profileCache.set(authorId, profile);
+            } catch (error) {
+              console.warn('Failed to fetch profile:', authorId);
+            }
+          }
+        })
+      );
+      
       for (const docSnap of snapshot.docs) {
         const postData = { id: docSnap.id, ...docSnap.data() } as Post;
         
-        // Fetch author profile with error handling
-        if (postData.author_id) {
-          try {
-            const authorProfile = await getProfile(postData.author_id);
-            if (authorProfile) {
-              postData.author = authorProfile;
-            }
-          } catch (profileError) {
-            console.warn('Failed to fetch author profile for post:', postData.id, profileError);
-            // Continue without author profile
-          }
+        if (postData.author_id && profileCache.has(postData.author_id)) {
+          postData.author = profileCache.get(postData.author_id);
         }
         
         posts.push(postData);

@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { Sprout, Leaf, Heading, Bookmark } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
 import { usePosts, type Post } from '@/hooks/use-posts';
-import { router } from 'expo-router';
+
 import * as Haptics from 'expo-haptics';
 import { useTabBar } from './_layout';
 
@@ -132,7 +132,7 @@ interface PostCardProps {
   onShare: () => void;
 }
 
-function PostCard({ post, onLike, onBookmark, onComment, onShare }: PostCardProps) {
+const PostCard = React.memo<PostCardProps>(({ post, onLike, onBookmark, onComment, onShare }) => {
   return (
     <View style={styles.postCard}>
       {post.image && (
@@ -141,6 +141,10 @@ function PostCard({ post, onLike, onBookmark, onComment, onShare }: PostCardProp
           style={styles.postImage}
           contentFit="cover"
           transition={200}
+          cachePolicy="memory-disk"
+          priority="high"
+          recyclingKey={post.image}
+          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
         />
       )}
       <View style={styles.postContent}>
@@ -151,6 +155,9 @@ function PostCard({ post, onLike, onBookmark, onComment, onShare }: PostCardProp
                 source={{ uri: post.user.avatar }}
                 style={styles.avatar}
                 contentFit="cover"
+                cachePolicy="memory-disk"
+                priority="high"
+                recyclingKey={post.user.avatar}
               />
             ) : (
               <View style={styles.avatarPlaceholder}>
@@ -200,9 +207,9 @@ function PostCard({ post, onLike, onBookmark, onComment, onShare }: PostCardProp
       </View>
     </View>
   );
-}
+});
 
-
+PostCard.displayName = 'PostCard';
 
 const styles = StyleSheet.create({
   container: {

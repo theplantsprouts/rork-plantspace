@@ -76,9 +76,13 @@ export function usePosts() {
 
       const bookmarkedIds = new Set<string>();
       for (const post of realTimePosts) {
-        const isBookmarked = await isPostBookmarked(user.id, post.id);
-        if (isBookmarked) {
-          bookmarkedIds.add(post.id);
+        try {
+          const isBookmarked = await isPostBookmarked(user.id, post.id);
+          if (isBookmarked) {
+            bookmarkedIds.add(post.id);
+          }
+        } catch (error) {
+          // Silently fail for individual bookmark checks
         }
       }
       setBookmarkedPostIds(bookmarkedIds);
@@ -119,16 +123,11 @@ export function usePosts() {
   const allPosts: Post[] = firebasePosts;
 
   const toggleLike = async (postId: string) => {
-    if (!user?.id) {
-      console.error('User must be authenticated to like posts');
-      return;
-    }
+    if (!user?.id) return;
 
     try {
       const isLiked = await firebaseToggleLike(user.id, postId);
       trackPostLiked(postId, user.id);
-      console.log(`✅ Post ${postId} ${isLiked ? 'liked' : 'unliked'} successfully`);
-      
       refresh();
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -136,16 +135,11 @@ export function usePosts() {
   };
 
   const toggleShare = async (postId: string) => {
-    if (!user?.id) {
-      console.error('User must be authenticated to share posts');
-      return;
-    }
+    if (!user?.id) return;
 
     try {
       const isShared = await firebaseToggleShare(user.id, postId);
       trackPostShared(postId, 'app_share');
-      console.log(`✅ Post ${postId} ${isShared ? 'shared' : 'unshared'} successfully`);
-      
       refresh();
     } catch (error) {
       console.error('Error sharing post:', error);
@@ -162,22 +156,16 @@ export function usePosts() {
     }
     
     try {
-      console.log('Creating post with Firebase...');
-      
-      // Upload image if provided
       let imageUrl: string | null = image || null;
       if (image && !image.startsWith('http')) {
-        console.log('Uploading image...');
         imageUrl = await uploadImage(image, 'posts');
       }
       
-      // Create post using Firebase function - only pass imageUrl if it exists
       const newFirebasePost = imageUrl 
         ? await createPost(content, imageUrl)
         : await createPost(content);
       
       if (newFirebasePost) {
-        // Track post creation
         trackPostCreated(newFirebasePost.id, !!imageUrl);
         
         const newPost: Post = {
@@ -205,7 +193,6 @@ export function usePosts() {
           recommendationScore: 0.8,
         };
         
-        console.log('Post created successfully');
         return newPost;
       }
       
@@ -217,10 +204,7 @@ export function usePosts() {
   };
 
   const togglePostBookmark = async (postId: string) => {
-    if (!user?.id) {
-      console.error('User must be authenticated to bookmark posts');
-      return;
-    }
+    if (!user?.id) return;
 
     try {
       const isBookmarked = await toggleBookmark(user.id, postId);
@@ -234,28 +218,16 @@ export function usePosts() {
         }
         return newSet;
       });
-
-      console.log(`Post ${postId} ${isBookmarked ? 'bookmarked' : 'unbookmarked'}`);
     } catch (error) {
       console.error('Error toggling bookmark:', error);
     }
   };
 
   const addComment = async (postId: string, content: string) => {
-    if (!user?.id) {
-      console.error('User must be authenticated to comment on posts');
-      return;
-    }
-
-    if (!content.trim()) {
-      console.error('Comment content cannot be empty');
-      return;
-    }
+    if (!user?.id || !content.trim()) return;
 
     try {
-      const commentId = await firebaseAddComment(user.id, postId, content.trim());
-      console.log(`✅ Comment added successfully with ID: ${commentId}`);
-      
+      await firebaseAddComment(user.id, postId, content.trim());
       refresh();
     } catch (error) {
       console.error('Error adding comment:', error);
