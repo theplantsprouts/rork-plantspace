@@ -283,7 +283,7 @@ function TabLayoutContent() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
+        name="leaves"
         options={{
           title: 'Leaves',
           tabBarIcon: renderMessageIcon,
