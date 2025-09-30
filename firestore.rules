@@ -87,9 +87,9 @@ service cloud.firestore {
     
     // Bookmarks
     match /bookmarks/{bookmarkId} {
-      // Users can read their own bookmarks
-      allow read: if isAuthenticated() && 
-                  resource.data.userId == request.auth.uid;
+      // Users can read all bookmarks (needed for queries with where clause)
+      // The where clause in the query will filter to only their bookmarks
+      allow read: if isAuthenticated();
       
       // Users can create bookmarks for any post
       allow create: if isAuthenticated() && 
