@@ -58,6 +58,7 @@ export interface Post {
   updated_at: string;
   likes: number;
   comments: number;
+  shares?: number;
   author?: Profile;
 }
 
@@ -205,6 +206,7 @@ export const createPost = async (content: string, image?: string): Promise<Post 
       updated_at: new Date().toISOString(),
       likes: 0,
       comments: 0,
+      shares: 0,
     };
     
     // Only add image field if it exists and is not undefined
@@ -496,6 +498,102 @@ export const getBookmarkedPosts = async (userId: string): Promise<Post[]> => {
   } catch (error) {
     console.error('Error fetching bookmarked posts:', error);
     return [];
+  }
+};
+
+export const toggleLike = async (userId: string, postId: string): Promise<boolean> => {
+  try {
+    const likeRef = doc(db, 'likes', `${userId}_${postId}`);
+    const likeSnap = await getDoc(likeRef);
+    const postRef = doc(db, 'posts', postId);
+
+    if (likeSnap.exists()) {
+      await deleteDoc(likeRef);
+      await updateDoc(postRef, {
+        likes: (await getDoc(postRef)).data()?.likes - 1 || 0,
+      });
+      return false;
+    } else {
+      await setDoc(likeRef, {
+        userId,
+        postId,
+        created_at: new Date().toISOString(),
+      });
+      await updateDoc(postRef, {
+        likes: ((await getDoc(postRef)).data()?.likes || 0) + 1,
+      });
+      return true;
+    }
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    throw new Error('Failed to toggle like');
+  }
+};
+
+export const isPostLiked = async (userId: string, postId: string): Promise<boolean> => {
+  try {
+    const likeRef = doc(db, 'likes', `${userId}_${postId}`);
+    const likeSnap = await getDoc(likeRef);
+    return likeSnap.exists();
+  } catch (error) {
+    console.error('Error checking like:', error);
+    return false;
+  }
+};
+
+export const addComment = async (userId: string, postId: string, content: string): Promise<string | null> => {
+  try {
+    const commentData = {
+      postId,
+      userId,
+      content,
+      created_at: new Date().toISOString(),
+      likes: 0,
+    };
+
+    const commentRef = await addDoc(collection(db, 'comments'), commentData);
+    
+    const postRef = doc(db, 'posts', postId);
+    const postSnap = await getDoc(postRef);
+    await updateDoc(postRef, {
+      comments: (postSnap.data()?.comments || 0) + 1,
+    });
+
+    return commentRef.id;
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    throw new Error('Failed to add comment');
+  }
+};
+
+export const toggleShare = async (userId: string, postId: string): Promise<boolean> => {
+  try {
+    const shareRef = doc(db, 'shares', `${userId}_${postId}`);
+    const shareSnap = await getDoc(shareRef);
+    const postRef = doc(db, 'posts', postId);
+
+    if (shareSnap.exists()) {
+      await deleteDoc(shareRef);
+      const postSnap = await getDoc(postRef);
+      await updateDoc(postRef, {
+        shares: (postSnap.data()?.shares || 0) - 1,
+      });
+      return false;
+    } else {
+      await setDoc(shareRef, {
+        userId,
+        postId,
+        created_at: new Date().toISOString(),
+      });
+      const postSnap = await getDoc(postRef);
+      await updateDoc(postRef, {
+        shares: (postSnap.data()?.shares || 0) + 1,
+      });
+      return true;
+    }
+  } catch (error) {
+    console.error('Error toggling share:', error);
+    throw new Error('Failed to toggle share');
   }
 };
 

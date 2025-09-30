@@ -9,6 +9,10 @@ import { getPostsProcedure } from "./routes/posts/list/route";
 import { uploadImageProcedure } from "./routes/posts/upload-image/route";
 import { toggleBookmarkProcedure } from "./routes/posts/toggle-bookmark/route";
 import { listBookmarksProcedure } from "./routes/posts/list-bookmarks/route";
+import { toggleLikeProcedure } from "./routes/posts/toggle-like/route";
+import { addCommentProcedure } from "./routes/posts/add-comment/route";
+import { toggleShareProcedure } from "./routes/posts/toggle-share/route";
+import { checkLikeProcedure } from "./routes/posts/check-like/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -26,6 +30,10 @@ export const appRouter = createTRPCRouter({
     uploadImage: uploadImageProcedure,
     toggleBookmark: toggleBookmarkProcedure,
     listBookmarks: listBookmarksProcedure,
+    toggleLike: toggleLikeProcedure,
+    addComment: addCommentProcedure,
+    toggleShare: toggleShareProcedure,
+    checkLike: checkLikeProcedure,
   }),
 });
 

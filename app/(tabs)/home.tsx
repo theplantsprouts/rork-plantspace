@@ -7,6 +7,7 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -20,7 +21,7 @@ import { useTabBar } from './_layout';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { posts, toggleLike, togglePostBookmark, isLoading, error, refresh } = usePosts();
+  const { posts, toggleLike, togglePostBookmark, toggleShare, addComment, isLoading, error, refresh } = usePosts();
   const { handleScroll } = useTabBar();
   
   const onScroll = useCallback((event: any) => {
@@ -90,6 +91,31 @@ export default function HomeScreen() {
               post={post} 
               onLike={() => handleLike(post.id)}
               onBookmark={() => togglePostBookmark(post.id)}
+              onComment={() => {
+                Alert.alert(
+                  '🌱 Add Roots',
+                  'Share your thoughts and grow the conversation.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Add Comment', 
+                      onPress: () => {
+                        addComment(post.id, 'Great post!');
+                      }
+                    },
+                  ]
+                );
+              }}
+              onShare={() => {
+                Alert.alert(
+                  '🌱 Spread Seeds',
+                  'How would you like to share this seed?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Share', onPress: () => toggleShare(post.id) },
+                  ]
+                );
+              }}
             />
           ))
         )}
@@ -102,9 +128,11 @@ interface PostCardProps {
   post: Post;
   onLike: () => void;
   onBookmark: () => void;
+  onComment: () => void;
+  onShare: () => void;
 }
 
-function PostCard({ post, onLike, onBookmark }: PostCardProps) {
+function PostCard({ post, onLike, onBookmark, onComment, onShare }: PostCardProps) {
   return (
     <View style={styles.postCard}>
       {post.image && (
@@ -157,13 +185,13 @@ function PostCard({ post, onLike, onBookmark }: PostCardProps) {
           </View>
           <Text style={styles.actionText}>{post.likes}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={onComment}>
           <View style={styles.actionIconContainer}>
             <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
           </View>
           <Text style={styles.actionText}>{post.comments}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={onShare}>
           <View style={styles.actionIconContainer}>
             <Heading size={20} color={PlantTheme.colors.onSurfaceVariant} />
           </View>

@@ -35,64 +35,12 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
   
   const handleComment = useCallback(() => {
     console.log('Roots pressed for post:', post.id);
-    
-    // For now, simulate adding a comment without using Alert.prompt
-    // In a real app, you'd want to implement a proper input modal
-    if (Platform.OS === 'web') {
-      // For web, show a simple confirmation
-      Alert.alert(
-        '🌱 Add Roots',
-        'Share your thoughts and grow the conversation.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Add Comment', 
-            onPress: () => {
-              onComment?.();
-              console.log('Comment action triggered');
-            }
-          },
-        ]
-      );
-    } else {
-      // For mobile, use Alert.alert with simulated comment
-      Alert.alert(
-        '🌱 Add Roots',
-        'Share your thoughts and grow the conversation.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Add Comment', 
-            onPress: () => {
-              // Simulate adding a comment
-              onComment?.();
-              console.log('Comment action triggered');
-            }
-          },
-        ]
-      );
-    }
+    onComment?.();
   }, [onComment, post.id]);
   
   const handleShare = useCallback(() => {
     console.log('Spread Seeds pressed for post:', post.id);
-    
-    // Show share options
-    Alert.alert(
-      '🌱 Spread Seeds',
-      'How would you like to share this seed?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Copy Link', onPress: () => {
-          console.log('Copy link for post:', post.id);
-          onShare?.();
-        }},
-        { text: 'Share to Garden', onPress: () => {
-          console.log('Share to garden for post:', post.id);
-          onShare?.();
-        }},
-      ]
-    );
+    onShare?.();
   }, [onShare, post.id]);
   
   const handleBookmark = useCallback(async () => {

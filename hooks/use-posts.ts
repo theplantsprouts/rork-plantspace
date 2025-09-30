@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAIContent } from './use-ai-content';
 import { useAuth } from './use-auth';
 import { useRealTimePosts } from './use-realtime';
-import { createPost, uploadImage, Post as FirebasePost, toggleBookmark, isPostBookmarked } from '@/lib/firebase';
+import { createPost, uploadImage, Post as FirebasePost, toggleBookmark, isPostBookmarked, toggleLike as firebaseToggleLike, isPostLiked, addComment as firebaseAddComment, toggleShare as firebaseToggleShare } from '@/lib/firebase';
 import { trackPostCreated, trackPostViewed, trackPostLiked, trackPostShared } from '@/lib/analytics';
 
 export interface User {
@@ -69,9 +69,9 @@ export function usePosts() {
   // Use real-time posts hook
   const { posts: realTimePosts, loading: isLoading, error, refresh } = useRealTimePosts();
 
-  // Load bookmarked status for all posts
+  // Load bookmarked and liked status for all posts
   useEffect(() => {
-    const loadBookmarkStatuses = async () => {
+    const loadPostStatuses = async () => {
       if (!user?.id || realTimePosts.length === 0) return;
 
       const bookmarkedIds = new Set<string>();
@@ -84,7 +84,7 @@ export function usePosts() {
       setBookmarkedPostIds(bookmarkedIds);
     };
 
-    loadBookmarkStatuses();
+    loadPostStatuses();
   }, [user?.id, realTimePosts.length]);
   
   // Convert Firebase posts to our Post interface
@@ -103,7 +103,7 @@ export function usePosts() {
     timestamp: formatTimestamp(firebasePost.created_at),
     likes: firebasePost.likes || 0,
     comments: firebasePost.comments || 0,
-    shares: 0,
+    shares: firebasePost.shares || 0,
     isLiked: false,
     isShared: false,
     isBookmarked: bookmarkedPostIds.has(firebasePost.id),
@@ -119,43 +119,36 @@ export function usePosts() {
   const allPosts: Post[] = firebasePosts;
 
   const toggleLike = async (postId: string) => {
-    const post = allPosts.find(p => p.id === postId);
-    if (post) {
-      try {
-        trackPostLiked(postId, post.user.id);
-        
-        // TODO: Implement actual like toggle in Firebase
-        // For now, simulate the action by updating local state
-        console.log('Like toggled for post:', postId, 'Current likes:', post.likes);
-        
-        // Simulate like toggle - in a real app this would update Firebase
-        post.likes = post.isLiked ? post.likes - 1 : post.likes + 1;
-        post.isLiked = !post.isLiked;
-        
-        console.log('✅ Like action processed successfully - New likes:', post.likes);
-      } catch (error) {
-        console.error('Error toggling like:', error);
-      }
+    if (!user?.id) {
+      console.error('User must be authenticated to like posts');
+      return;
+    }
+
+    try {
+      const isLiked = await firebaseToggleLike(user.id, postId);
+      trackPostLiked(postId, user.id);
+      console.log(`✅ Post ${postId} ${isLiked ? 'liked' : 'unliked'} successfully`);
+      
+      refresh();
+    } catch (error) {
+      console.error('Error toggling like:', error);
     }
   };
 
   const toggleShare = async (postId: string) => {
-    const post = allPosts.find(p => p.id === postId);
-    if (post) {
-      try {
-        trackPostShared(postId, 'app_share');
-        
-        // Simulate share functionality
-        console.log('Share action for post:', postId, 'Content:', post.content.substring(0, 50) + '...');
-        
-        // Simulate share count increment
-        post.shares = (post.shares || 0) + 1;
-        post.isShared = true;
-        
-        console.log('✅ Share action processed successfully - New shares:', post.shares);
-      } catch (error) {
-        console.error('Error sharing post:', error);
-      }
+    if (!user?.id) {
+      console.error('User must be authenticated to share posts');
+      return;
+    }
+
+    try {
+      const isShared = await firebaseToggleShare(user.id, postId);
+      trackPostShared(postId, 'app_share');
+      console.log(`✅ Post ${postId} ${isShared ? 'shared' : 'unshared'} successfully`);
+      
+      refresh();
+    } catch (error) {
+      console.error('Error sharing post:', error);
     }
   };
 
@@ -249,41 +242,23 @@ export function usePosts() {
   };
 
   const addComment = async (postId: string, content: string) => {
-    const post = allPosts.find(p => p.id === postId);
-    if (post && content.trim()) {
-      try {
-        // Simulate comment creation
-        console.log('Comment added to post:', postId, 'Comment:', content);
-        
-        // Simulate comment count increment
-        post.comments = (post.comments || 0) + 1;
-        
-        // Create a mock comment object
-        const newComment: Comment = {
-          id: `comment-${Date.now()}`,
-          user: {
-            id: user?.id || 'current-user',
-            name: user?.name || 'You',
-            username: user?.username || '@you',
-            avatar: user?.avatar,
-            followers: 0,
-            following: 0,
-          },
-          content: content.trim(),
-          timestamp: 'now',
-          likes: 0,
-        };
-        
-        // Add to post comments if array exists
-        if (!post.postComments) {
-          post.postComments = [];
-        }
-        post.postComments.unshift(newComment);
-        
-        console.log('✅ Comment action processed successfully - New comment count:', post.comments);
-      } catch (error) {
-        console.error('Error adding comment:', error);
-      }
+    if (!user?.id) {
+      console.error('User must be authenticated to comment on posts');
+      return;
+    }
+
+    if (!content.trim()) {
+      console.error('Comment content cannot be empty');
+      return;
+    }
+
+    try {
+      const commentId = await firebaseAddComment(user.id, postId, content.trim());
+      console.log(`✅ Comment added successfully with ID: ${commentId}`);
+      
+      refresh();
+    } catch (error) {
+      console.error('Error adding comment:', error);
     }
   };
 
