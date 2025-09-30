@@ -22,43 +22,7 @@ interface BlockedUser {
 
 export default function BlockedAccountsScreen() {
   const insets = useSafeAreaInsets();
-  const [users, setUsers] = useState<BlockedUser[]>([
-    {
-      id: '1',
-      name: 'Flora Green',
-      username: '@plantlover22',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-      isBlocked: true,
-    },
-    {
-      id: '2',
-      name: 'Oliver Bloom',
-      username: '@leafy_life',
-      avatar: 'https://i.pravatar.cc/150?img=2',
-      isBlocked: true,
-    },
-    {
-      id: '3',
-      name: 'Ivy Gardener',
-      username: '@garden_guru',
-      avatar: 'https://i.pravatar.cc/150?img=3',
-      isBlocked: false,
-    },
-    {
-      id: '4',
-      name: 'Rowan Sprout',
-      username: '@root_to_rise',
-      avatar: 'https://i.pravatar.cc/150?img=4',
-      isBlocked: true,
-    },
-    {
-      id: '5',
-      name: 'Daisy Meadow',
-      username: '@bloom_and_grow',
-      avatar: 'https://i.pravatar.cc/150?img=5',
-      isBlocked: false,
-    },
-  ]);
+  const [users, setUsers] = useState<BlockedUser[]>([]);
 
   const handleToggleBlock = (userId: string, currentStatus: boolean) => {
     const action = currentStatus ? 'Unblock' : 'Unmute';
@@ -131,7 +95,16 @@ export default function BlockedAccountsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {users.map(renderUser)}
+        {users.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No blocked or muted accounts</Text>
+            <Text style={styles.emptySubtext}>
+              Accounts you block or mute will appear here
+            </Text>
+          </View>
+        ) : (
+          users.map(renderUser)
+        )}
       </ScrollView>
     </View>
   );
@@ -218,5 +191,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500' as const,
     color: '#1a1c1a',
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: '#1a1c1a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });

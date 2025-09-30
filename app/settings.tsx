@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/use-auth';
 import { PlantTheme } from '@/constants/theme';
+import { useSettings } from '@/hooks/use-settings';
 
 interface SettingItem {
   id: string;
@@ -44,7 +45,8 @@ interface SettingSection {
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { logout } = useAuth();
-  const [darkMode, setDarkMode] = useState(false);
+  const { settings, updateAppSetting } = useSettings();
+  const darkMode = settings.app.darkMode;
 
   const handleLogout = () => {
     Alert.alert(
@@ -117,7 +119,7 @@ export default function SettingsScreen() {
           icon: Contrast,
           type: 'toggle',
           value: darkMode,
-          onToggle: setDarkMode,
+          onToggle: (value: boolean) => updateAppSetting('darkMode', value),
         },
         {
           id: 'data-usage',

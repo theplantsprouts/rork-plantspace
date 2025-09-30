@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppProvider } from "@/hooks/use-app-context";
 import { AuthProvider, useAuth, isProfileComplete } from "@/hooks/use-auth";
 import { OfflineProvider } from "@/hooks/use-offline";
+import { SettingsProvider } from "@/hooks/use-settings";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer } from "@/components/Toast";
 import { PlantTheme } from "@/constants/theme";
@@ -160,12 +161,14 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <OfflineProvider>
-            <AppProvider>
-              <GestureHandlerRootView style={styles.gestureHandler}>
-                <AuthenticatedLayout />
-                <ToastContainer />
-              </GestureHandlerRootView>
-            </AppProvider>
+            <SettingsProvider>
+              <AppProvider>
+                <GestureHandlerRootView style={styles.gestureHandler}>
+                  <AuthenticatedLayout />
+                  <ToastContainer />
+                </GestureHandlerRootView>
+              </AppProvider>
+            </SettingsProvider>
           </OfflineProvider>
         </AuthProvider>
       </QueryClientProvider>

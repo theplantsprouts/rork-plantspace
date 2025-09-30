@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Bookmark, Settings } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, Settings, Camera } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -37,6 +37,108 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   
   const userPosts = posts.filter(post => post.user.id === currentUser?.id);
+
+  const handleEditBackgroundImage = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'We need camera roll permissions to change your background image.');
+        return;
+      }
+    }
+
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Change Background Image',
+        'Choose an option',
+        [
+          { text: 'Photo Library', onPress: openBackgroundImagePicker },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Change Background Image',
+        'Choose an option',
+        [
+          { text: 'Camera', onPress: openBackgroundCamera },
+          { text: 'Photo Library', onPress: openBackgroundImagePicker },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    }
+  };
+
+  const openBackgroundCamera = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not supported', 'Camera is not supported on web. Please use photo library.');
+      return;
+    }
+
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'We need camera permissions to take a photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      try {
+        console.log('New background image from camera:', result.assets[0].uri);
+        
+        const { uploadImage } = await import('@/lib/firebase');
+        const imageUrl = await uploadImage(result.assets[0].uri, 'backgrounds');
+        
+        if (imageUrl && currentUser) {
+          const { updateProfile } = await import('@/lib/firebase');
+          await updateProfile(currentUser.id, { backgroundImage: imageUrl } as any);
+          
+          Alert.alert('Success', 'Background image updated successfully!');
+        } else {
+          throw new Error('Failed to upload image');
+        }
+      } catch (error) {
+        console.error('Error processing background image:', error);
+        Alert.alert('Error', 'Failed to update background image. Please try again.');
+      }
+    }
+  };
+
+  const openBackgroundImagePicker = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      try {
+        console.log('New background image from library:', result.assets[0].uri);
+        
+        const { uploadImage } = await import('@/lib/firebase');
+        const imageUrl = await uploadImage(result.assets[0].uri, 'backgrounds');
+        
+        if (imageUrl && currentUser) {
+          const { updateProfile } = await import('@/lib/firebase');
+          await updateProfile(currentUser.id, { backgroundImage: imageUrl } as any);
+          
+          Alert.alert('Success', 'Background image updated successfully!');
+        } else {
+          throw new Error('Failed to upload image');
+        }
+      } catch (error) {
+        console.error('Error processing background image:', error);
+        Alert.alert('Error', 'Failed to update background image. Please try again.');
+      }
+    }
+  };
 
   const handleEditProfilePicture = async () => {
     if (Platform.OS !== 'web') {
@@ -188,14 +290,23 @@ export default function ProfileScreen() {
           scrollEventThrottle={16}
         >
           {/* Cover Image */}
-          <View style={styles.coverImageContainer}>
+          <TouchableOpacity 
+            style={styles.coverImageContainer}
+            onPress={handleEditBackgroundImage}
+            activeOpacity={0.9}
+          >
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&h=400&fit=crop' }} 
+              source={{ uri: (currentUser as any)?.backgroundImage || 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&h=400&fit=crop' }} 
               style={styles.coverImage}
               cachePolicy="memory-disk"
               contentFit="cover"
             />
-          </View>
+            <View style={styles.coverImageOverlay}>
+              <View style={styles.cameraIconContainer}>
+                <Camera color="#FFFFFF" size={24} />
+              </View>
+            </View>
+          </TouchableOpacity>
 
           {/* Profile Picture */}
           <View style={styles.profilePictureContainer}>
@@ -222,21 +333,8 @@ export default function ProfileScreen() {
             </Text>
           </View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={styles.followButton}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.followButtonText}>Follow</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.messageButton}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.messageButtonText}>Message</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Action Buttons - Only show for other users' profiles */}
+          {/* For now, this is the current user's profile, so we don't show these buttons */}
 
           {/* Stats */}
           <View style={styles.statsContainer}>
@@ -374,6 +472,21 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  coverImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0,
+  },
+  cameraIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   profilePictureContainer: {
     alignItems: 'center',
     marginTop: -64,
@@ -412,42 +525,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 16,
-    marginTop: 16,
-  },
-  followButton: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 9999,
-    backgroundColor: 'rgba(23, 207, 23, 0.2)',
-    alignItems: 'center',
-  },
-  followButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#17cf17',
-  },
-  messageButton: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 9999,
-    backgroundColor: '#17cf17',
-    alignItems: 'center',
-  },
-  messageButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    marginTop: 8,
+    marginTop: 16,
   },
   statItem: {
     alignItems: 'center',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { ArrowLeft, Heart, MessageCircle, UserPlus, Sprout, Leaf, Megaphone } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
+import { useSettings } from '@/hooks/use-settings';
 
 interface NotificationSetting {
   id: string;
@@ -27,69 +28,59 @@ interface NotificationSection {
 
 export default function NotificationPreferencesScreen() {
   const insets = useSafeAreaInsets();
+  const { settings, updateNotificationSetting } = useSettings();
   
-  const [activitySettings, setActivitySettings] = useState<NotificationSetting[]>([
+  const activitySettings: NotificationSetting[] = [
     {
       id: 'likes',
       title: 'Likes on your posts',
       icon: Heart,
-      enabled: true,
+      enabled: settings.notifications.likes,
     },
     {
       id: 'comments',
       title: 'Comments on your posts',
       icon: MessageCircle,
-      enabled: true,
+      enabled: settings.notifications.comments,
     },
     {
       id: 'followers',
       title: 'New Followers',
       icon: UserPlus,
-      enabled: true,
+      enabled: settings.notifications.followers,
     },
-  ]);
+  ];
 
-  const [messageSettings, setMessageSettings] = useState<NotificationSetting[]>([
+  const messageSettings: NotificationSetting[] = [
     {
-      id: 'direct-messages',
+      id: 'directMessages',
       title: 'Direct Sprouts (Messages)',
       icon: Sprout,
-      enabled: false,
+      enabled: settings.notifications.directMessages,
     },
-  ]);
+  ];
 
-  const [systemSettings, setSystemSettings] = useState<NotificationSetting[]>([
+  const systemSettings: NotificationSetting[] = [
     {
       id: 'updates',
       title: 'PlantSpace Updates',
       subtitle: 'News about new features and updates',
       icon: Leaf,
-      enabled: true,
+      enabled: settings.notifications.updates,
     },
     {
       id: 'promotions',
       title: 'Promotions & Announcements',
       icon: Megaphone,
-      enabled: false,
+      enabled: settings.notifications.promotions,
     },
-  ]);
+  ];
 
   const toggleSetting = (
     section: 'activity' | 'messages' | 'system',
     id: string
   ) => {
-    const updateSettings = (settings: NotificationSetting[]) =>
-      settings.map((item) =>
-        item.id === id ? { ...item, enabled: !item.enabled } : item
-      );
-
-    if (section === 'activity') {
-      setActivitySettings(updateSettings(activitySettings));
-    } else if (section === 'messages') {
-      setMessageSettings(updateSettings(messageSettings));
-    } else {
-      setSystemSettings(updateSettings(systemSettings));
-    }
+    updateNotificationSetting(id as any, !settings.notifications[id as keyof typeof settings.notifications]);
   };
 
   const renderNotificationItem = (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -17,14 +17,17 @@ import {
   Ban,
 } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
+import { useSettings } from '@/hooks/use-settings';
 
 type MessagePrivacy = 'everyone' | 'following' | 'none';
 
 export default function PrivacySettingsScreen() {
   const insets = useSafeAreaInsets();
-  const [privateProfile, setPrivateProfile] = useState(true);
-  const [personalizedAds, setPersonalizedAds] = useState(false);
-  const [messagePrivacy, setMessagePrivacy] = useState<MessagePrivacy>('everyone');
+  const { settings, updatePrivacySetting } = useSettings();
+  
+  const privateProfile = settings.privacy.privateProfile;
+  const personalizedAds = settings.privacy.personalizedAds;
+  const messagePrivacy = settings.privacy.messagePrivacy;
 
   const renderRadioOption = (
     value: MessagePrivacy,
@@ -34,7 +37,7 @@ export default function PrivacySettingsScreen() {
     <TouchableOpacity
       key={value}
       style={styles.radioOption}
-      onPress={() => setMessagePrivacy(value)}
+      onPress={() => updatePrivacySetting('messagePrivacy', value)}
       activeOpacity={0.7}
     >
       <View style={[styles.radioCircle, selected && styles.radioCircleSelected]}>
@@ -84,7 +87,7 @@ export default function PrivacySettingsScreen() {
             </View>
             <Switch
               value={privateProfile}
-              onValueChange={setPrivateProfile}
+              onValueChange={(value) => updatePrivacySetting('privateProfile', value)}
               trackColor={{
                 false: '#E8EAE6',
                 true: 'rgba(23, 207, 23, 0.3)',
@@ -117,7 +120,7 @@ export default function PrivacySettingsScreen() {
             </View>
             <Switch
               value={personalizedAds}
-              onValueChange={setPersonalizedAds}
+              onValueChange={(value) => updatePrivacySetting('personalizedAds', value)}
               trackColor={{
                 false: '#E8EAE6',
                 true: 'rgba(23, 207, 23, 0.3)',
