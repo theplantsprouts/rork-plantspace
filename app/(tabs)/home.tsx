@@ -11,12 +11,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { Sprout, Leaf, Heading, Bookmark } from 'lucide-react-native';
+import { Sprout, Leaf, Heading, Bookmark, Bell } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
 import { usePosts, type Post } from '@/hooks/use-posts';
 
 import * as Haptics from 'expo-haptics';
 import { useTabBar } from './_layout';
+import { router } from 'expo-router';
 
 
 export default function HomeScreen() {
@@ -50,7 +51,12 @@ export default function HomeScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerSpacer} />
         <Text style={styles.headerTitle}>Garden</Text>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity 
+          style={styles.notificationButton}
+          onPress={() => router.push('/notifications')}
+        >
+          <Bell color={PlantTheme.colors.onSurface} size={24} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -228,6 +234,12 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  notificationButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,

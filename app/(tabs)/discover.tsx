@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, Inbox } from 'lucide-react-native';
+import { Search, Bell } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
+import { router } from 'expo-router';
 
 
 
@@ -26,8 +27,11 @@ export default function DiscoverScreen() {
         <View style={styles.headerContent}>
           <View style={styles.headerSpacer} />
           <Text style={styles.headerTitle}>Explore Garden</Text>
-          <TouchableOpacity style={styles.inboxButton}>
-            <Inbox color={PlantTheme.colors.onSurface} size={24} />
+          <TouchableOpacity 
+            style={styles.notificationButton}
+            onPress={() => router.push('/notifications')}
+          >
+            <Bell color={PlantTheme.colors.onSurface} size={24} />
           </TouchableOpacity>
         </View>
         
@@ -88,9 +92,9 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: PlantTheme.colors.onSurface,
   },
-  inboxButton: {
-    width: 24,
-    height: 24,
+  notificationButton: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },

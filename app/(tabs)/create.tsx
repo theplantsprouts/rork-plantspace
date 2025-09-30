@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, ImagePlus } from 'lucide-react-native';
+import { X, ImagePlus, Bell } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -122,7 +122,12 @@ export default function CreateScreen() {
           <X color={PlantTheme.colors.textPrimary} size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Plant Seed</Text>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity 
+          style={styles.notificationButton}
+          onPress={() => router.push('/notifications')}
+        >
+          <Bell color={PlantTheme.colors.textPrimary} size={24} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -207,8 +212,11 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: PlantTheme.colors.textPrimary,
   },
-  headerSpacer: {
+  notificationButton: {
     width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
