@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { X, ImagePlus } from "lucide-react-native";
+import { X, Image as ImageIcon } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { usePosts } from "@/hooks/use-posts";
 import { router } from "expo-router";
@@ -104,7 +104,7 @@ export default function CreatePostScreen() {
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: borderColor }]}>
           <TouchableOpacity 
             style={styles.closeButton} 
             onPress={handleClose}
@@ -112,29 +112,35 @@ export default function CreatePostScreen() {
           >
             <X size={24} color={textColor} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: textColor }]}>Plant New Seed</Text>
+          <Text style={[styles.headerTitle, { color: textColor }]}>Plant Seed</Text>
           <View style={styles.headerSpacer} />
         </View>
 
         <View style={styles.content}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[
-                styles.textInput,
-                { 
-                  backgroundColor: bgColor,
-                  borderColor: borderColor,
-                  color: textColor,
-                }
-              ]}
-              value={content}
-              onChangeText={setContent}
-              placeholder="What's blooming in your garden today?"
-              placeholderTextColor={placeholderColor}
-              multiline
-              textAlignVertical="top"
-              testID="content-input"
+          <View style={styles.postContainer}>
+            <Image 
+              source={{ uri: user?.avatar || 'https://via.placeholder.com/48' }} 
+              style={styles.avatar}
             />
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  { 
+                    backgroundColor: bgColor,
+                    borderColor: borderColor,
+                    color: textColor,
+                  }
+                ]}
+                value={content}
+                onChangeText={setContent}
+                placeholder="What's growing?"
+                placeholderTextColor={placeholderColor}
+                multiline
+                textAlignVertical="top"
+                testID="content-input"
+              />
+            </View>
           </View>
 
           {selectedImage && (
@@ -156,26 +162,20 @@ export default function CreatePostScreen() {
               onPress={pickImage}
               testID="pick-image-button"
             >
-              <View style={styles.addPhotoIconContainer}>
-                <ImagePlus size={32} color={PlantTheme.colors.primary} />
-              </View>
-              <Text style={[styles.addPhotoText, { color: textColor }]}>Add Photo</Text>
+              <ImageIcon size={28} color={PlantTheme.colors.primary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={loading}
+              testID="submit-button"
+            >
+              <Text style={styles.submitButtonText}>
+                {loading ? "Planting..." : "Plant Seed"}
+              </Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        <View style={styles.footer}>
-          <View style={[styles.footerBorder, { borderTopColor: borderColor }]} />
-          <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-            testID="submit-button"
-          >
-            <Text style={styles.submitButtonText}>
-              {loading ? "Planting..." : "Plant Seed"}
-            </Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     </View>
@@ -188,36 +188,48 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
   },
   closeButton: {
-    padding: 8,
+    padding: 0,
   },
   headerTitle: {
-    flex: 1,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700' as const,
     textAlign: 'center',
-    marginRight: 40,
+    flex: 1,
   },
   headerSpacer: {
-    width: 40,
+    width: 32,
   },
   content: {
     flex: 1,
     paddingHorizontal: 16,
+    paddingTop: 16,
   },
-  inputContainer: {
-    marginBottom: 24,
+  postContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  inputWrapper: {
+    flex: 1,
   },
   textInput: {
-    height: 192,
+    minHeight: 192,
     padding: 16,
     borderRadius: 24,
     borderWidth: 1,
@@ -226,7 +238,7 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     position: 'relative',
-    marginBottom: 24,
+    marginBottom: 16,
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -248,37 +260,19 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    gap: 24,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
   },
   addPhotoButton: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 8,
-  },
-  addPhotoIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    padding: 8,
+    borderRadius: 9999,
     backgroundColor: 'rgba(23, 207, 23, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addPhotoText: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-  },
-  footer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  footerBorder: {
-    borderTopWidth: 1,
-    marginBottom: 16,
   },
   submitButton: {
     backgroundColor: PlantTheme.colors.primary,
     borderRadius: 9999,
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingHorizontal: 24,
     alignItems: 'center',
   },
