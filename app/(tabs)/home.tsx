@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heading, Sparkles, Wifi, WifiOff, Sun, Droplets } from 'lucide-react-native';
-import { PlantTheme, PlantTerminology } from '@/constants/theme';
+import { PlantTheme, PlantTerminology, PlantTypography } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 import { StoryCircles } from '@/components/StoryCircles';
 
@@ -262,12 +262,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     gap: 6,
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
   },
   createButtonText: {
     color: PlantTheme.colors.primary,
-    fontSize: 12,
-    fontWeight: '600',
+    ...PlantTypography.label,
   },
 
   postsContainer: {
@@ -286,12 +285,11 @@ const styles = StyleSheet.create({
   },
   insightsContainer: {
     padding: 16,
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
   },
   insightsTitle: {
     color: PlantTheme.colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
+    ...PlantTypography.title,
     marginBottom: 12,
   },
   insightsGrid: {
@@ -300,13 +298,13 @@ const styles = StyleSheet.create({
   },
   insightCard: {
     flex: 1,
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
     borderRadius: PlantTheme.borderRadius.md,
     padding: 12,
     alignItems: 'center',
     gap: 4,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
+    borderColor: PlantTheme.colors.outlineVariant,
   },
   insightValue: {
     color: PlantTheme.colors.textPrimary,
@@ -360,7 +358,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     gap: 12,
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
   },
   createFirstPostText: {
     color: PlantTheme.colors.primary,

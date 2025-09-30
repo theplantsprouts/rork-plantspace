@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Search, TrendingUp, TreePine, Sprout } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useAppContext } from '@/hooks/use-app-context';
-import { PlantTheme, PlantTerminology } from '@/constants/theme';
+import { PlantTheme, PlantTerminology, PlantTypography } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 import * as Haptics from 'expo-haptics';
 
@@ -290,6 +290,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: PlantTheme.colors.surfaceContainer,
   },
   safeArea: {
     flex: 1,
@@ -299,14 +300,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: PlantTheme.colors.textDark,
+    ...PlantTypography.headline,
+    color: PlantTheme.colors.onSurface,
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: PlantTheme.colors.textSecondary,
+    ...PlantTypography.body,
+    color: PlantTheme.colors.onSurfaceVariant,
   },
   scrollView: {
     flex: 1,
@@ -324,7 +324,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     gap: 12,
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.outlineVariant,
   },
   searchInput: {
     flex: 1,
@@ -342,9 +344,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: PlantTheme.colors.textDark,
+    ...PlantTypography.title,
+    color: PlantTheme.colors.onSurface,
   },
   trendingCard: {
     marginLeft: 20,
@@ -354,7 +355,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 15,
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.outlineVariant,
   },
   topicIcon: {
     fontSize: 24,
@@ -378,7 +381,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 15,
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.outlineVariant,
   },
   userAvatar: {
     width: 60,
@@ -413,7 +418,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: PlantTheme.borderRadius.lg,
-    ...PlantTheme.shadows.sm,
+    ...PlantTheme.elevation.level2,
   },
   followButtonText: {
     color: PlantTheme.colors.white,
@@ -421,7 +426,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   followingButton: {
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
     borderWidth: 1,
     borderColor: PlantTheme.colors.primary,
   },
@@ -438,7 +443,7 @@ const styles = StyleSheet.create({
     borderRadius: PlantTheme.borderRadius.md,
     overflow: 'hidden',
     marginBottom: 5,
-    ...PlantTheme.shadows.sm,
+    ...PlantTheme.elevation.level1,
   },
   exploreImage: {
     width: '100%',

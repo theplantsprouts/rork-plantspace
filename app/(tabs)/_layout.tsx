@@ -77,19 +77,19 @@ function TabLayoutContent() {
         container: {
           ...baseContainer,
           elevation: 2,
-          shadowColor: PlantTheme.colors.primary,
+          shadowColor: PlantTheme.colors.onSurface,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.1,
           shadowRadius: 2,
         },
         active: {
-          backgroundColor: PlantTheme.colors.cardBackground,
-          borderColor: PlantTheme.colors.primary,
+          backgroundColor: PlantTheme.colors.surface,
+          borderColor: PlantTheme.colors.outline,
           transform: [{ scale: 1.05 }],
         },
         inactive: {
-          backgroundColor: PlantTheme.colors.cardBackground,
-          borderColor: PlantTheme.colors.cardBorder,
+          backgroundColor: PlantTheme.colors.surface,
+          borderColor: PlantTheme.colors.outlineVariant,
         },
       });
     }
@@ -100,13 +100,13 @@ function TabLayoutContent() {
         ...PlantTheme.shadows.sm,
       },
       active: {
-        backgroundColor: PlantTheme.colors.cardBackground,
-        borderColor: PlantTheme.colors.primary,
+        backgroundColor: PlantTheme.colors.surface,
+        borderColor: PlantTheme.colors.outline,
         transform: [{ scale: 1.1 }],
       },
       inactive: {
-        backgroundColor: PlantTheme.colors.cardBackground,
-        borderColor: PlantTheme.colors.cardBorder,
+        backgroundColor: PlantTheme.colors.surface,
+        borderColor: PlantTheme.colors.outlineVariant,
       },
     });
   }, []);
@@ -149,13 +149,13 @@ function TabLayoutContent() {
       paddingBottom: Platform.OS === 'ios' ? 30 : 18,
       paddingTop: Platform.OS === 'ios' ? 8 : 8,
       transform: [{ translateY: tabBarAnimation }],
-      backgroundColor: PlantTheme.colors.cardBackground,
-      borderTopColor: PlantTheme.colors.cardBorder,
-      ...PlantTheme.shadows.md,
+      backgroundColor: PlantTheme.colors.surface,
+      borderTopColor: PlantTheme.colors.outlineVariant,
+      ...PlantTheme.elevation.level3,
       ...(Platform.OS === 'android' && {
         elevation: 8,
         shadowColor: 'transparent',
-        backgroundColor: PlantTheme.colors.cardBackground,
+        backgroundColor: PlantTheme.colors.surface,
       }),
     };
   }, [tabBarAnimation]);

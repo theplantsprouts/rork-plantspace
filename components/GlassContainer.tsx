@@ -47,31 +47,31 @@ export function GlassCard({
   );
 }
 
-// Keep the old names for backward compatibility
+// Backwards compatibility aliases
 export const CardContainer = GlassContainer;
 export const Card = GlassCard;
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
     borderRadius: PlantTheme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
-    ...PlantTheme.shadows.sm,
+    borderColor: PlantTheme.colors.outlineVariant,
+    ...PlantTheme.elevation.level1,
     ...(Platform.OS === 'android' && {
-      backgroundColor: PlantTheme.colors.cardBackground,
+      backgroundColor: PlantTheme.colors.surface,
       elevation: 2,
       shadowColor: 'transparent',
     }),
   },
   card: {
-    backgroundColor: PlantTheme.colors.cardBackground,
+    backgroundColor: PlantTheme.colors.surface,
     borderRadius: PlantTheme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
-    ...PlantTheme.shadows.md,
+    borderColor: PlantTheme.colors.outlineVariant,
+    ...PlantTheme.elevation.level2,
     ...(Platform.OS === 'android' && {
-      backgroundColor: PlantTheme.colors.cardBackground,
+      backgroundColor: PlantTheme.colors.surface,
       elevation: 3,
       shadowColor: 'transparent',
     }),

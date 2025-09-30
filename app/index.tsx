@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView } from 'rea
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, isProfileComplete } from '@/hooks/use-auth';
-import { PlantTheme } from '@/constants/theme';
+import { PlantTheme, PlantTypography } from '@/constants/theme';
 import { Sprout } from 'lucide-react-native';
 
 export default function Index() {
@@ -100,7 +100,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PlantTheme.colors.backgroundStart,
+    backgroundColor: PlantTheme.colors.surfaceContainer,
   },
   safeArea: {
     flex: 1,
@@ -116,9 +116,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   logoText: {
-    fontSize: 24,
-    fontWeight: 'bold' as const,
-    color: PlantTheme.colors.textDark,
+    ...PlantTypography.headline,
+    color: PlantTheme.colors.onSurface,
   },
   scrollContent: {
     flexGrow: 1,
@@ -140,18 +139,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 30,
-    fontWeight: 'bold' as const,
-    color: PlantTheme.colors.textDark,
+    ...PlantTypography.display,
+    color: PlantTheme.colors.onSurface,
     textAlign: 'center',
     marginBottom: 16,
-    lineHeight: 38,
   },
   subtitle: {
-    fontSize: 16,
-    color: PlantTheme.colors.textSecondary,
+    ...PlantTypography.body,
+    color: PlantTheme.colors.onSurfaceVariant,
     textAlign: 'center',
-    lineHeight: 24,
   },
   footer: {
     padding: 24,
@@ -161,13 +157,9 @@ const styles = StyleSheet.create({
     backgroundColor: PlantTheme.colors.primary,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 9999,
+    borderRadius: PlantTheme.borderRadius.full,
     alignItems: 'center',
-    shadowColor: PlantTheme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    ...PlantTheme.elevation.level3,
   },
   signUpButtonText: {
     color: '#FFFFFF',
@@ -175,15 +167,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold' as const,
   },
   loginButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    backgroundColor: PlantTheme.colors.surfaceVariant,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 9999,
+    borderRadius: PlantTheme.borderRadius.full,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.outline,
   },
   loginButtonText: {
     color: PlantTheme.colors.primary,
-    fontSize: 18,
-    fontWeight: 'bold' as const,
+    ...PlantTypography.title,
   },
 });
