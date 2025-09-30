@@ -6,24 +6,24 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ScrollView,
   Platform,
+  useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { X, Camera, Image as ImageIcon, Sprout } from "lucide-react-native";
+import { X, ImagePlus } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { usePosts } from "@/hooks/use-posts";
 import { router } from "expo-router";
-import { PlantTheme, PlantTerminology } from "@/constants/theme";
-import { GlassCard } from "@/components/GlassContainer";
+import { PlantTheme } from "@/constants/theme";
 
 export default function CreatePostScreen() {
   const [content, setContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   
   const { user } = useAuth();
   const { addPost } = usePosts();
@@ -49,25 +49,7 @@ export default function CreatePostScreen() {
     }
   }, []);
 
-  const takePhoto = useCallback(async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      if (Platform.OS !== 'web') {
-        Alert.alert("Permission needed", "Please grant camera permissions");
-      }
-      return;
-    }
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  }, []);
 
   const removeImage = useCallback(() => {
     setSelectedImage(null);
@@ -76,14 +58,14 @@ export default function CreatePostScreen() {
   const handleSubmit = useCallback(async () => {
     if (!content.trim()) {
       if (Platform.OS !== 'web') {
-        Alert.alert("Error", "Please plant some seeds (add content)");
+        Alert.alert("Error", "Please add some content");
       }
       return;
     }
 
     if (!user) {
       if (Platform.OS !== 'web') {
-        Alert.alert("Error", "Please log in to tend your garden");
+        Alert.alert("Error", "Please log in to create a post");
       }
       return;
     }
@@ -93,10 +75,9 @@ export default function CreatePostScreen() {
       await addPost(content.trim(), selectedImage || undefined);
 
       if (Platform.OS !== 'web') {
-        Alert.alert("Success", "Your seed has been planted successfully! 🌱");
+        Alert.alert("Success", "Your post has been created! 🌱");
       }
       
-      // Clear form
       setContent("");
       setSelectedImage(null);
       
@@ -104,109 +85,98 @@ export default function CreatePostScreen() {
     } catch (error: any) {
       console.error('Error creating post:', error);
       if (Platform.OS !== 'web') {
-        Alert.alert("Error", error.message || "Failed to plant your seed");
+        Alert.alert("Error", error.message || "Failed to create post");
       }
     } finally {
       setLoading(false);
     }
   }, [content, selectedImage, user, addPost]);
 
+  const handleClose = useCallback(() => {
+    router.back();
+  }, []);
+
+  const bgColor = isDark ? '#112111' : '#f6f8f6';
+  const textColor = isDark ? '#ffffff' : '#000000';
+  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)';
+  const borderColor = isDark ? 'rgba(23, 207, 23, 0.5)' : 'rgba(23, 207, 23, 0.3)';
+
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd, PlantTheme.colors.primaryLight]}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.scrollView}>
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <Sprout color={PlantTheme.colors.primary} size={32} />
-            </View>
-            <Text style={styles.title}>🌱 {PlantTerminology.create}</Text>
-            <Text style={styles.subtitle}>Share your sustainable journey with the community</Text>
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={handleClose}
+            testID="close-button"
+          >
+            <X size={24} color={textColor} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: textColor }]}>New Post</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <View style={styles.content}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[
+                styles.textInput,
+                { 
+                  backgroundColor: bgColor,
+                  borderColor: borderColor,
+                  color: textColor,
+                }
+              ]}
+              value={content}
+              onChangeText={setContent}
+              placeholder="What's growing in your garden?"
+              placeholderTextColor={placeholderColor}
+              multiline
+              textAlignVertical="top"
+              testID="content-input"
+            />
           </View>
 
-          <View style={styles.form}>
-            <GlassCard style={styles.formCard}>
-              {user && (
-                <View style={styles.userInfo}>
-                  <View style={styles.userAvatar}>
-                    {user.avatar ? (
-                      <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-                    ) : (
-                      <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarText}>
-                          {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.userDetails}>
-                    <Text style={styles.userName}>{user.name || 'Anonymous Gardener'}</Text>
-                    <Text style={styles.userHandle}>@{user.username || 'gardener'}</Text>
-                  </View>
-                </View>
-              )}
-              
-              <TextInput
-                style={styles.textInput}
-                value={content}
-                onChangeText={setContent}
-                placeholder="What's growing in your garden today?"
-                placeholderTextColor={PlantTheme.colors.textSecondary}
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-                testID="content-input"
-              />
-
-              {selectedImage && (
-                <View style={styles.imageContainer}>
-                  <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={removeImage}
-                    testID="remove-image-button"
-                  >
-                    <X size={18} color={PlantTheme.colors.white} />
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              <View style={styles.imageActions}>
-                <TouchableOpacity
-                  style={styles.imageButton}
-                  onPress={pickImage}
-                  testID="pick-image-button"
-                >
-                  <ImageIcon size={18} color={PlantTheme.colors.primary} />
-                  <Text style={styles.imageButtonText}>Gallery</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.imageButton}
-                  onPress={takePhoto}
-                  testID="take-photo-button"
-                >
-                  <Camera size={18} color={PlantTheme.colors.primary} />
-                  <Text style={styles.imageButtonText}>Camera</Text>
-                </TouchableOpacity>
-              </View>
-
+          {selectedImage && (
+            <View style={styles.imagePreviewContainer}>
+              <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
               <TouchableOpacity
-                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-                onPress={handleSubmit}
-                disabled={loading}
-                testID="submit-button"
+                style={styles.removeImageButton}
+                onPress={removeImage}
+                testID="remove-image-button"
               >
-                <Text style={styles.submitButtonText}>
-                  {loading ? "Planting..." : `${PlantTerminology.share} 🌱`}
-                </Text>
+                <X size={20} color="#fff" />
               </TouchableOpacity>
-            </GlassCard>
+            </View>
+          )}
+
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
+              style={styles.addPhotoButton}
+              onPress={pickImage}
+              testID="pick-image-button"
+            >
+              <View style={styles.addPhotoIconContainer}>
+                <ImagePlus size={32} color={PlantTheme.colors.primary} />
+              </View>
+              <Text style={[styles.addPhotoText, { color: textColor }]}>Add Photo</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
+
+        <View style={styles.footer}>
+          <View style={[styles.footerBorder, { borderTopColor: borderColor }]} />
+          <TouchableOpacity
+            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={loading}
+            testID="submit-button"
+          >
+            <Text style={styles.submitButtonText}>
+              {loading ? "Posting..." : "Sprout Post"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -218,154 +188,106 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-  },
-  scrollView: {
-    flex: 1,
+    justifyContent: 'space-between',
   },
   header: {
-    padding: 24,
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  logoContainer: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: PlantTheme.colors.cardBackground,
-    borderRadius: PlantTheme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
+  closeButton: {
+    padding: 8,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold" as const,
-    color: PlantTheme.colors.textDark,
-    marginBottom: 8,
-    textAlign: "center",
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '700' as const,
+    textAlign: 'center',
+    marginRight: 40,
   },
-  subtitle: {
-    fontSize: 16,
-    color: PlantTheme.colors.textSecondary,
-    textAlign: "center",
-    lineHeight: 22,
+  headerSpacer: {
+    width: 40,
   },
-  form: {
-    padding: 20,
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
-  formCard: {
-    padding: 20,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
-    borderRadius: PlantTheme.borderRadius.md,
-    padding: 16,
-    fontSize: 16,
-    backgroundColor: PlantTheme.colors.cardBackground,
-    color: PlantTheme.colors.textPrimary,
-    minHeight: 120,
-    marginBottom: 16,
-    ...(Platform.OS === 'android' && {
-      backgroundColor: PlantTheme.colors.cardBackground,
-      textAlignVertical: 'top',
-    }),
-  },
-  imageContainer: {
-    position: "relative",
-    marginBottom: 16,
-  },
-  selectedImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: PlantTheme.borderRadius.md,
-  },
-  removeImageButton: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    borderRadius: 16,
-    width: 32,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    ...PlantTheme.shadows.sm,
-  },
-  imageActions: {
-    flexDirection: "row",
-    justifyContent: "space-around",
+  inputContainer: {
     marginBottom: 24,
   },
-  imageButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: PlantTheme.colors.cardBackground,
+  textInput: {
+    height: 192,
+    padding: 16,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.primary,
-    borderRadius: PlantTheme.borderRadius.md,
-    minWidth: 100,
-    justifyContent: "center",
-    gap: 6,
+    fontSize: 16,
+    textAlignVertical: 'top',
   },
-  imageButtonText: {
-    color: PlantTheme.colors.primary,
+  imagePreviewContainer: {
+    position: 'relative',
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    gap: 24,
+  },
+  addPhotoButton: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addPhotoIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(23, 207, 23, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addPhotoText: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: '500' as const,
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  footerBorder: {
+    borderTopWidth: 1,
+    marginBottom: 16,
   },
   submitButton: {
     backgroundColor: PlantTheme.colors.primary,
-    borderRadius: PlantTheme.borderRadius.lg,
-    padding: 16,
-    alignItems: "center",
-    ...PlantTheme.shadows.md,
+    borderRadius: 9999,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: 'center',
   },
   submitButtonDisabled: {
     opacity: 0.6,
   },
   submitButtonText: {
-    color: PlantTheme.colors.white,
+    color: '#000000',
     fontSize: 16,
-    fontWeight: "600" as const,
-  },
-  userInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: PlantTheme.colors.cardBorder,
-  },
-  userAvatar: {
-    marginRight: 12,
-  },
-  avatarImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  avatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: PlantTheme.colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    color: PlantTheme.colors.white,
-    fontSize: 18,
-    fontWeight: "600" as const,
-  },
-  userDetails: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: PlantTheme.colors.textDark,
-    marginBottom: 2,
-  },
-  userHandle: {
-    fontSize: 14,
-    color: PlantTheme.colors.textSecondary,
+    fontWeight: '700' as const,
   },
 });
