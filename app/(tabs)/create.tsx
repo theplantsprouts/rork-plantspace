@@ -10,10 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Camera, Image as ImageIcon, Leaf, Heading } from 'lucide-react-native';
-import { PlantTheme, PlantTerminology } from '@/constants/theme';
-import { GlassCard } from '@/components/GlassContainer';
+import { X, ImagePlus } from 'lucide-react-native';
+import { PlantTheme } from '@/constants/theme';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { usePosts } from '@/hooks/use-posts';
@@ -28,15 +26,11 @@ export default function CreateScreen() {
   const [postText, setPostText] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
-  const [showAiInsights, setShowAiInsights] = useState(false);
   const { addPost } = usePosts();
   const { addNotification } = useAppContext();
-  const { analyzeContent, moderatePost, isAnalyzing } = useAIContent();
+  const { moderatePost } = useAIContent();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  // Temporarily disable scroll handling to fix hooks order issue
-  const handleScroll = () => {};
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -48,33 +42,6 @@ export default function CreateScreen() {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
-    }
-  };
-
-  const takePhoto = async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
-
-  const analyzePostContent = async () => {
-    if (!postText.trim()) return;
-    
-    try {
-      const analysis = await analyzeContent({
-        content: postText.trim(),
-        image: selectedImage || undefined
-      });
-      setAiAnalysis(analysis);
-      setShowAiInsights(true);
-    } catch (error) {
-      console.error('Error analyzing content:', error);
     }
   };
 
@@ -126,8 +93,6 @@ export default function CreateScreen() {
             onPress: () => {
               setPostText('');
               setSelectedImage(null);
-              setAiAnalysis(null);
-              setShowAiInsights(false);
               router.push('/(tabs)/home');
             }
           }
@@ -135,8 +100,6 @@ export default function CreateScreen() {
       } else {
         setPostText('');
         setSelectedImage(null);
-        setAiAnalysis(null);
-        setShowAiInsights(false);
         router.push('/(tabs)/home');
       }
     } catch (error) {
@@ -150,167 +113,74 @@ export default function CreateScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd, PlantTheme.colors.primaryLight]}
-        style={StyleSheet.absoluteFillObject}
-      />
-      
-      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>🌱 {PlantTerminology.create}</Text>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.closeButton}
+          onPress={() => router.back()}
+        >
+          <X color={PlantTheme.colors.textPrimary} size={24} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Plant Seed</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.postContainer}>
+          <View style={styles.userSection}>
+            <Image 
+              source={{ uri: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' }} 
+              style={styles.userAvatar}
+            />
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="What's growing?"
+                placeholderTextColor={PlantTheme.colors.textSecondary}
+                multiline
+                value={postText}
+                onChangeText={setPostText}
+                maxLength={280}
+              />
+            </View>
+          </View>
+
+          {selectedImage && (
+            <View style={styles.imagePreview}>
+              <Image source={{ uri: selectedImage }} style={styles.previewImage} />
+              <TouchableOpacity 
+                style={styles.removeImageButton}
+                onPress={() => setSelectedImage(null)}
+              >
+                <Text style={styles.removeImageText}>×</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.actionsRow}>
           <TouchableOpacity 
-            style={[styles.postButton, isPosting && styles.postButtonDisabled]} 
+            style={styles.photoButton}
+            onPress={pickImage}
+          >
+            <ImagePlus color={PlantTheme.colors.primary} size={28} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.plantButton, isPosting && styles.plantButtonDisabled]} 
             onPress={handlePost}
             disabled={isPosting}
           >
-            <Text style={styles.postButtonText}>
-              {isPosting ? 'Planting...' : PlantTerminology.share}
+            <Text style={styles.plantButtonText}>
+              {isPosting ? 'Planting...' : 'Plant Seed'}
             </Text>
           </TouchableOpacity>
         </View>
-
-        <ScrollView 
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          <GlassCard style={styles.postContainer}>
-            <View style={styles.userSection}>
-              <Image 
-                source={{ uri: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' }} 
-                style={styles.userAvatar}
-              />
-              <View>
-                <Text style={styles.userName}>{user?.name || 'You'}</Text>
-                <Text style={styles.userHandle}>@{user?.username || 'yourhandle'}</Text>
-              </View>
-            </View>
-
-            <TextInput
-              style={styles.textInput}
-              placeholder="What's growing in your garden today?"
-              placeholderTextColor={PlantTheme.colors.textSecondary}
-              multiline
-              value={postText}
-              onChangeText={setPostText}
-              maxLength={280}
-            />
-
-            {selectedImage && (
-              <View style={styles.imagePreview}>
-                <Image source={{ uri: selectedImage }} style={styles.previewImage} />
-                <TouchableOpacity 
-                  style={styles.removeImageButton}
-                  onPress={() => setSelectedImage(null)}
-                >
-                  <Text style={styles.removeImageText}>×</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <View style={styles.characterCount}>
-              <Text style={[
-                styles.characterCountText,
-                postText.length > 280 && styles.characterCountError
-              ]}>
-                {postText.length}/280
-              </Text>
-            </View>
-
-            {postText.trim().length > 10 && (
-              <TouchableOpacity 
-                style={styles.aiAnalyzeButton} 
-                onPress={analyzePostContent}
-                disabled={isAnalyzing}
-              >
-                <Text style={styles.aiAnalyzeText}>
-                  {isAnalyzing ? '🤖 Analyzing...' : '🤖 Check AI Relevance'}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {showAiInsights && aiAnalysis && (
-              <View style={styles.aiInsights}>
-                <Text style={styles.aiInsightsTitle}>🤖 AI Analysis</Text>
-                <View style={styles.aiScoreContainer}>
-                  <Text style={styles.aiScoreLabel}>Agriculture Relevance:</Text>
-                  <Text style={[
-                    styles.aiScoreValue,
-                    { color: aiAnalysis.isAgricultureRelated ? PlantTheme.colors.success : PlantTheme.colors.error }
-                  ]}>
-                    {aiAnalysis.isAgricultureRelated ? '✅ Relevant' : '❌ Not Relevant'}
-                  </Text>
-                </View>
-                <View style={styles.aiScoreContainer}>
-                  <Text style={styles.aiScoreLabel}>AI Score:</Text>
-                  <Text style={styles.aiScoreValue}>
-                    {(aiAnalysis.aiScore * 100).toFixed(0)}%
-                  </Text>
-                </View>
-                {aiAnalysis.aiTags && aiAnalysis.aiTags.length > 0 && (
-                  <View style={styles.aiTagsContainer}>
-                    <Text style={styles.aiTagsLabel}>Tags:</Text>
-                    <View style={styles.aiTags}>
-                      {aiAnalysis.aiTags.map((tag: string, index: number) => (
-                        <View key={`tag-${tag}-${index}`} style={styles.aiTag}>
-                          <Text style={styles.aiTagText}>#{tag}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
-                {aiAnalysis.moderationReason && (
-                  <Text style={styles.moderationReason}>
-                    💡 {aiAnalysis.moderationReason}
-                  </Text>
-                )}
-              </View>
-            )}
-          </GlassCard>
-
-          <View style={styles.actionsContainer}>
-            <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
-              <GlassCard style={styles.actionCard}>
-                <ImageIcon color={PlantTheme.colors.accent} size={24} />
-                <Text style={styles.actionText}>Photo</Text>
-              </GlassCard>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
-              <GlassCard style={styles.actionCard}>
-                <Camera color={PlantTheme.colors.primary} size={24} />
-                <Text style={styles.actionText}>Camera</Text>
-              </GlassCard>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionButton}>
-              <GlassCard style={styles.actionCard}>
-                <Leaf color={PlantTheme.colors.secondary} size={24} />
-                <Text style={styles.actionText}>Voice</Text>
-              </GlassCard>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionButton}>
-              <GlassCard style={styles.actionCard}>
-                <Heading color={PlantTheme.colors.primaryLight} size={24} />
-                <Text style={styles.actionText}>Location</Text>
-              </GlassCard>
-            </TouchableOpacity>
-          </View>
-
-          <GlassCard style={styles.tipsContainer}>
-            <Text style={styles.tipsTitle}>🌱 Sustainable Community Guidelines</Text>
-            <Text style={styles.tipText}>• Share farming techniques, crop updates, or garden progress</Text>
-            <Text style={styles.tipText}>• Discuss sustainable practices and environmental conservation</Text>
-            <Text style={styles.tipText}>• Post about climate change impacts on agriculture</Text>
-            <Text style={styles.tipText}>• Share agricultural technology and innovation</Text>
-            <Text style={styles.tipText}>• Connect with fellow farmers and environmental enthusiasts</Text>
-          </GlassCard>
-        </ScrollView>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -318,76 +188,64 @@ export default function CreateScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  safeArea: {
-    flex: 1,
+    backgroundColor: PlantTheme.colors.backgroundStart,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: PlantTheme.colors.cardBorder,
+  },
+  closeButton: {
+    padding: 4,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: PlantTheme.colors.textDark,
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: PlantTheme.colors.textPrimary,
   },
-  postButton: {
-    backgroundColor: PlantTheme.colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: PlantTheme.borderRadius.lg,
-    ...PlantTheme.shadows.sm,
-  },
-  postButtonText: {
-    color: PlantTheme.colors.white,
-    fontWeight: '600',
-    fontSize: 14,
+  headerSpacer: {
+    width: 32,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
     paddingBottom: 100,
   },
   postContainer: {
-    marginBottom: 20,
-    padding: 20,
-    backgroundColor: PlantTheme.colors.cardBackground,
+    padding: 16,
   },
   userSection: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
+    alignItems: 'flex-start',
   },
   userAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     marginRight: 12,
   },
-  userName: {
-    color: PlantTheme.colors.textPrimary,
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  userHandle: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 14,
+  textInputContainer: {
+    flex: 1,
   },
   textInput: {
     color: PlantTheme.colors.textPrimary,
-    fontSize: 18,
-    minHeight: 120,
+    fontSize: 16,
+    minHeight: 192,
     textAlignVertical: 'top',
-    marginBottom: 15,
+    padding: 16,
+    backgroundColor: PlantTheme.colors.backgroundStart,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.cardBorder,
+    borderRadius: PlantTheme.borderRadius.xl,
   },
   imagePreview: {
     position: 'relative',
-    marginBottom: 15,
+    marginTop: 16,
   },
   previewImage: {
     width: '100%',
@@ -408,130 +266,32 @@ const styles = StyleSheet.create({
   removeImageText: {
     color: '#fff',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700' as const,
   },
-  characterCount: {
-    alignItems: 'flex-end',
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 16,
   },
-  characterCountText: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 12,
+  photoButton: {
+    padding: 8,
+    borderRadius: 9999,
+    backgroundColor: PlantTheme.colors.cardBackground,
   },
-  characterCountError: {
-    color: PlantTheme.colors.error,
+  plantButton: {
+    backgroundColor: PlantTheme.colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 9999,
   },
-  postButtonDisabled: {
+  plantButtonDisabled: {
     opacity: 0.6,
   },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  actionButton: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  actionCard: {
-    alignItems: 'center',
-    gap: 8,
-    padding: 15,
-    backgroundColor: PlantTheme.colors.cardBackground,
-  },
-  actionText: {
-    color: PlantTheme.colors.textPrimary,
-    fontWeight: '500',
-    fontSize: 12,
-  },
-  tipsContainer: {
-    padding: 20,
-    backgroundColor: PlantTheme.colors.cardBackground,
-  },
-  tipsTitle: {
-    color: PlantTheme.colors.textPrimary,
+  plantButtonText: {
+    color: '#000',
+    fontWeight: '700' as const,
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 15,
-  },
-  tipText: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  aiAnalyzeButton: {
-    backgroundColor: PlantTheme.colors.cardBackground,
-    borderRadius: PlantTheme.borderRadius.md,
-    padding: 12,
-    alignItems: 'center',
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.primary,
-  },
-  aiAnalyzeText: {
-    color: PlantTheme.colors.primary,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  aiInsights: {
-    backgroundColor: PlantTheme.colors.cardBackground,
-    borderRadius: PlantTheme.borderRadius.md,
-    padding: 15,
-    marginTop: 15,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
-  },
-  aiInsightsTitle: {
-    color: PlantTheme.colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  aiScoreContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  aiScoreLabel: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 14,
-  },
-  aiScoreValue: {
-    color: PlantTheme.colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  aiTagsContainer: {
-    marginTop: 10,
-  },
-  aiTagsLabel: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  aiTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  aiTag: {
-    backgroundColor: PlantTheme.colors.cardBackground,
-    borderRadius: PlantTheme.borderRadius.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.primary,
-  },
-  aiTagText: {
-    color: PlantTheme.colors.primary,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  moderationReason: {
-    color: PlantTheme.colors.warning,
-    fontSize: 13,
-    marginTop: 10,
-    fontStyle: 'italic',
   },
 });
