@@ -34,8 +34,8 @@ export default function LeavesScreen() {
   const conversations: Conversation[] = [];
 
   const backgroundColor = isDark ? '#112111' : '#f6f8f6';
-  const textColor = isDark ? '#e1e3e0' : '#191d19';
-  const secondaryTextColor = isDark ? '#c2c8c1' : '#424842';
+  const textColor = '#000000';
+  const secondaryTextColor = '#424842';
   const containerBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
   const searchBg = isDark ? 'rgba(23, 207, 23, 0.2)' : 'rgba(23, 207, 23, 0.1)';
   const primaryColor = '#17cf17';
