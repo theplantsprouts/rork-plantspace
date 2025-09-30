@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
@@ -79,7 +78,7 @@ export default function SettingsScreen() {
           subtitle: 'Manage your account information',
           icon: User,
           type: 'navigation',
-          onPress: () => Alert.alert('Coming Soon', 'Account management will be available soon!'),
+          onPress: () => router.push('/account-settings' as any),
         },
         {
           id: 'privacy',
