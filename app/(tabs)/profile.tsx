@@ -23,7 +23,7 @@ import { usePosts } from '@/hooks/use-posts';
 export default function ProfileScreen() {
   const { currentUser } = useAppContext();
   const { posts } = usePosts();
-  const [activeTab, setActiveTab] = useState<'sprouts' | 'gardeners' | 'following'>('sprouts');
+  const [activeTab, setActiveTab] = useState<'seeds' | 'gardeners' | 'tending'>('seeds');
 
   const { handleScroll } = useTabBar();
   
@@ -340,46 +340,46 @@ export default function ProfileScreen() {
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{userPosts.length}</Text>
-              <Text style={styles.statLabel}>My Sprouts</Text>
+              <Text style={styles.statLabel}>Seeds</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{currentUser?.followers || 350}</Text>
-              <Text style={styles.statLabel}>Gardeners</Text>
+              <Text style={styles.statLabel}>Garden Friends</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{currentUser?.following || 200}</Text>
-              <Text style={styles.statLabel}>Following</Text>
+              <Text style={styles.statLabel}>Tending</Text>
             </View>
           </View>
 
           {/* Tabs */}
           <View style={styles.tabsContainer}>
             <TouchableOpacity 
-              style={[styles.tab, activeTab === 'sprouts' && styles.activeTab]}
-              onPress={() => setActiveTab('sprouts')}
+              style={[styles.tab, activeTab === 'seeds' && styles.activeTab]}
+              onPress={() => setActiveTab('seeds')}
             >
-              <Text style={[styles.tabText, activeTab === 'sprouts' && styles.activeTabText]}>My Sprouts</Text>
+              <Text style={[styles.tabText, activeTab === 'seeds' && styles.activeTabText]}>Seeds</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.tab, activeTab === 'gardeners' && styles.activeTab]}
               onPress={() => setActiveTab('gardeners')}
             >
-              <Text style={[styles.tabText, activeTab === 'gardeners' && styles.activeTabText]}>Gardeners</Text>
+              <Text style={[styles.tabText, activeTab === 'gardeners' && styles.activeTabText]}>Garden Friends</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.tab, activeTab === 'following' && styles.activeTab]}
-              onPress={() => setActiveTab('following')}
+              style={[styles.tab, activeTab === 'tending' && styles.activeTab]}
+              onPress={() => setActiveTab('tending')}
             >
-              <Text style={[styles.tabText, activeTab === 'following' && styles.activeTabText]}>Following</Text>
+              <Text style={[styles.tabText, activeTab === 'tending' && styles.activeTabText]}>Tending</Text>
             </TouchableOpacity>
           </View>
 
           {/* Posts Grid */}
-          {activeTab === 'sprouts' && (
+          {activeTab === 'seeds' && (
             <View style={styles.postsGrid}>
               {userPosts.length === 0 ? (
                 <View style={styles.emptyPosts}>
-                  <Text style={styles.emptyPostsText}>No sprouts yet</Text>
+                  <Text style={styles.emptyPostsText}>No seeds planted yet</Text>
                   <Text style={styles.emptyPostsSubtext}>Start sharing your plant journey!</Text>
                 </View>
               ) : (
@@ -420,14 +420,14 @@ export default function ProfileScreen() {
 
           {activeTab === 'gardeners' && (
             <View style={styles.emptyPosts}>
-              <Text style={styles.emptyPostsText}>No gardeners yet</Text>
+              <Text style={styles.emptyPostsText}>No garden friends yet</Text>
               <Text style={styles.emptyPostsSubtext}>Connect with other plant lovers!</Text>
             </View>
           )}
 
-          {activeTab === 'following' && (
+          {activeTab === 'tending' && (
             <View style={styles.emptyPosts}>
-              <Text style={styles.emptyPostsText}>Not following anyone yet</Text>
+              <Text style={styles.emptyPostsText}>Not tending anyone yet</Text>
               <Text style={styles.emptyPostsSubtext}>Discover amazing plant enthusiasts!</Text>
             </View>
           )}

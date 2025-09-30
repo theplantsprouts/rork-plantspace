@@ -269,41 +269,41 @@ function TabLayoutContent() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
+          title: 'Garden',
           tabBarIcon: renderHomeIcon,
-          tabBarAccessibilityLabel: 'Home Tab',
+          tabBarAccessibilityLabel: 'Garden Tab',
         }}
       />
       <Tabs.Screen
         name="discover"
         options={{
-          title: 'Explore',
+          title: 'Explore Garden',
           tabBarIcon: renderExploreIcon,
-          tabBarAccessibilityLabel: 'Explore Tab',
+          tabBarAccessibilityLabel: 'Explore Garden Tab',
         }}
       />
       <Tabs.Screen
         name="notifications"
         options={{
-          title: 'Message',
+          title: 'Leaves',
           tabBarIcon: renderMessageIcon,
-          tabBarAccessibilityLabel: 'Message Tab',
+          tabBarAccessibilityLabel: 'Leaves Tab',
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'My Grove',
           tabBarIcon: renderProfileIcon,
-          tabBarAccessibilityLabel: 'Profile Tab',
+          tabBarAccessibilityLabel: 'My Grove Tab',
         }}
       />
       <Tabs.Screen
         name="create"
         options={{
-          title: 'Create',
+          title: 'Plant Seed',
           tabBarIcon: renderCreateIcon,
-          tabBarAccessibilityLabel: 'Create Post Tab',
+          tabBarAccessibilityLabel: 'Plant Seed Tab',
         }}
       />
     </Tabs>

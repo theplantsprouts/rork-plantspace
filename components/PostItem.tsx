@@ -19,7 +19,7 @@ interface PostItemProps {
 function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: PostItemProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const handleLike = useCallback(async () => {
-    console.log('Sunshine (like) pressed for post:', post.id);
+    console.log('Sunshine pressed for post:', post.id);
     
     // Haptic feedback for better UX
     if (Platform.OS !== 'web') {
@@ -34,15 +34,15 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
   }, [onLike, post.id]);
   
   const handleComment = useCallback(() => {
-    console.log('Roots (comment) pressed for post:', post.id);
+    console.log('Roots pressed for post:', post.id);
     
     // For now, simulate adding a comment without using Alert.prompt
     // In a real app, you'd want to implement a proper input modal
     if (Platform.OS === 'web') {
       // For web, show a simple confirmation
       Alert.alert(
-        '🌱 Add Roots (Comment)',
-        'Comment functionality will open a modal in the full version.',
+        '🌱 Add Roots',
+        'Share your thoughts and grow the conversation.',
         [
           { text: 'Cancel', style: 'cancel' },
           { 
@@ -57,8 +57,8 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
     } else {
       // For mobile, use Alert.alert with simulated comment
       Alert.alert(
-        '🌱 Add Roots (Comment)',
-        'Comment functionality will open a modal in the full version.',
+        '🌱 Add Roots',
+        'Share your thoughts and grow the conversation.',
         [
           { text: 'Cancel', style: 'cancel' },
           { 
@@ -75,7 +75,7 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
   }, [onComment, post.id]);
   
   const handleShare = useCallback(() => {
-    console.log('Spread Seeds (share) pressed for post:', post.id);
+    console.log('Spread Seeds pressed for post:', post.id);
     
     // Show share options
     Alert.alert(
@@ -96,7 +96,7 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
   }, [onShare, post.id]);
   
   const handleBookmark = useCallback(async () => {
-    console.log('Bookmark pressed for post:', post.id);
+    console.log('Harvest pressed for post:', post.id);
     
     // Haptic feedback
     if (Platform.OS !== 'web') {

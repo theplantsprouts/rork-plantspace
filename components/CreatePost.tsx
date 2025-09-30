@@ -112,7 +112,7 @@ export default function CreatePostScreen() {
           >
             <X size={24} color={textColor} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: textColor }]}>New Post</Text>
+          <Text style={[styles.headerTitle, { color: textColor }]}>Plant New Seed</Text>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -129,7 +129,7 @@ export default function CreatePostScreen() {
               ]}
               value={content}
               onChangeText={setContent}
-              placeholder="What's growing in your garden?"
+              placeholder="What's blooming in your garden today?"
               placeholderTextColor={placeholderColor}
               multiline
               textAlignVertical="top"
@@ -173,7 +173,7 @@ export default function CreatePostScreen() {
             testID="submit-button"
           >
             <Text style={styles.submitButtonText}>
-              {loading ? "Posting..." : "Sprout Post"}
+              {loading ? "Planting..." : "Plant Seed"}
             </Text>
           </TouchableOpacity>
         </View>

@@ -103,7 +103,7 @@ export default function LoginScreen() {
                 <Sprout color={PlantTheme.colors.primary} size={40} />
               </View>
               <Text style={styles.title}>
-                {isLogin ? "Welcome Back" : "Join Sprout"}
+                {isLogin ? "Welcome Back" : "Join PlantSpace"}
               </Text>
               <Text style={styles.subtitle}>
                 {isLogin

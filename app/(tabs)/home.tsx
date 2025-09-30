@@ -48,7 +48,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerSpacer} />
-        <Text style={styles.headerTitle}>Bloom</Text>
+        <Text style={styles.headerTitle}>Garden</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -62,7 +62,7 @@ export default function HomeScreen() {
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={PlantTheme.colors.primary} />
-            <Text style={styles.loadingText}>Loading your garden...</Text>
+            <Text style={styles.loadingText}>Watering your garden...</Text>
           </View>
         ) : error ? (
           <View style={styles.emptyContainer}>

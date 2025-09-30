@@ -21,7 +21,7 @@ const trendingTopics = [
   { id: 4, tag: '#PlantParenthood', active: false },
 ];
 
-const popularSprouts = [
+const popularGardeners = [
   {
     id: 1,
     name: 'Olivia Green',
@@ -84,7 +84,7 @@ export default function DiscoverScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerSpacer} />
-          <Text style={styles.headerTitle}>Explore</Text>
+          <Text style={styles.headerTitle}>Explore Garden</Text>
           <TouchableOpacity style={styles.inboxButton}>
             <Inbox color={PlantTheme.colors.onSurface} size={24} />
           </TouchableOpacity>
@@ -98,7 +98,7 @@ export default function DiscoverScreen() {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search Sprout"
+            placeholder="Search PlantSpace"
             placeholderTextColor={PlantTheme.colors.onSurfaceVariant}
             value={searchQuery}
             onChangeText={handleSearch}
@@ -139,16 +139,16 @@ export default function DiscoverScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Popular Sprouts</Text>
+          <Text style={styles.sectionTitle}>Popular Gardeners</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.sproutsContainer}
           >
-            {popularSprouts.map((sprout) => (
-              <TouchableOpacity key={sprout.id} style={styles.sproutCard}>
-                <Image source={{ uri: sprout.avatar }} style={styles.sproutAvatar} />
-                <Text style={styles.sproutName}>{sprout.name}</Text>
+            {popularGardeners.map((gardener) => (
+              <TouchableOpacity key={gardener.id} style={styles.sproutCard}>
+                <Image source={{ uri: gardener.avatar }} style={styles.sproutAvatar} />
+                <Text style={styles.sproutName}>{gardener.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
