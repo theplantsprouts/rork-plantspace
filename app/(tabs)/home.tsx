@@ -1,39 +1,26 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Animated,
   Platform,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { LinearGradient } from 'expo-linear-gradient';
-import { Heading, Sparkles, Wifi, WifiOff, Sun, Droplets } from 'lucide-react-native';
-import { PlantTheme, PlantTerminology, PlantTypography } from '@/constants/theme';
-import { GlassCard } from '@/components/GlassContainer';
-import { StoryCircles } from '@/components/StoryCircles';
-
-// import { useAuth } from '@/hooks/use-auth'; // No longer needed at component level
-import { useOffline } from '@/hooks/use-offline';
+import { Image } from 'expo-image';
+import { Settings, Leaf } from 'lucide-react-native';
+import { PlantTheme } from '@/constants/theme';
 import { usePosts, type Post } from '@/hooks/use-posts';
-import VirtualizedList from '@/components/VirtualizedList';
-import PostItem from '@/components/PostItem';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useTabBar } from './_layout';
 
 
 export default function HomeScreen() {
-  // const { user } = useAuth(); // Authentication handled at layout level
-  const { isOnline } = useOffline();
   const insets = useSafeAreaInsets();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [showInsights, setShowInsights] = useState(false);
-  const { posts, toggleLike, toggleShare, addComment, isLoading, error, refresh } = usePosts();
-  // Enable scroll handling for tab bar animation
+  const { posts, toggleLike, isLoading, error, refresh } = usePosts();
   const { handleScroll } = useTabBar();
   
   const onScroll = useCallback((event: any) => {
@@ -41,23 +28,6 @@ export default function HomeScreen() {
       handleScroll(event);
     }
   }, [handleScroll]);
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
-
-  // Removed caching logic to prevent infinite loops
-  // TODO: Implement proper caching without causing re-renders
-
-
-
-  const handleCreatePost = useCallback(() => {
-    router.push('/create-post');
-  }, []);
 
   const handleLike = useCallback(async (postId: string) => {
     if (Platform.OS !== 'web') {
@@ -70,152 +40,123 @@ export default function HomeScreen() {
     toggleLike(postId);
   }, [toggleLike]);
 
-
-  const handleComment = useCallback((postId: string) => {
-    console.log('Adding roots (comment) to post:', postId);
-    addComment(postId, 'Great seed! 🌱 Keep growing!');
-  }, [addComment]);
-
-  const handleShare = useCallback((postId: string) => {
-    console.log('Spreading seeds (sharing) for post:', postId);
-    toggleShare(postId);
-  }, [toggleShare]);
-
-  const renderPost = useCallback(({ item }: { item: Post }) => {
-    const onLike = () => handleLike(item.id);
-    const onComment = () => handleComment(item.id);
-    const onShare = () => handleShare(item.id);
-    
-    return (
-      <PostItem
-        post={item}
-        onLike={onLike}
-        onComment={onComment}
-        onShare={onShare}
-        testID={`post-${item.id}`}
-      />
-    );
-  }, [handleLike, handleComment, handleShare]);
-
   const memoizedPosts = useMemo(() => {
-    // Limit posts for better performance on mobile
     return Platform.OS === 'web' ? posts : posts.slice(0, 50);
   }, [posts]);
 
-  const keyExtractor = useCallback((item: Post) => item.id, []);
-
-  // Authentication is now handled at the layout level
-  // This component will only render when user is authenticated
-
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd, PlantTheme.colors.primaryLight]}
-        style={StyleSheet.absoluteFillObject}
-      />
-      
-      <View style={[styles.content, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>🌿 {PlantTerminology.home}</Text>
-            <Text style={styles.headerSubtitle}>Nurture your community</Text>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.headerSpacer} />
+        <Text style={styles.headerTitle}>Bloom</Text>
+        <TouchableOpacity 
+          style={styles.settingsButton}
+          onPress={() => router.push('/settings')}
+        >
+          <Settings size={24} color={PlantTheme.colors.onSurfaceVariant} />
+        </TouchableOpacity>
+      </View>
 
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={PlantTheme.colors.primary} />
+            <Text style={styles.loadingText}>Loading your garden...</Text>
           </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity 
-              style={styles.headerButton}
-              onPress={() => setShowInsights(!showInsights)}
-            >
-              <Sparkles color={showInsights ? "#4ECDC4" : "#fff"} size={20} />
+        ) : error ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>🌱 Connection Issue</Text>
+            <Text style={styles.emptyText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={() => {
+              if (Platform.OS === 'web') {
+                window.location.reload();
+              } else {
+                refresh();
+              }
+            }}>
+              <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.createButton}
-              onPress={handleCreatePost}
-            >
-              <GlassCard style={styles.createButtonGlass}>
-                <Heading color={PlantTheme.colors.primary} size={20} />
-                <Text style={styles.createButtonText}>{PlantTerminology.create}</Text>
-              </GlassCard>
-            </TouchableOpacity>
+          </View>
+        ) : memoizedPosts.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>🌿 Welcome to Your Garden!</Text>
+            <Text style={styles.emptyText}>Your community garden is ready to grow. Start by planting your first seed!</Text>
+          </View>
+        ) : (
+          memoizedPosts.map((post) => (
+            <PostCard key={post.id} post={post} onLike={() => handleLike(post.id)} />
+          ))
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+interface PostCardProps {
+  post: Post;
+  onLike: () => void;
+}
+
+function PostCard({ post, onLike }: PostCardProps) {
+  return (
+    <View style={styles.postCard}>
+      {post.image && (
+        <Image
+          source={{ uri: post.image }}
+          style={styles.postImage}
+          contentFit="cover"
+          transition={200}
+        />
+      )}
+      <View style={styles.postContent}>
+        <View style={styles.postHeader}>
+          <View style={styles.avatarContainer}>
+            {post.user.avatar ? (
+              <Image
+                source={{ uri: post.user.avatar }}
+                style={styles.avatar}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>
+                  {post.user.name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.userInfo}>
+            <Text style={styles.username}>{post.user.name}</Text>
+            <Text style={styles.timestamp}>{post.timestamp}</Text>
           </View>
         </View>
-
-        {showInsights && (
-          <View style={styles.aiInsightsPanel}>
-            <GlassCard style={styles.insightsContainer}>
-              <Text style={styles.insightsTitle}>🌱 Garden Insights</Text>
-              <View style={styles.insightsGrid}>
-                <View style={styles.insightCard}>
-                  <Sun color={PlantTheme.colors.accent} size={16} />
-                  <Text style={styles.insightValue}>{posts.length}</Text>
-                  <Text style={styles.insightLabel}>Seeds Planted</Text>
-                </View>
-                <View style={styles.insightCard}>
-                  <Droplets color={PlantTheme.colors.primary} size={16} />
-                  <Text style={styles.insightValue}>{posts.reduce((acc, post) => acc + post.likes, 0)}</Text>
-                  <Text style={styles.insightLabel}>Sunshine Given</Text>
-                </View>
-                <View style={styles.insightCard}>
-                  {isOnline ? (
-                    <Wifi color={PlantTheme.colors.success} size={16} />
-                  ) : (
-                    <WifiOff color={PlantTheme.colors.error} size={16} />
-                  )}
-                  <Text style={styles.insightValue}>{isOnline ? 'Growing' : 'Dormant'}</Text>
-                  <Text style={styles.insightLabel}>Garden Status</Text>
-                </View>
-              </View>
-            </GlassCard>
+        <Text style={styles.postText}>{post.content}</Text>
+      </View>
+      <View style={styles.postActions}>
+        <TouchableOpacity style={styles.actionButton} onPress={onLike}>
+          <View style={styles.actionIconContainer}>
+            <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
           </View>
-        )}
-
-        <Animated.View style={[styles.postsContainer, { opacity: fadeAnim }]}>
-          {!isLoading && memoizedPosts.length > 0 && (
-            <StoryCircles posts={memoizedPosts} />
-          )}
-          
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={PlantTheme.colors.primary} />
-              <Text style={styles.loadingText}>Loading your garden...</Text>
-            </View>
-          ) : error ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>🌱 Connection Issue</Text>
-              <Text style={styles.emptyText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={() => {
-                if (Platform.OS === 'web') {
-                  window.location.reload();
-                } else {
-                  refresh();
-                }
-              }}>
-                <Text style={styles.retryButtonText}>Try Again</Text>
-              </TouchableOpacity>
-            </View>
-          ) : memoizedPosts.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>🌿 Welcome to Your Garden!</Text>
-              <Text style={styles.emptyText}>Your community garden is ready to grow. Start by planting your first seed!</Text>
-              <TouchableOpacity style={styles.createFirstPostButton} onPress={handleCreatePost}>
-                <GlassCard style={styles.createFirstPostGlass}>
-                  <Heading color={PlantTheme.colors.primary} size={24} />
-                  <Text style={styles.createFirstPostText}>Plant Your First Seed</Text>
-                </GlassCard>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <VirtualizedList
-              data={memoizedPosts}
-              renderItem={renderPost}
-              keyExtractor={keyExtractor}
-              estimatedItemSize={Platform.OS === 'web' ? 280 : 320}
-              testID="posts-list"
-              onScroll={onScroll}
-              scrollEventThrottle={16}
-            />
-          )}
-        </Animated.View>
+          <Text style={styles.actionText}>{post.likes}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}>
+          <View style={styles.actionIconContainer}>
+            <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
+          </View>
+          <Text style={styles.actionText}>{post.comments}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}>
+          <View style={styles.actionIconContainer}>
+            <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
+          </View>
+          <Text style={styles.actionText}>{post.shares || 2}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -226,95 +167,123 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  content: {
-    flex: 1,
+    backgroundColor: PlantTheme.colors.backgroundStart,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: 'rgba(246, 248, 246, 0.8)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(114, 121, 111, 0.2)',
   },
-  headerTitleContainer: {
-    flex: 1,
+  headerSpacer: {
+    width: 40,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: PlantTheme.colors.textDark,
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: PlantTheme.colors.onSurface,
   },
-  headerSubtitle: {
-    fontSize: 12,
-    color: PlantTheme.colors.textSecondary,
-    marginTop: 2,
+  settingsButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  headerButton: {
-    padding: 8,
+  scrollView: {
+    flex: 1,
   },
-  createButton: {
-    marginLeft: 8,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 120,
   },
-  createButtonGlass: {
+  postCard: {
+    backgroundColor: PlantTheme.colors.surface,
+    borderRadius: 24,
+    marginBottom: 16,
+    overflow: 'hidden',
+    ...PlantTheme.shadows.sm,
+  },
+  postImage: {
+    width: '100%',
+    height: 192,
+  },
+  postContent: {
+    padding: 16,
+  },
+  postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 6,
-    backgroundColor: PlantTheme.colors.surface,
+    marginBottom: 12,
   },
-  createButtonText: {
+  avatarContainer: {
+    marginRight: 12,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  avatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: PlantTheme.colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
     color: PlantTheme.colors.primary,
-    ...PlantTypography.label,
   },
-
-  postsContainer: {
+  userInfo: {
     flex: 1,
-    paddingHorizontal: 15,
   },
-  // Removed auth-related styles as they're no longer needed
-  headerActions: {
+  username: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: PlantTheme.colors.onSurface,
+  },
+  timestamp: {
+    fontSize: 14,
+    color: PlantTheme.colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  postText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: PlantTheme.colors.onSurfaceVariant,
+  },
+  postActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(114, 121, 111, 0.2)',
+    paddingVertical: 4,
+  },
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
   },
-  aiInsightsPanel: {
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-  },
-  insightsContainer: {
-    padding: 16,
-    backgroundColor: PlantTheme.colors.surface,
-  },
-  insightsTitle: {
-    color: PlantTheme.colors.textPrimary,
-    ...PlantTypography.title,
-    marginBottom: 12,
-  },
-  insightsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  insightCard: {
-    flex: 1,
-    backgroundColor: PlantTheme.colors.surface,
-    borderRadius: PlantTheme.borderRadius.md,
-    padding: 12,
+  actionIconContainer: {
+    width: 20,
+    height: 20,
     alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.outlineVariant,
+    justifyContent: 'center',
   },
-  insightValue: {
-    color: PlantTheme.colors.textPrimary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  insightLabel: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 10,
-    textAlign: 'center',
+  actionText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: PlantTheme.colors.onSurfaceVariant,
   },
   loadingContainer: {
     flex: 1,
@@ -337,7 +306,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700' as const,
     color: PlantTheme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 12,
@@ -349,22 +318,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 32,
   },
-  createFirstPostButton: {
-    marginTop: 16,
-  },
-  createFirstPostGlass: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    gap: 12,
-    backgroundColor: PlantTheme.colors.surface,
-  },
-  createFirstPostText: {
-    color: PlantTheme.colors.primary,
-    fontSize: 18,
-    fontWeight: '600',
-  },
   retryButton: {
     marginTop: 16,
     paddingHorizontal: 24,
@@ -375,8 +328,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: PlantTheme.colors.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     textAlign: 'center',
   },
-
 });

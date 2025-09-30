@@ -2,8 +2,10 @@ export const PlantTheme = {
   colors: {
     // Primary plant-inspired greens (Material 3 expressive palette)
     primary: '#17cf17',
-    primaryLight: '#81E28A',
-    primaryDark: '#0F9A13',
+    primaryLight: '#a3f7a3',
+    primaryDark: '#005300',
+    primaryContainer: '#a3f7a3',
+    onPrimaryContainer: '#002100',
 
     secondary: '#4CAF50',
     secondaryLight: '#A5D6A7',
@@ -21,16 +23,19 @@ export const PlantTheme = {
     surface: '#ffffff',
     surfaceVariant: '#E3F2E6',
     surfaceContainer: '#F6F8F6',
-    surfaceContainerHigh: '#EEF3EE',
-    onSurface: '#1a1c19',
-    onSurfaceVariant: '#42493f',
+    surfaceContainerHigh: '#E9ECE9',
+    surfaceDark: '#1C2B1C',
+    onSurface: '#1a1c1a',
+    onSurfaceVariant: '#424942',
+    onSurfaceDark: '#e2e3e2',
 
-    outline: '#72796f',
-    outlineVariant: '#c2c9be',
+    outline: '#727972',
+    outlineVariant: '#c2c9c2',
 
     // Background gradients
-    backgroundStart: '#E8F5E8',
+    backgroundStart: '#f6f8f6',
     backgroundEnd: '#F1F8E9',
+    backgroundDark: '#112111',
 
     // Card backgrounds
     cardBackground: '#FFFFFF',
