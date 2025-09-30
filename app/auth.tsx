@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Sprout, Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { PlantTheme } from "@/constants/theme";
+import { router } from "expo-router";
 
 
 
@@ -162,6 +163,16 @@ export default function LoginScreen() {
                 </View>
               ) : null}
 
+              {isLogin && (
+                <TouchableOpacity
+                  style={styles.forgotPasswordButton}
+                  onPress={() => router.push("/forgot-password" as any)}
+                  testID="forgot-password-button"
+                >
+                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity
                 style={[styles.submitButton, loading && styles.submitButtonDisabled]}
                 onPress={handleSubmit}
@@ -310,5 +321,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     textAlign: "center",
+  },
+  forgotPasswordButton: {
+    alignItems: "flex-end",
+    marginBottom: 8,
+  },
+  forgotPasswordText: {
+    color: PlantTheme.colors.primary,
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
 });
