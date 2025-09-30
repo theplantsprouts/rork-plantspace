@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, Settings } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { PlantTheme } from '@/constants/theme';
 
@@ -45,12 +45,6 @@ export default function LeavesScreen() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>Leaves</Text>
-            <TouchableOpacity 
-              style={styles.settingsButton}
-              onPress={() => {}}
-            >
-              <Settings color={PlantTheme.colors.textDark} size={24} />
-            </TouchableOpacity>
           </View>
           
           <View style={styles.searchContainer}>
@@ -137,11 +131,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: PlantTheme.colors.textDark,
   },
-  settingsButton: {
-    padding: 8,
-    borderRadius: PlantTheme.borderRadius.full,
-    backgroundColor: 'transparent',
-  },
+
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
