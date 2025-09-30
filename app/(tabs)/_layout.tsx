@@ -66,13 +66,13 @@ function TabLayoutContent() {
       if (isCreateButton) {
         return (
           <View style={{
-            width: 64,
-            height: 64,
-            borderRadius: 32,
+            width: 70,
+            height: 70,
+            borderRadius: 35,
             backgroundColor: '#ffdde0',
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: -32,
+            marginBottom: 8,
             ...Platform.select({
               ios: {
                 shadowColor: '#000',
@@ -98,11 +98,11 @@ function TabLayoutContent() {
       
       return (
         <View style={{
+          width: 48,
+          height: 48,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          borderRadius: 30,
+          borderRadius: 24,
           backgroundColor: focused ? '#d2e3fc' : 'transparent',
         }}>
           <IconComponent 
@@ -135,13 +135,13 @@ function TabLayoutContent() {
     return {
       position: 'absolute' as const,
       bottom: Platform.OS === 'ios' ? 20 : 16,
-      left: 20,
-      right: 20,
+      left: 16,
+      right: 16,
       height: 64,
       borderRadius: 50,
       paddingBottom: 0,
       paddingTop: 0,
-      paddingHorizontal: 16,
+      paddingHorizontal: 8,
       transform: [{ translateY: tabBarAnimation }],
       backgroundColor: 'transparent',
       borderWidth: 0,
@@ -173,11 +173,11 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 0,
-      paddingHorizontal: 0,
+      paddingVertical: 8,
+      paddingHorizontal: 4,
       justifyContent: 'center',
       alignItems: 'center',
-      flex: 1,
+      height: 64,
     },
     tabBarBackground: () => (
       Platform.OS === 'web' ? (
@@ -186,7 +186,7 @@ function TabLayoutContent() {
             position: 'absolute',
             top: 0,
             left: 0,
-            right: 0,
+            right: 90,
             bottom: 0,
             borderRadius: 50,
             overflow: 'hidden',
@@ -202,7 +202,7 @@ function TabLayoutContent() {
             position: 'absolute',
             top: 0,
             left: 0,
-            right: 0,
+            right: 90,
             bottom: 0,
             borderRadius: 50,
             overflow: 'hidden',
