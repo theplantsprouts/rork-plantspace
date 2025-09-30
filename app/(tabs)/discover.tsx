@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,283 +6,170 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  useWindowDimensions,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Search, TrendingUp, TreePine, Sprout } from 'lucide-react-native';
+import { Search, Inbox } from 'lucide-react-native';
 import { Image } from 'expo-image';
-import { useAppContext } from '@/hooks/use-app-context';
-import { PlantTheme, PlantTerminology, PlantTypography } from '@/constants/theme';
-import { GlassCard } from '@/components/GlassContainer';
+import { PlantTheme } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 
+const trendingTopics = [
+  { id: 1, tag: '#VeganRecipes', active: true },
+  { id: 2, tag: '#SustainableLiving', active: false },
+  { id: 3, tag: '#ZeroWaste', active: false },
+  { id: 4, tag: '#PlantParenthood', active: false },
+];
 
-import { usePosts } from '@/hooks/use-posts';
-import { mockUsers, mockTrendingTopics, mockDiscoverPosts } from '@/constants/mock-data';
+const popularSprouts = [
+  {
+    id: 1,
+    name: 'Olivia Green',
+    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+  },
+  {
+    id: 2,
+    name: 'Ethan Bloom',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+  },
+  {
+    id: 3,
+    name: 'Sophia Leaf',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+  },
+  {
+    id: 4,
+    name: 'Noah Root',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+  },
+];
 
-// Generate trending topics from real posts or use mock data
-const generateTrendingTopics = (posts: any[]) => {
-  if (posts.length === 0) {
-    return mockTrendingTopics;
-  }
-  
-  const topics = [
-    { id: 1, tag: '#SustainableFarming', icon: '🌱' },
-    { id: 2, tag: '#OrganicGardening', icon: '🌿' },
-    { id: 3, tag: '#ClimateChange', icon: '🌍' },
-    { id: 4, tag: '#GreenTech', icon: '♻️' },
-    { id: 5, tag: '#PermaCulture', icon: '🌳' },
-  ];
-  
-  return topics.map(topic => ({
-    ...topic,
-    posts: `${Math.floor(Math.random() * 100) + posts.length}`,
-  }));
-};
-
-// Generate suggested users from real posts or use mock data
-const generateSuggestedUsers = (posts: any[]) => {
-  if (posts.length === 0) {
-    return mockUsers;
-  }
-  
-  const uniqueUsers = posts.reduce((acc: any[], post: any) => {
-    if (!acc.find(u => u.id === post.user.id)) {
-      acc.push({
-        id: post.user.id,
-        name: post.user.name,
-        username: post.user.username,
-        avatar: post.user.avatar,
-        followers: post.user.followers || Math.floor(Math.random() * 5000) + 100,
-        following: post.user.following || Math.floor(Math.random() * 2000) + 50,
-        specialty: ['Organic Farming', 'Permaculture', 'Urban Gardening', 'Climate Science', 'Sustainable Tech'][Math.floor(Math.random() * 5)],
-      });
-    }
-    return acc;
-  }, []);
-  
-  return uniqueUsers.slice(0, 5);
-};
-
-// Generate discover posts from real posts or use mock data
-const generateDiscoverPosts = (posts: any[]) => {
-  const postsWithImages = posts.filter(post => post.image);
-  
-  // Always show mock data if no real posts with images, or combine both
-  if (postsWithImages.length === 0) {
-    console.log('No posts with images found, using mock discover posts');
-    return mockDiscoverPosts;
-  }
-  
-  const realPosts = postsWithImages.slice(0, 3).map(post => ({
-    id: post.id,
-    image: post.image,
-    likes: post.likes.toString(),
-    title: post.content.slice(0, 20) + '...',
-  }));
-  
-  // Combine real posts with mock posts for better content
-  return [...realPosts, ...mockDiscoverPosts.slice(0, 6 - realPosts.length)];
-};
+const forYouPosts = [
+  {
+    id: 1,
+    image: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=600&h=400&fit=crop',
+    title: 'Plant-based cooking tips',
+    description: 'Learn how to make delicious and nutritious plant-based meals with these expert tips.',
+    views: '120K',
+    time: '2 days ago',
+  },
+  {
+    id: 2,
+    image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=600&h=400&fit=crop',
+    title: 'Sustainable gardening practices',
+    description: 'Discover eco-friendly gardening techniques to minimize your environmental impact.',
+    views: '85K',
+    time: '3 days ago',
+  },
+];
 
 export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { followUser, unfollowUser, isFollowing, addToSearchHistory, addNotification } = useAppContext();
-  const { posts } = usePosts();
-  // Temporarily disable scroll handling to fix hooks order issue
-  const handleScroll = () => {};
-  
-  const trendingTopics = useMemo(() => {
-    console.log('Generating trending topics with', posts.length, 'posts');
-    return generateTrendingTopics(posts);
-  }, [posts]);
-  
-  const suggestedUsers = useMemo(() => {
-    console.log('Generating suggested users with', posts.length, 'posts');
-    return generateSuggestedUsers(posts);
-  }, [posts]);
-  
-  const discoverPosts = useMemo(() => {
-    console.log('Generating discover posts with', posts.length, 'posts');
-    const result = generateDiscoverPosts(posts);
-    console.log('Generated', result.length, 'discover posts');
-    return result;
-  }, [posts]);
-
-  const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return suggestedUsers;
-    return suggestedUsers.filter(user => 
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, suggestedUsers]);
-
-  const filteredTopics = useMemo(() => {
-    if (!searchQuery.trim()) return trendingTopics;
-    return trendingTopics.filter(topic => 
-      topic.tag.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, trendingTopics]);
+  const [selectedTopic, setSelectedTopic] = useState(1);
 
   const handleSearch = (query: string) => {
-    if (!query.trim() || query.length > 100) return;
-    const sanitizedQuery = query.trim();
-    setSearchQuery(sanitizedQuery);
-    if (sanitizedQuery) {
-      addToSearchHistory(sanitizedQuery);
-    }
+    setSearchQuery(query);
   };
 
-  const handleFollowToggle = async (userId: string | number) => {
+  const handleTopicPress = async (topicId: number) => {
     if (Platform.OS !== 'web') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
-    const user = suggestedUsers.find(u => u.id === userId);
-    if (!user) return;
-    
-    // Convert string ID to number for compatibility with existing follow system
-    const numericUserId = typeof userId === 'string' ? parseInt(userId.replace('mock-', ''), 10) || Date.now() : userId;
-    
-    if (isFollowing(numericUserId)) {
-      unfollowUser(numericUserId);
-      addNotification({
-        id: Date.now(),
-        type: 'unfollow',
-        user: { name: 'You', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' },
-        message: `unfollowed ${user.name}`,
-        time: 'now',
-      });
-    } else {
-      followUser(numericUserId);
-      addNotification({
-        id: Date.now(),
-        type: 'follow',
-        user: { name: 'You', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face' },
-        message: `started following ${user.name}`,
-        time: 'now',
-      });
-    }
+    setSelectedTopic(topicId);
   };
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd, PlantTheme.colors.primaryLight]}
-        style={StyleSheet.absoluteFillObject}
-      />
-      
-      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>🌿 {PlantTerminology.discover}</Text>
-          <Text style={styles.headerSubtitle}>Find your garden community</Text>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>Explore</Text>
+          <TouchableOpacity style={styles.inboxButton}>
+            <Inbox color={PlantTheme.colors.onSurface} size={24} />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.searchContainer}>
+          <Search 
+            color={PlantTheme.colors.onSurfaceVariant} 
+            size={20} 
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search Sprout"
+            placeholderTextColor={PlantTheme.colors.onSurfaceVariant}
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+        </View>
+      </View>
+
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+      >
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Trending Topics</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.topicsContainer}
+          >
+            {trendingTopics.map((topic) => (
+              <TouchableOpacity 
+                key={topic.id} 
+                style={[
+                  styles.topicChip,
+                  topic.active && styles.topicChipActive
+                ]}
+                onPress={() => handleTopicPress(topic.id)}
+              >
+                <Text style={[
+                  styles.topicText,
+                  topic.active && styles.topicTextActive
+                ]}>
+                  {topic.tag}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
-        <ScrollView 
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          <View style={styles.searchContainer}>
-            <GlassCard style={styles.searchCard}>
-              <Search color={PlantTheme.colors.primary} size={20} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search farmers, gardens, topics..."
-                placeholderTextColor={PlantTheme.colors.textSecondary}
-                value={searchQuery}
-                onChangeText={handleSearch}
-              />
-            </GlassCard>
-          </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Popular Sprouts</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.sproutsContainer}
+          >
+            {popularSprouts.map((sprout) => (
+              <TouchableOpacity key={sprout.id} style={styles.sproutCard}>
+                <Image source={{ uri: sprout.avatar }} style={styles.sproutAvatar} />
+                <Text style={styles.sproutName}>{sprout.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <TrendingUp color={PlantTheme.colors.primary} size={24} />
-              <Text style={styles.sectionTitle}>🌱 Trending in Agriculture</Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {filteredTopics.map((topic) => (
-                <TouchableOpacity key={topic.id} style={styles.trendingCard}>
-                  <GlassCard style={styles.trendingContent}>
-                    <Text style={styles.topicIcon}>{topic.icon}</Text>
-                    <Text style={styles.trendingTag}>{topic.tag}</Text>
-                    <Text style={styles.trendingCount}>{topic.posts} {PlantTerminology.posts.toLowerCase()}</Text>
-                  </GlassCard>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>For You</Text>
+          <View style={styles.forYouContainer}>
+            {forYouPosts.map((post) => (
+              <TouchableOpacity key={post.id} style={styles.forYouCard}>
+                <Image source={{ uri: post.image }} style={styles.forYouImage} />
+                <View style={styles.forYouContent}>
+                  <Text style={styles.forYouTitle}>{post.title}</Text>
+                  <Text style={styles.forYouDescription}>{post.description}</Text>
+                  <Text style={styles.forYouMeta}>{post.views} views · {post.time}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <TreePine color={PlantTheme.colors.primary} size={24} />
-              <Text style={styles.sectionTitle}>🌳 {PlantTerminology.followers} to Connect</Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {filteredUsers.map((user) => (
-                <TouchableOpacity key={user.id} style={styles.userCard}>
-                  <GlassCard style={styles.userContent}>
-                    <Image source={{ uri: user.avatar }} style={styles.userAvatar} />
-                    <Text style={styles.userName}>{user.name}</Text>
-                    <Text style={styles.userUsername}>{user.username}</Text>
-                    <Text style={styles.userSpecialty}>{user.specialty}</Text>
-                    <Text style={styles.userStats}>{user.followers} {PlantTerminology.followers.toLowerCase()}</Text>
-                    <TouchableOpacity 
-                      style={[
-                        styles.followButton,
-                        isFollowing(typeof user.id === 'string' ? parseInt(user.id.replace('mock-', ''), 10) || Date.now() : user.id) && styles.followingButton
-                      ]}
-                      onPress={() => handleFollowToggle(user.id)}
-                    >
-                      <Text style={[
-                        styles.followButtonText,
-                        isFollowing(typeof user.id === 'string' ? parseInt(user.id.replace('mock-', ''), 10) || Date.now() : user.id) && styles.followingButtonText
-                      ]}>
-                        {isFollowing(typeof user.id === 'string' ? parseInt(user.id.replace('mock-', ''), 10) || Date.now() : user.id) ? PlantTerminology.following : 'Connect'}
-                      </Text>
-                    </TouchableOpacity>
-                  </GlassCard>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Sprout color={PlantTheme.colors.primary} size={24} />
-              <Text style={styles.sectionTitle}>🌾 Explore Gardens</Text>
-            </View>
-            <View style={styles.exploreGrid}>
-              {discoverPosts.map((post, index) => (
-                <TouchableOpacity 
-                  key={post.id} 
-                  style={[
-                    styles.exploreItem,
-                    { width: (width - 50) / 3, height: (width - 50) / 3 },
-                    index % 3 === 0 && { width: (width - 45) / 2, height: (width - 45) / 2 }
-                  ]}
-                >
-                  <Image source={{ uri: post.image }} style={styles.exploreImage} />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(46, 125, 50, 0.8)']}
-                    style={styles.exploreOverlay}
-                  >
-                    <Text style={styles.exploreTitle}>{post.title}</Text>
-                    <Text style={styles.exploreLikes}>☀️ {post.likes}</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -292,182 +179,138 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: PlantTheme.colors.surfaceContainer,
   },
-  safeArea: {
-    flex: 1,
-  },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: 'rgba(246, 248, 246, 0.8)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(114, 121, 114, 0.2)',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  headerSpacer: {
+    width: 24,
   },
   headerTitle: {
-    ...PlantTypography.headline,
+    fontSize: 20,
+    fontWeight: '700' as const,
     color: PlantTheme.colors.onSurface,
-    marginBottom: 4,
   },
-  headerSubtitle: {
-    ...PlantTypography.body,
-    color: PlantTheme.colors.onSurfaceVariant,
+  inboxButton: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(226, 226, 226, 0.5)',
+    borderRadius: PlantTheme.borderRadius.full,
+    height: 48,
+    paddingHorizontal: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: PlantTheme.colors.onSurface,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 25,
-  },
-  searchCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    gap: 12,
-    backgroundColor: PlantTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.outlineVariant,
-  },
-  searchInput: {
-    flex: 1,
-    color: PlantTheme.colors.textPrimary,
-    fontSize: 16,
+    paddingBottom: 24,
   },
   section: {
-    marginBottom: 30,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 15,
-    gap: 10,
+    paddingTop: 16,
   },
   sectionTitle: {
-    ...PlantTypography.title,
+    fontSize: 18,
+    fontWeight: '700' as const,
     color: PlantTheme.colors.onSurface,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
-  trendingCard: {
-    marginLeft: 20,
-    width: 160,
-  },
-  trendingContent: {
-    alignItems: 'center',
+  topicsContainer: {
+    paddingHorizontal: 16,
     gap: 8,
-    padding: 15,
-    backgroundColor: PlantTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.outlineVariant,
   },
-  topicIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  trendingTag: {
-    color: PlantTheme.colors.textPrimary,
-    fontWeight: '600',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  trendingCount: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 12,
-  },
-  userCard: {
-    marginLeft: 20,
-    width: 150,
-  },
-  userContent: {
-    alignItems: 'center',
-    gap: 8,
-    padding: 15,
-    backgroundColor: PlantTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.outlineVariant,
-  },
-  userAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: PlantTheme.colors.primary,
-  },
-  userName: {
-    color: PlantTheme.colors.textPrimary,
-    fontWeight: '600',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  userUsername: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 12,
-  },
-  userSpecialty: {
-    color: PlantTheme.colors.primary,
-    fontSize: 11,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  userStats: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 11,
-    marginBottom: 8,
-  },
-  followButton: {
-    backgroundColor: PlantTheme.colors.primary,
+  topicChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: PlantTheme.borderRadius.lg,
-    ...PlantTheme.elevation.level2,
+    borderRadius: PlantTheme.borderRadius.full,
+    backgroundColor: 'rgba(226, 226, 226, 0.5)',
+    marginRight: 8,
   },
-  followButtonText: {
-    color: PlantTheme.colors.white,
-    fontWeight: '600',
-    fontSize: 12,
+  topicChipActive: {
+    backgroundColor: 'rgba(23, 207, 23, 0.1)',
   },
-  followingButton: {
-    backgroundColor: PlantTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.primary,
+  topicText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: PlantTheme.colors.onSurface,
   },
-  followingButtonText: {
+  topicTextActive: {
     color: PlantTheme.colors.primary,
   },
-  exploreGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    gap: 5,
+  sproutsContainer: {
+    paddingHorizontal: 16,
+    gap: 16,
   },
-  exploreItem: {
-    borderRadius: PlantTheme.borderRadius.md,
+  sproutCard: {
+    alignItems: 'center',
+    width: 96,
+  },
+  sproutAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 8,
+  },
+  sproutName: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: PlantTheme.colors.onSurface,
+    textAlign: 'center',
+  },
+  forYouContainer: {
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  forYouCard: {
+    backgroundColor: 'rgba(226, 226, 226, 0.3)',
+    borderRadius: PlantTheme.borderRadius.lg,
     overflow: 'hidden',
-    marginBottom: 5,
-    ...PlantTheme.elevation.level1,
+    marginBottom: 16,
   },
-  exploreImage: {
+  forYouImage: {
     width: '100%',
-    height: '100%',
+    height: 192,
   },
-  exploreOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 50,
-    justifyContent: 'flex-end',
-    paddingHorizontal: 12,
-    paddingBottom: 8,
+  forYouContent: {
+    padding: 16,
   },
-  exploreTitle: {
-    color: PlantTheme.colors.white,
-    fontWeight: '600',
-    fontSize: 11,
-    marginBottom: 2,
+  forYouTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: PlantTheme.colors.onSurface,
+    marginBottom: 4,
   },
-  exploreLikes: {
-    color: PlantTheme.colors.white,
-    fontWeight: '500',
-    fontSize: 10,
+  forYouDescription: {
+    fontSize: 14,
+    color: PlantTheme.colors.onSurfaceVariant,
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  forYouMeta: {
+    fontSize: 12,
+    color: PlantTheme.colors.outline,
   },
 });
