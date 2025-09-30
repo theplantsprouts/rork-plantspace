@@ -112,7 +112,7 @@ function TabLayoutContent() {
       paddingTop: 8,
       paddingHorizontal: 8,
       transform: [{ translateY: tabBarAnimation }],
-      backgroundColor: Platform.OS === 'web' ? 'rgba(255, 255, 255, 0.8)' : 'transparent',
+      backgroundColor: 'transparent',
       borderWidth: 0,
       ...Platform.select({
         ios: {
@@ -126,7 +126,6 @@ function TabLayoutContent() {
         },
         web: {
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-          backdropFilter: 'blur(20px)',
         },
       }),
     };
@@ -148,8 +147,21 @@ function TabLayoutContent() {
       justifyContent: 'center',
       alignItems: 'center',
     },
-    ...(Platform.OS !== 'web' && {
-      tabBarBackground: () => (
+    tabBarBackground: () => (
+      Platform.OS === 'web' ? (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: 28,
+            overflow: 'hidden',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+          }}
+        />
+      ) : (
         <BlurView
           intensity={80}
           tint="light"
@@ -164,8 +176,8 @@ function TabLayoutContent() {
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
           }}
         />
-      ),
-    }),
+      )
+    ),
   }), [tabBarStyle]);
 
   return (
