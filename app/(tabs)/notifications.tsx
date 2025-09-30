@@ -1,126 +1,113 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  TextInput,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, MessageCircle, UserPlus, Share, Leaf } from 'lucide-react-native';
+import { Search, Settings } from 'lucide-react-native';
 import { Image } from 'expo-image';
-import { useAppContext } from '@/hooks/use-app-context';
-import { PlantTheme, PlantTerminology } from '@/constants/theme';
-import { GlassCard } from '@/components/GlassContainer';
+import { PlantTheme } from '@/constants/theme';
 
-
-
-
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case 'like':
-      return <Heart color={PlantTheme.colors.accent} size={18} fill={PlantTheme.colors.accent} />;
-    case 'comment':
-      return <MessageCircle color={PlantTheme.colors.primary} size={18} />;
-    case 'follow':
-      return <UserPlus color={PlantTheme.colors.secondary} size={18} />;
-    case 'share':
-      return <Share color={PlantTheme.colors.primaryLight} size={18} />;
-    default:
-      return <Heart color={PlantTheme.colors.accent} size={18} />;
-  }
+type Conversation = {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  lastMessage: string;
+  timestamp: string;
+  unread?: boolean;
 };
 
-export default function NotificationsScreen() {
-  const { notifications, unreadNotifications, markNotificationsAsRead } = useAppContext();
+export default function LeavesScreen() {
   const insets = useSafeAreaInsets();
-  // Temporarily disable scroll handling to fix hooks order issue
-  const handleScroll = () => {};
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [conversations] = useState<Conversation[]>([]);
 
-  useEffect(() => {
-    if (unreadNotifications > 0) {
-      const timer = setTimeout(() => {
-        markNotificationsAsRead();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [unreadNotifications, markNotificationsAsRead]);
-
-  const allNotifications = notifications;
+  const filteredConversations = conversations.filter(conv =>
+    conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd, PlantTheme.colors.primaryLight]}
+        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>🍃 {PlantTerminology.notifications}</Text>
-            <Text style={styles.headerSubtitle}>Stay connected with your garden</Text>
+          <View style={styles.headerTop}>
+            <Text style={styles.headerTitle}>Leaves</Text>
+            <TouchableOpacity 
+              style={styles.settingsButton}
+              onPress={() => {}}
+            >
+              <Settings color={PlantTheme.colors.textDark} size={24} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={markNotificationsAsRead} style={styles.markAllButton}>
-            <Text style={styles.markAllRead}>Mark all read</Text>
-          </TouchableOpacity>
+          
+          <View style={styles.searchContainer}>
+            <Search 
+              color={PlantTheme.colors.primary} 
+              size={20} 
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search Leaves"
+              placeholderTextColor={`${PlantTheme.colors.primary}CC`}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
         </View>
 
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
         >
-          {allNotifications.length === 0 ? (
-            <GlassCard style={styles.emptyState}>
-              <Leaf color={PlantTheme.colors.textSecondary} size={48} />
-              <Text style={styles.emptyStateText}>No leaves yet</Text>
-              <Text style={styles.emptyStateSubtext}>When your garden grows, notifications will bloom here</Text>
-            </GlassCard>
+          {filteredConversations.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>🍃</Text>
+              <Text style={styles.emptyStateTitle}>No conversations yet</Text>
+              <Text style={styles.emptyStateText}>
+                Start connecting with your garden friends
+              </Text>
+            </View>
           ) : (
-            allNotifications.map((notification) => (
-              <TouchableOpacity key={notification.id} style={styles.notificationItem}>
-                <GlassCard style={styles.notificationCard}>
-                  <View style={styles.notificationContent}>
-                    <View style={styles.leftSection}>
-                      <View style={styles.avatarContainer}>
-                        <Image 
-                          source={{ uri: notification.user.avatar }} 
-                          style={styles.userAvatar}
-                        />
-                        <View style={styles.iconBadge}>
-                          {getNotificationIcon(notification.type)}
-                        </View>
-                      </View>
-                      
-                      <View style={styles.textSection}>
-                        <Text style={styles.notificationText}>
-                          <Text style={styles.userName}>{notification.user.name}</Text>
-                          {' '}
-                          <Text style={styles.messageText}>{notification.message}</Text>
-                        </Text>
-                        <Text style={styles.timeText}>{notification.time}</Text>
-                      </View>
-                    </View>
-                    
-                    {notification.postImage && (
-                      <Image 
-                        source={{ uri: notification.postImage }} 
-                        style={styles.postThumbnail}
-                      />
-                    )}
+            filteredConversations.map((conversation) => (
+              <TouchableOpacity 
+                key={conversation.id} 
+                style={styles.conversationItem}
+                activeOpacity={0.7}
+              >
+                <Image 
+                  source={{ uri: conversation.user.avatar }} 
+                  style={styles.avatar}
+                />
+                <View style={styles.conversationContent}>
+                  <View style={styles.conversationHeader}>
+                    <Text style={styles.userName}>{conversation.user.name}</Text>
+                    <Text style={styles.timestamp}>{conversation.timestamp}</Text>
                   </View>
-                </GlassCard>
+                  <Text 
+                    style={styles.lastMessage}
+                    numberOfLines={1}
+                  >
+                    {conversation.lastMessage}
+                  </Text>
+                </View>
               </TouchableOpacity>
             ))
           )}
-
-          <View style={styles.endMessage}>
-            <Text style={styles.endMessageText}>Your garden is all tended! 🌱</Text>
-          </View>
         </ScrollView>
       </View>
     </View>
@@ -135,138 +122,109 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: 'transparent',
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
     color: PlantTheme.colors.textDark,
-    marginBottom: 4,
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: PlantTheme.colors.textSecondary,
+  settingsButton: {
+    padding: 8,
+    borderRadius: PlantTheme.borderRadius.full,
+    backgroundColor: 'transparent',
   },
-  markAllButton: {
-    backgroundColor: PlantTheme.colors.cardBackground,
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${PlantTheme.colors.primary}1A`,
+    borderRadius: PlantTheme.borderRadius.lg,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: PlantTheme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
   },
-  markAllRead: {
-    color: PlantTheme.colors.primary,
-    fontWeight: '600',
-    fontSize: 12,
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: PlantTheme.colors.textDark,
+    padding: 0,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 100,
   },
-  notificationItem: {
-    marginBottom: 15,
-  },
-  notificationCard: {
-    padding: 15,
+  conversationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    padding: 12,
+    borderRadius: PlantTheme.borderRadius.lg,
     backgroundColor: PlantTheme.colors.cardBackground,
-  },
-  notificationContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  leftSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginRight: 15,
-  },
-  userAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: PlantTheme.colors.primary,
-  },
-  iconBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: PlantTheme.colors.white,
-    borderRadius: 12,
-    width: 22,
-    height: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 8,
     ...PlantTheme.shadows.sm,
   },
-  textSection: {
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  conversationContent: {
     flex: 1,
   },
-  notificationText: {
-    fontSize: 15,
-    lineHeight: 20,
+  conversationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 4,
   },
   userName: {
-    fontWeight: '600',
-    color: PlantTheme.colors.textPrimary,
-  },
-  messageText: {
-    color: PlantTheme.colors.textSecondary,
-  },
-  timeText: {
-    color: PlantTheme.colors.textSecondary,
-    fontSize: 12,
-  },
-  postThumbnail: {
-    width: 50,
-    height: 50,
-    borderRadius: PlantTheme.borderRadius.md,
-    marginLeft: 10,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
-  },
-  endMessage: {
-    alignItems: 'center',
-    paddingVertical: 30,
-  },
-  endMessageText: {
-    color: PlantTheme.colors.textPrimary,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: PlantTheme.colors.textDark,
+  },
+  timestamp: {
+    fontSize: 12,
+    color: PlantTheme.colors.textSecondary,
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: PlantTheme.colors.textSecondary,
+    lineHeight: 20,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 60,
+    justifyContent: 'center',
+    paddingVertical: 80,
     paddingHorizontal: 40,
-    backgroundColor: PlantTheme.colors.cardBackground,
+  },
+  emptyStateEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: PlantTheme.colors.textDark,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   emptyStateText: {
-    color: PlantTheme.colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  emptyStateSubtext: {
-    color: PlantTheme.colors.textSecondary,
     fontSize: 16,
+    color: PlantTheme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
-  },
-  headerTitleContainer: {
-    flex: 1,
   },
 });
