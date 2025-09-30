@@ -1,8 +1,9 @@
 import { Tabs } from "expo-router";
-import { Sprout, Compass, Heading, Leaf, TreePine } from "lucide-react-native";
+import { Sprout, Compass, Plus, Bell, User } from "lucide-react-native";
 import React, { useCallback, useMemo, useRef } from "react";
-import { Platform, Animated, View, StyleSheet } from "react-native";
+import { Platform, Animated, View, Text } from "react-native";
 import { PlantTheme } from "@/constants/theme";
+import { BlurView } from "expo-blur";
 import createContextHook from '@nkzw/create-context-hook';
 
 // Create a context for tab bar animation
@@ -59,103 +60,74 @@ export default function TabLayout() {
 
 function TabLayoutContent() {
   const { tabBarAnimation } = useTabBar();
-  
-  const tabIconStyles = useMemo(() => {
-    const baseContainer = {
-      alignItems: 'center' as const,
-      justifyContent: 'center' as const,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 20,
-      borderWidth: 1.5,
-      minWidth: 48,
-      minHeight: 48,
-    };
 
-    if (Platform.OS === 'android') {
-      return StyleSheet.create({
-        container: {
-          ...baseContainer,
-          elevation: 2,
-          shadowColor: PlantTheme.colors.onSurface,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-        },
-        active: {
-          backgroundColor: PlantTheme.colors.surface,
-          borderColor: PlantTheme.colors.outline,
-          transform: [{ scale: 1.05 }],
-        },
-        inactive: {
-          backgroundColor: PlantTheme.colors.surface,
-          borderColor: PlantTheme.colors.outlineVariant,
-        },
-      });
-    }
-
-    return StyleSheet.create({
-      container: {
-        ...baseContainer,
-        ...PlantTheme.shadows.sm,
-      },
-      active: {
-        backgroundColor: PlantTheme.colors.surface,
-        borderColor: PlantTheme.colors.outline,
-        transform: [{ scale: 1.1 }],
-      },
-      inactive: {
-        backgroundColor: PlantTheme.colors.surface,
-        borderColor: PlantTheme.colors.outlineVariant,
-      },
-    });
+  const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, label: string) => {
+    const TabIcon = ({ focused }: { color: string; size: number; focused: boolean }) => (
+      <View style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 4,
+      }}>
+        <IconComponent 
+          color={focused ? PlantTheme.colors.primary : PlantTheme.colors.textSecondary} 
+          size={24} 
+        />
+        <Text style={{
+          fontSize: 11,
+          fontWeight: focused ? '600' : '500',
+          color: focused ? PlantTheme.colors.primary : PlantTheme.colors.textSecondary,
+        }}>
+          {label}
+        </Text>
+      </View>
+    );
+    TabIcon.displayName = `TabIcon_${label}`;
+    return TabIcon;
   }, []);
 
-  const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, extraSize: number = 0) => 
-    ({ focused }: { color: string; size: number; focused: boolean }) => (
-      <View style={[
-        tabIconStyles.container,
-        focused ? tabIconStyles.active : tabIconStyles.inactive
-      ]}>
-        <IconComponent 
-          color={focused ? PlantTheme.colors.primary : PlantTheme.colors.textPrimary} 
-          size={22 + extraSize} 
-        />
-      </View>
-    ), [tabIconStyles]);
-
   const renderHomeIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Sprout)(props), [createTabIcon]);
+    createTabIcon(Sprout, 'Home')(props), [createTabIcon]);
 
   const renderDiscoverIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Compass)(props), [createTabIcon]);
+    createTabIcon(Compass, 'Discover')(props), [createTabIcon]);
 
   const renderCreateIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Heading, 2)(props), [createTabIcon]);
+    createTabIcon(Plus, 'Create')(props), [createTabIcon]);
 
   const renderNotificationsIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Leaf)(props), [createTabIcon]);
+    createTabIcon(Bell, 'Activity')(props), [createTabIcon]);
 
   const renderProfileIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(TreePine)(props), [createTabIcon]);
+    createTabIcon(User, 'Profile')(props), [createTabIcon]);
   
   const tabBarStyle = useMemo(() => {
     return {
-      borderTopWidth: 1,
       position: 'absolute' as const,
-      borderTopLeftRadius: PlantTheme.borderRadius.lg,
-      borderTopRightRadius: PlantTheme.borderRadius.lg,
-      height: Platform.OS === 'ios' ? 95 : 80,
-      paddingBottom: Platform.OS === 'ios' ? 30 : 18,
-      paddingTop: Platform.OS === 'ios' ? 8 : 8,
+      bottom: Platform.OS === 'ios' ? 20 : 16,
+      left: 20,
+      right: 20,
+      height: 80,
+      borderRadius: 28,
+      paddingBottom: 8,
+      paddingTop: 8,
+      paddingHorizontal: 8,
       transform: [{ translateY: tabBarAnimation }],
-      backgroundColor: PlantTheme.colors.surface,
-      borderTopColor: PlantTheme.colors.outlineVariant,
-      ...PlantTheme.elevation.level3,
-      ...(Platform.OS === 'android' && {
-        elevation: 8,
-        shadowColor: 'transparent',
-        backgroundColor: PlantTheme.colors.surface,
+      backgroundColor: Platform.OS === 'web' ? 'rgba(255, 255, 255, 0.8)' : 'transparent',
+      borderWidth: 0,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 20,
+        },
+        android: {
+          elevation: 12,
+        },
+        web: {
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+          backdropFilter: 'blur(20px)',
+        },
       }),
     };
   }, [tabBarAnimation]);
@@ -166,17 +138,34 @@ function TabLayoutContent() {
     headerShown: false,
     tabBarStyle,
     tabBarActiveTintColor: PlantTheme.colors.primary,
-    tabBarInactiveTintColor: PlantTheme.colors.textPrimary,
+    tabBarInactiveTintColor: PlantTheme.colors.textSecondary,
     tabBarShowLabel: false,
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: Platform.OS === 'ios' ? 8 : 12,
-      paddingHorizontal: 8,
-      marginHorizontal: 4,
+      paddingVertical: 4,
+      paddingHorizontal: 4,
       justifyContent: 'center',
       alignItems: 'center',
     },
+    ...(Platform.OS !== 'web' && {
+      tabBarBackground: () => (
+        <BlurView
+          intensity={80}
+          tint="light"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: 28,
+            overflow: 'hidden',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+          }}
+        />
+      ),
+    }),
   }), [tabBarStyle]);
 
   return (
