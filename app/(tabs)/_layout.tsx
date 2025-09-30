@@ -1,9 +1,10 @@
 import { Tabs } from "expo-router";
-import { Sprout, Compass, Plus, Bell, User } from "lucide-react-native";
+import { Home, Compass, Plus, MessageCircle, User } from "lucide-react-native";
 import React, { useCallback, useMemo, useRef } from "react";
 import { Platform, Animated, View } from "react-native";
 import { PlantTheme } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import createContextHook from '@nkzw/create-context-hook';
 
 // Create a context for tab bar animation
@@ -117,19 +118,19 @@ function TabLayoutContent() {
   }, []);
 
   const renderHomeIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Sprout, 'Home')(props), [createTabIcon]);
+    createTabIcon(Home, 'Home')(props), [createTabIcon]);
 
-  const renderDiscoverIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Compass, 'Discover')(props), [createTabIcon]);
+  const renderExploreIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
+    createTabIcon(Compass, 'Explore')(props), [createTabIcon]);
 
-  const renderCreateIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Plus, 'Create', true)(props), [createTabIcon]);
-
-  const renderNotificationsIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Bell, 'Activity')(props), [createTabIcon]);
+  const renderMessageIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
+    createTabIcon(MessageCircle, 'Message')(props), [createTabIcon]);
 
   const renderProfileIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
     createTabIcon(User, 'Profile')(props), [createTabIcon]);
+
+  const renderCreateIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
+    createTabIcon(Plus, 'Create', true)(props), [createTabIcon]);
   
   const tabBarStyle = useMemo(() => {
     return {
@@ -190,14 +191,15 @@ function TabLayoutContent() {
             bottom: 0,
             borderRadius: 50,
             overflow: 'hidden',
-            background: 'linear-gradient(to right, #e0eaff, #e0ffec, #ffe0e0)',
+            background: 'linear-gradient(to right, rgba(224, 234, 255, 0.85), rgba(224, 255, 236, 0.85), rgba(255, 224, 224, 0.85))',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
           }}
         />
       ) : (
-        <LinearGradient
-          colors={['#e0eaff', '#e0ffec', '#ffe0e0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+        <BlurView
+          intensity={80}
+          tint="light"
           style={{
             position: 'absolute',
             top: 0,
@@ -207,7 +209,20 @@ function TabLayoutContent() {
             borderRadius: 50,
             overflow: 'hidden',
           }}
-        />
+        >
+          <LinearGradient
+            colors={['rgba(224, 234, 255, 0.7)', 'rgba(224, 255, 236, 0.7)', 'rgba(255, 224, 224, 0.7)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          />
+        </BlurView>
       )
     ),
   }), [tabBarStyle]);
@@ -217,41 +232,41 @@ function TabLayoutContent() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Garden',
+          title: 'Home',
           tabBarIcon: renderHomeIcon,
-          tabBarAccessibilityLabel: 'Garden Tab',
+          tabBarAccessibilityLabel: 'Home Tab',
         }}
       />
       <Tabs.Screen
         name="discover"
         options={{
           title: 'Explore',
-          tabBarIcon: renderDiscoverIcon,
+          tabBarIcon: renderExploreIcon,
           tabBarAccessibilityLabel: 'Explore Tab',
-        }}
-      />
-      <Tabs.Screen
-        name="create"
-        options={{
-          title: 'Plant',
-          tabBarIcon: renderCreateIcon,
-          tabBarAccessibilityLabel: 'Plant Seed Tab',
         }}
       />
       <Tabs.Screen
         name="notifications"
         options={{
-          title: 'Leaves',
-          tabBarIcon: renderNotificationsIcon,
-          tabBarAccessibilityLabel: 'Notifications Tab',
+          title: 'Message',
+          tabBarIcon: renderMessageIcon,
+          tabBarAccessibilityLabel: 'Message Tab',
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Grove',
+          title: 'Profile',
           tabBarIcon: renderProfileIcon,
           tabBarAccessibilityLabel: 'Profile Tab',
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          title: 'Create',
+          tabBarIcon: renderCreateIcon,
+          tabBarAccessibilityLabel: 'Create Post Tab',
         }}
       />
     </Tabs>
