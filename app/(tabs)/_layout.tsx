@@ -135,7 +135,7 @@ function TabLayoutContent() {
               position: 'absolute',
             }} />
             <IconComponent 
-              color="#ffffff" 
+              color="#000000" 
               size={36} 
             />
           </View>
