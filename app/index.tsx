@@ -67,7 +67,7 @@ export default function Index() {
 
           <View style={styles.textContent}>
             <Text style={styles.title}>
-              Welcome to the{"\n"}Plant-Based Community
+              Welcome to the{"\n"}Plant Community
             </Text>
             <Text style={styles.subtitle}>
               Connect with fellow plant enthusiasts, share your green journey, and discover new plant-based recipes and tips.

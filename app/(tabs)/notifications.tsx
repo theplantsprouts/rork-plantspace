@@ -49,8 +49,8 @@ export default function NotificationsScreen() {
   };
 
   const backgroundColor = isDark ? '#112111' : '#f6f8f6';
-  const textColor = isDark ? '#e1e3e0' : '#191d19';
-  const secondaryTextColor = isDark ? '#c2c8c1' : '#424842';
+  const textColor = '#000000';
+  const secondaryTextColor = '#424842';
   const containerBg = isDark ? '#1d211d' : '#eef2ee';
   const iconBg = isDark ? '#005307' : '#a6f8a5';
 
