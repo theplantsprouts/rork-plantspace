@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Bookmark } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -161,7 +161,12 @@ export default function ProfileScreen() {
             <ArrowLeft color="#1a1c19" size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
-          <View style={styles.headerSpacer} />
+          <TouchableOpacity 
+            onPress={() => router.push('/saved-content')}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Bookmark color="#1a1c19" size={24} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView 
