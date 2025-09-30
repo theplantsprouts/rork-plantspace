@@ -84,5 +84,20 @@ service cloud.firestore {
     match /analytics/{eventId} {
       allow create: if isAuthenticated();
     }
+    
+    // Bookmarks
+    match /bookmarks/{bookmarkId} {
+      // Users can read their own bookmarks
+      allow read: if isAuthenticated() && 
+                  resource.data.userId == request.auth.uid;
+      
+      // Users can create bookmarks for any post
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own bookmarks
+      allow delete: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+    }
   }
 }
