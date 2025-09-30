@@ -343,11 +343,11 @@ export default function ProfileScreen() {
               <Text style={styles.statLabel}>Seeds</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{currentUser?.followers || 350}</Text>
+              <Text style={styles.statNumber}>{currentUser?.followers || 0}</Text>
               <Text style={styles.statLabel}>Garden Friends</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{currentUser?.following || 200}</Text>
+              <Text style={styles.statNumber}>{currentUser?.following || 0}</Text>
               <Text style={styles.statLabel}>Tending</Text>
             </View>
           </View>
