@@ -70,28 +70,73 @@ function TabLayoutContent() {
             width: 70,
             height: 70,
             borderRadius: 35,
-            backgroundColor: '#ffdde0',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: 0,
+            overflow: 'hidden',
             ...Platform.select({
               ios: {
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
+                shadowOpacity: 0.05,
                 shadowRadius: 12,
               },
               android: {
-                elevation: 8,
+                elevation: 4,
               },
               web: {
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
               },
             }),
           }}>
+            {Platform.OS === 'web' ? (
+              <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(135deg, rgba(128, 255, 0, 0.6), rgba(0, 255, 128, 0.6))',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+              }} />
+            ) : (
+              <BlurView
+                intensity={80}
+                tint="light"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                }}
+              >
+                <LinearGradient
+                  colors={['rgba(128, 255, 0, 0.6)', 'rgba(0, 255, 128, 0.6)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                  }}
+                />
+              </BlurView>
+            )}
+            <View style={{
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.4)',
+              borderRadius: 35,
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+            }} />
             <IconComponent 
-              color="#d93025" 
-              size={32} 
+              color="#ffffff" 
+              size={36} 
             />
           </View>
         );
@@ -104,11 +149,11 @@ function TabLayoutContent() {
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: 24,
-          backgroundColor: focused ? '#d2e3fc' : 'transparent',
+          backgroundColor: focused ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
         }}>
           <IconComponent 
-            color={focused ? '#1a73e8' : '#5f6368'} 
-            size={24} 
+            color={focused ? '#222222' : '#555555'} 
+            size={28} 
           />
         </View>
       );
@@ -138,11 +183,11 @@ function TabLayoutContent() {
       bottom: Platform.OS === 'ios' ? 20 : 16,
       left: 16,
       right: 16,
-      height: 64,
+      height: 72,
       borderRadius: 50,
       paddingBottom: 0,
       paddingTop: 0,
-      paddingHorizontal: 8,
+      paddingHorizontal: 12,
       transform: [{ translateY: tabBarAnimation }],
       backgroundColor: 'transparent',
       borderWidth: 0,
@@ -150,14 +195,14 @@ function TabLayoutContent() {
         ios: {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
+          shadowOpacity: 0.05,
           shadowRadius: 12,
         },
         android: {
-          elevation: 8,
+          elevation: 4,
         },
         web: {
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
         },
       }),
     };
@@ -174,11 +219,11 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 8,
-      paddingHorizontal: 0,
+      paddingVertical: 12,
+      paddingHorizontal: 4,
       justifyContent: 'center',
       alignItems: 'center',
-      height: 64,
+      height: 72,
     },
     tabBarBackground: () => (
       Platform.OS === 'web' ? (
@@ -191,9 +236,11 @@ function TabLayoutContent() {
             bottom: 0,
             borderRadius: 50,
             overflow: 'hidden',
-            background: 'linear-gradient(to right, rgba(224, 234, 255, 0.85), rgba(224, 255, 236, 0.85), rgba(255, 224, 224, 0.85))',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.3)',
           }}
         />
       ) : (
@@ -208,21 +255,11 @@ function TabLayoutContent() {
             bottom: 0,
             borderRadius: 50,
             overflow: 'hidden',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.3)',
           }}
-        >
-          <LinearGradient
-            colors={['rgba(224, 234, 255, 0.7)', 'rgba(224, 255, 236, 0.7)', 'rgba(255, 224, 224, 0.7)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          />
-        </BlurView>
+        />
       )
     ),
   }), [tabBarStyle]);
