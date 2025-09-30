@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAIContent } from './use-ai-content';
 import { useAuth } from './use-auth';
 import { useRealTimePosts } from './use-realtime';
-import { createPost, uploadImage, Post as FirebasePost } from '@/lib/firebase';
+import { createPost, uploadImage, Post as FirebasePost, toggleBookmark, isPostBookmarked } from '@/lib/firebase';
 import { trackPostCreated, trackPostViewed, trackPostLiked, trackPostShared } from '@/lib/analytics';
 
 export interface User {
@@ -35,6 +35,7 @@ export interface Post {
   shares: number;
   isLiked?: boolean;
   isShared?: boolean;
+  isBookmarked?: boolean;
   postComments?: Comment[];
   aiScore?: number;
   isAgricultureRelated?: boolean;
@@ -61,11 +62,30 @@ const formatTimestamp = (timestamp: string): string => {
 
 export function usePosts() {
   const [recommendedPosts, setRecommendedPosts] = useState<Post[]>([]);
+  const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
   const { getRecommendations, getContentInsights } = useAIContent();
   const { user } = useAuth();
   
   // Use real-time posts hook
   const { posts: realTimePosts, loading: isLoading, error, refresh } = useRealTimePosts();
+
+  // Load bookmarked status for all posts
+  useEffect(() => {
+    const loadBookmarkStatuses = async () => {
+      if (!user?.id || realTimePosts.length === 0) return;
+
+      const bookmarkedIds = new Set<string>();
+      for (const post of realTimePosts) {
+        const isBookmarked = await isPostBookmarked(user.id, post.id);
+        if (isBookmarked) {
+          bookmarkedIds.add(post.id);
+        }
+      }
+      setBookmarkedPostIds(bookmarkedIds);
+    };
+
+    loadBookmarkStatuses();
+  }, [user?.id, realTimePosts.length]);
   
   // Convert Firebase posts to our Post interface
   const firebasePosts = realTimePosts.map((firebasePost: FirebasePost): Post => ({
@@ -83,9 +103,10 @@ export function usePosts() {
     timestamp: formatTimestamp(firebasePost.created_at),
     likes: firebasePost.likes || 0,
     comments: firebasePost.comments || 0,
-    shares: 0, // Not implemented yet
-    isLiked: false, // Would need to check user's likes
+    shares: 0,
+    isLiked: false,
     isShared: false,
+    isBookmarked: bookmarkedPostIds.has(firebasePost.id),
     postComments: [],
     moderationStatus: 'approved' as 'approved' | 'pending' | 'rejected',
     isAgricultureRelated: true,
@@ -202,6 +223,31 @@ export function usePosts() {
     }
   };
 
+  const togglePostBookmark = async (postId: string) => {
+    if (!user?.id) {
+      console.error('User must be authenticated to bookmark posts');
+      return;
+    }
+
+    try {
+      const isBookmarked = await toggleBookmark(user.id, postId);
+      
+      setBookmarkedPostIds(prev => {
+        const newSet = new Set(prev);
+        if (isBookmarked) {
+          newSet.add(postId);
+        } else {
+          newSet.delete(postId);
+        }
+        return newSet;
+      });
+
+      console.log(`Post ${postId} ${isBookmarked ? 'bookmarked' : 'unbookmarked'}`);
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
+  };
+
   const addComment = async (postId: string, content: string) => {
     const post = allPosts.find(p => p.id === postId);
     if (post && content.trim()) {
@@ -278,6 +324,7 @@ export function usePosts() {
     refresh,
     toggleLike,
     toggleShare,
+    togglePostBookmark,
     addPost,
     addComment,
     trackPostView,

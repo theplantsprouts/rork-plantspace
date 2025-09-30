@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,66 +6,74 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Bookmark } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-
+import { getBookmarkedPosts, toggleBookmark } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 
 interface SavedPost {
   id: string;
   content: string;
   image?: string;
-  user: {
-    name: string;
-    username: string;
+  author?: {
+    name?: string;
+    username?: string;
   };
-  timestamp: string;
+  created_at: string;
 }
+
+const formatTimestamp = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 1) return 'now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+  return `${Math.floor(diffInMinutes / 1440)}d ago`;
+};
 
 export default function SavedContentScreen() {
   const insets = useSafeAreaInsets();
-  
-  const [savedPosts] = useState<SavedPost[]>([
-    {
-      id: '1',
-      content: 'My new monstera is finally sprouting a new leaf! So exciting.',
-      image: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=400&h=300&fit=crop',
-      user: { name: 'Flora Green', username: '@floragreen' },
-      timestamp: '2d ago',
-    },
-    {
-      id: '2',
-      content: 'Can anyone help me identify this succulent?',
-      image: 'https://images.unsplash.com/photo-1459156212016-c812468e2115?w=400&h=300&fit=crop',
-      user: { name: 'Ethan Woods', username: '@ethanwoods' },
-      timestamp: '3d ago',
-    },
-    {
-      id: '3',
-      content: 'Just repotted my fiddle leaf fig. It was a struggle but I think it will be happier in its new home. Any tips for post-repotting care are welcome!',
-      user: { name: 'Sophia Leaf', username: '@sophialeaf' },
-      timestamp: '5d ago',
-    },
-    {
-      id: '4',
-      content: 'Morning dew on my calathea. Nature&apos;s art.',
-      image: 'https://images.unsplash.com/photo-1463320726281-696a485928c7?w=400&h=300&fit=crop',
-      user: { name: 'Noah Root', username: '@noahroot' },
-      timestamp: '1w ago',
-    },
-    {
-      id: '5',
-      content: 'My cactus collection is growing! I&apos;m officially a spikey plant parent.',
-      image: 'https://images.unsplash.com/photo-1509937528035-ad76254b0356?w=400&h=300&fit=crop',
-      user: { name: 'Olivia Rivers', username: '@oliviarivers' },
-      timestamp: '1w ago',
-    },
-  ]);
+  const { user } = useAuth();
+  const [savedPosts, setSavedPosts] = useState<SavedPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleRemoveBookmark = (postId: string) => {
-    console.log('Removing bookmark for post:', postId);
+  useEffect(() => {
+    loadBookmarkedPosts();
+  }, [user]);
+
+  const loadBookmarkedPosts = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const posts = await getBookmarkedPosts(user.id);
+      setSavedPosts(posts as SavedPost[]);
+    } catch (error) {
+      console.error('Error loading bookmarked posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveBookmark = async (postId: string) => {
+    if (!user?.id) return;
+
+    try {
+      await toggleBookmark(user.id, postId);
+      setSavedPosts(prev => prev.filter(post => post.id !== postId));
+      console.log('Bookmark removed for post:', postId);
+    } catch (error) {
+      console.error('Error removing bookmark:', error);
+    }
   };
 
   const handlePostPress = (postId: string) => {
@@ -132,22 +140,41 @@ export default function SavedContentScreen() {
           <View style={styles.headerSpacer} />
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <View style={styles.postsGrid}>
-            {savedPosts.map((post, index) => renderSavedPost(post, index))}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#17cf17" />
+            <Text style={styles.loadingText}>Loading harvested seeds...</Text>
           </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {savedPosts.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Bookmark size={64} color="rgba(23, 207, 23, 0.3)" />
+                <Text style={styles.emptyTitle}>No harvested seeds yet</Text>
+                <Text style={styles.emptySubtitle}>
+                  Tap the bookmark icon on any seed to save it here
+                </Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.postsGrid}>
+                  {savedPosts.map((post, index) => renderSavedPost(post, index))}
+                </View>
 
-          <View style={styles.endMessage}>
-            <Bookmark size={48} color="rgba(23, 207, 23, 0.3)" />
-            <Text style={styles.endMessageText}>
-              You&apos;ve reached the end of your saved sprouts.
-            </Text>
-          </View>
-        </ScrollView>
+                <View style={styles.endMessage}>
+                  <Bookmark size={48} color="rgba(23, 207, 23, 0.3)" />
+                  <Text style={styles.endMessageText}>
+                    You&apos;ve reached the end of your harvested seeds.
+                  </Text>
+                </View>
+              </>
+            )}
+          </ScrollView>
+        )}
       </View>
     </View>
   );
@@ -191,6 +218,38 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1a1c19',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#72796f',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 100,
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    marginTop: 24,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a1c19',
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#72796f',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   headerSpacer: {
     width: 32,

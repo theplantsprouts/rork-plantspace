@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from "react-native";
 import { Image } from "expo-image";
-import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react-native";
+import { Sprout, Leaf, Heading, Bookmark } from "lucide-react-native";
 import { PlantTheme } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { type Post } from "@/hooks/use-posts";
@@ -167,7 +167,7 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
           testID={`like-button-${post.id}`}
           activeOpacity={0.7}
         >
-          <Heart 
+          <Sprout 
             size={20} 
             color={post.isLiked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
             fill={post.isLiked ? PlantTheme.colors.primary : 'none'}
@@ -181,7 +181,7 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
           testID={`comment-button-${post.id}`}
           activeOpacity={0.7}
         >
-          <MessageCircle size={20} color={PlantTheme.colors.onSurfaceVariant} />
+          <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
           <Text style={styles.actionText}>{post.comments}</Text>
         </TouchableOpacity>
 
@@ -191,7 +191,7 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
           testID={`share-button-${post.id}`}
           activeOpacity={0.7}
         >
-          <Share2 size={20} color={PlantTheme.colors.onSurfaceVariant} />
+          <Heading size={20} color={PlantTheme.colors.onSurfaceVariant} />
           <Text style={styles.actionText}>{post.shares || 0}</Text>
         </TouchableOpacity>
       </View>

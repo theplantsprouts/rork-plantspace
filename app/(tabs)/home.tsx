@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { Heart, MessageCircle, Share2 } from 'lucide-react-native';
+import { Sprout, Leaf, Heading, Bookmark } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
 import { usePosts, type Post } from '@/hooks/use-posts';
 import { router } from 'expo-router';
@@ -20,7 +20,7 @@ import { useTabBar } from './_layout';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { posts, toggleLike, isLoading, error, refresh } = usePosts();
+  const { posts, toggleLike, togglePostBookmark, isLoading, error, refresh } = usePosts();
   const { handleScroll } = useTabBar();
   
   const onScroll = useCallback((event: any) => {
@@ -85,7 +85,12 @@ export default function HomeScreen() {
           </View>
         ) : (
           memoizedPosts.map((post) => (
-            <PostCard key={post.id} post={post} onLike={() => handleLike(post.id)} />
+            <PostCard 
+              key={post.id} 
+              post={post} 
+              onLike={() => handleLike(post.id)}
+              onBookmark={() => togglePostBookmark(post.id)}
+            />
           ))
         )}
       </ScrollView>
@@ -96,9 +101,10 @@ export default function HomeScreen() {
 interface PostCardProps {
   post: Post;
   onLike: () => void;
+  onBookmark: () => void;
 }
 
-function PostCard({ post, onLike }: PostCardProps) {
+function PostCard({ post, onLike, onBookmark }: PostCardProps) {
   return (
     <View style={styles.postCard}>
       {post.image && (
@@ -130,13 +136,20 @@ function PostCard({ post, onLike }: PostCardProps) {
             <Text style={styles.username}>{post.user.name}</Text>
             <Text style={styles.timestamp}>{post.timestamp}</Text>
           </View>
+          <TouchableOpacity style={styles.bookmarkButton} onPress={onBookmark}>
+            <Bookmark 
+              size={20} 
+              color={post.isBookmarked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
+              fill={post.isBookmarked ? PlantTheme.colors.primary : 'none'}
+            />
+          </TouchableOpacity>
         </View>
         <Text style={styles.postText}>{post.content}</Text>
       </View>
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.actionButton} onPress={onLike}>
           <View style={styles.actionIconContainer}>
-            <Heart 
+            <Sprout 
               size={20} 
               color={post.isLiked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
               fill={post.isLiked ? PlantTheme.colors.primary : 'none'}
@@ -146,13 +159,13 @@ function PostCard({ post, onLike }: PostCardProps) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <View style={styles.actionIconContainer}>
-            <MessageCircle size={20} color={PlantTheme.colors.onSurfaceVariant} />
+            <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
           </View>
           <Text style={styles.actionText}>{post.comments}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <View style={styles.actionIconContainer}>
-            <Share2 size={20} color={PlantTheme.colors.onSurfaceVariant} />
+            <Heading size={20} color={PlantTheme.colors.onSurfaceVariant} />
           </View>
           <Text style={styles.actionText}>{post.shares || 0}</Text>
         </TouchableOpacity>
@@ -236,6 +249,9 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     flex: 1,
+  },
+  bookmarkButton: {
+    padding: 8,
   },
   username: {
     fontSize: 16,

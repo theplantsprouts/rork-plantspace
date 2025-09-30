@@ -7,6 +7,8 @@ import { completeProfileProcedure } from "./routes/auth/complete-profile/route";
 import { createPostProcedure } from "./routes/posts/create/route";
 import { getPostsProcedure } from "./routes/posts/list/route";
 import { uploadImageProcedure } from "./routes/posts/upload-image/route";
+import { toggleBookmarkProcedure } from "./routes/posts/toggle-bookmark/route";
+import { listBookmarksProcedure } from "./routes/posts/list-bookmarks/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -22,6 +24,8 @@ export const appRouter = createTRPCRouter({
     create: createPostProcedure,
     list: getPostsProcedure,
     uploadImage: uploadImageProcedure,
+    toggleBookmark: toggleBookmarkProcedure,
+    listBookmarks: listBookmarksProcedure,
   }),
 });
 

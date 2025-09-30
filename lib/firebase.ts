@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc, query, orderBy, limit, startAfter, DocumentSnapshot, Timestamp, onSnapshot, where } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, DocumentSnapshot, Timestamp, onSnapshot, where } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAnalytics, logEvent, Analytics } from 'firebase/analytics';
 import { Platform } from 'react-native';
@@ -428,6 +428,73 @@ export const getPushTokens = async (userIds: string[]): Promise<string[]> => {
     return tokens;
   } catch (error) {
     console.error('Error fetching push tokens:', error);
+    return [];
+  }
+};
+
+export const toggleBookmark = async (userId: string, postId: string): Promise<boolean> => {
+  try {
+    const bookmarkRef = doc(db, 'bookmarks', `${userId}_${postId}`);
+    const bookmarkSnap = await getDoc(bookmarkRef);
+
+    if (bookmarkSnap.exists()) {
+      await deleteDoc(bookmarkRef);
+      return false;
+    } else {
+      await setDoc(bookmarkRef, {
+        userId,
+        postId,
+        created_at: new Date().toISOString(),
+      });
+      return true;
+    }
+  } catch (error) {
+    console.error('Error toggling bookmark:', error);
+    throw new Error('Failed to toggle bookmark');
+  }
+};
+
+export const isPostBookmarked = async (userId: string, postId: string): Promise<boolean> => {
+  try {
+    const bookmarkRef = doc(db, 'bookmarks', `${userId}_${postId}`);
+    const bookmarkSnap = await getDoc(bookmarkRef);
+    return bookmarkSnap.exists();
+  } catch (error) {
+    console.error('Error checking bookmark:', error);
+    return false;
+  }
+};
+
+export const getBookmarkedPosts = async (userId: string): Promise<Post[]> => {
+  try {
+    const bookmarksRef = collection(db, 'bookmarks');
+    const q = query(bookmarksRef, where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+
+    const bookmarkedPosts: Post[] = [];
+
+    for (const bookmarkDoc of querySnapshot.docs) {
+      const bookmarkData = bookmarkDoc.data();
+      const postRef = doc(db, 'posts', bookmarkData.postId);
+      const postSnap = await getDoc(postRef);
+
+      if (postSnap.exists()) {
+        const postData = { id: postSnap.id, ...postSnap.data() } as Post;
+        
+        if (postData.author_id) {
+          const authorProfile = await getProfile(postData.author_id);
+          if (authorProfile) {
+            postData.author = authorProfile;
+          }
+        }
+        
+        bookmarkedPosts.push(postData);
+      }
+    }
+
+    return bookmarkedPosts;
+  } catch (error) {
+    console.error('Error fetching bookmarked posts:', error);
     return [];
   }
 };
