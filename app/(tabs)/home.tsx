@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { Settings, Leaf } from 'lucide-react-native';
+import { Leaf } from 'lucide-react-native';
 import { PlantTheme } from '@/constants/theme';
 import { usePosts, type Post } from '@/hooks/use-posts';
 import { router } from 'expo-router';
@@ -49,12 +49,7 @@ export default function HomeScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerSpacer} />
         <Text style={styles.headerTitle}>Bloom</Text>
-        <TouchableOpacity 
-          style={styles.settingsButton}
-          onPress={() => router.push('/settings')}
-        >
-          <Settings size={24} color={PlantTheme.colors.onSurfaceVariant} />
-        </TouchableOpacity>
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView
@@ -186,12 +181,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700' as const,
     color: PlantTheme.colors.onSurface,
-  },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,

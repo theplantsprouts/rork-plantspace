@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Bookmark } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, Settings } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -161,12 +161,22 @@ export default function ProfileScreen() {
             <ArrowLeft color="#1a1c19" size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
-          <TouchableOpacity 
-            onPress={() => router.push('/saved-content')}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Bookmark color="#1a1c19" size={24} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              onPress={() => router.push('/saved-content')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.headerIconButton}
+            >
+              <Bookmark color="#1a1c19" size={24} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => router.push('/settings')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.headerIconButton}
+            >
+              <Settings color="#1a1c19" size={24} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView 
@@ -533,7 +543,15 @@ const styles = StyleSheet.create({
     color: '#42493f',
     textAlign: 'center',
   },
-  headerSpacer: {
-    width: 24,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
