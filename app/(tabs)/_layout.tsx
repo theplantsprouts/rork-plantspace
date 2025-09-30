@@ -1,9 +1,9 @@
 import { Tabs } from "expo-router";
 import { Sprout, Compass, Plus, Bell, User } from "lucide-react-native";
 import React, { useCallback, useMemo, useRef } from "react";
-import { Platform, Animated, View, Text } from "react-native";
+import { Platform, Animated, View } from "react-native";
 import { PlantTheme } from "@/constants/theme";
-import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import createContextHook from '@nkzw/create-context-hook';
 
 // Create a context for tab bar animation
@@ -61,26 +61,57 @@ export default function TabLayout() {
 function TabLayoutContent() {
   const { tabBarAnimation } = useTabBar();
 
-  const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, label: string) => {
-    const TabIcon = ({ focused }: { color: string; size: number; focused: boolean }) => (
-      <View style={{
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-      }}>
-        <IconComponent 
-          color={focused ? PlantTheme.colors.primary : PlantTheme.colors.textSecondary} 
-          size={24} 
-        />
-        <Text style={{
-          fontSize: 11,
-          fontWeight: focused ? '600' : '500',
-          color: focused ? PlantTheme.colors.primary : PlantTheme.colors.textSecondary,
+  const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, label: string, isCreateButton: boolean = false) => {
+    const TabIcon = ({ focused }: { color: string; size: number; focused: boolean }) => {
+      if (isCreateButton) {
+        return (
+          <View style={{
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: '#ffdde0',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: -32,
+            ...Platform.select({
+              ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 12,
+              },
+              android: {
+                elevation: 8,
+              },
+              web: {
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+            }),
+          }}>
+            <IconComponent 
+              color="#d93025" 
+              size={32} 
+            />
+          </View>
+        );
+      }
+      
+      return (
+        <View style={{
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderRadius: 30,
+          backgroundColor: focused ? '#d2e3fc' : 'transparent',
         }}>
-          {label}
-        </Text>
-      </View>
-    );
+          <IconComponent 
+            color={focused ? '#1a73e8' : '#5f6368'} 
+            size={24} 
+          />
+        </View>
+      );
+    };
     TabIcon.displayName = `TabIcon_${label}`;
     return TabIcon;
   }, []);
@@ -92,7 +123,7 @@ function TabLayoutContent() {
     createTabIcon(Compass, 'Discover')(props), [createTabIcon]);
 
   const renderCreateIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Plus, 'Create')(props), [createTabIcon]);
+    createTabIcon(Plus, 'Create', true)(props), [createTabIcon]);
 
   const renderNotificationsIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
     createTabIcon(Bell, 'Activity')(props), [createTabIcon]);
@@ -106,26 +137,26 @@ function TabLayoutContent() {
       bottom: Platform.OS === 'ios' ? 20 : 16,
       left: 20,
       right: 20,
-      height: 80,
-      borderRadius: 28,
-      paddingBottom: 8,
-      paddingTop: 8,
-      paddingHorizontal: 8,
+      height: 64,
+      borderRadius: 50,
+      paddingBottom: 0,
+      paddingTop: 0,
+      paddingHorizontal: 16,
       transform: [{ translateY: tabBarAnimation }],
       backgroundColor: 'transparent',
       borderWidth: 0,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
         },
         android: {
-          elevation: 12,
+          elevation: 8,
         },
         web: {
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
         },
       }),
     };
@@ -142,10 +173,11 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 4,
-      paddingHorizontal: 4,
+      paddingVertical: 0,
+      paddingHorizontal: 0,
       justifyContent: 'center',
       alignItems: 'center',
+      flex: 1,
     },
     tabBarBackground: () => (
       Platform.OS === 'web' ? (
@@ -156,24 +188,24 @@ function TabLayoutContent() {
             left: 0,
             right: 0,
             bottom: 0,
-            borderRadius: 28,
+            borderRadius: 50,
             overflow: 'hidden',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            background: 'linear-gradient(to right, #e0eaff, #e0ffec, #ffe0e0)',
           }}
         />
       ) : (
-        <BlurView
-          intensity={80}
-          tint="light"
+        <LinearGradient
+          colors={['#e0eaff', '#e0ffec', '#ffe0e0']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
           style={{
             position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            borderRadius: 28,
+            borderRadius: 50,
             overflow: 'hidden',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
           }}
         />
       )
