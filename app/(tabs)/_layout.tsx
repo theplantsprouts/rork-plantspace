@@ -175,7 +175,7 @@ function TabLayoutContent() {
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
       paddingVertical: 8,
-      paddingHorizontal: 2,
+      paddingHorizontal: 0,
       justifyContent: 'center',
       alignItems: 'center',
       height: 64,
