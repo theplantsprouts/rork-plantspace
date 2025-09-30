@@ -73,7 +73,7 @@ function TabLayoutContent() {
             backgroundColor: '#ffdde0',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: 8,
+            marginBottom: 0,
             ...Platform.select({
               ios: {
                 shadowColor: '#000',
@@ -175,7 +175,7 @@ function TabLayoutContent() {
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
       paddingVertical: 8,
-      paddingHorizontal: 4,
+      paddingHorizontal: 2,
       justifyContent: 'center',
       alignItems: 'center',
       height: 64,
