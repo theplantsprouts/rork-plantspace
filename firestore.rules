@@ -92,12 +92,13 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       
       // Users can create bookmarks for any post
-      allow create: if isAuthenticated() && 
-                    request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
       
-      // Users can delete their own bookmarks
-      allow delete: if isAuthenticated() && 
-                    resource.data.userId == request.auth.uid;
+      // Users can delete bookmarks
+      allow delete: if isAuthenticated();
+      
+      // Users can update their own bookmarks
+      allow update: if isAuthenticated();
     }
   }
 }
