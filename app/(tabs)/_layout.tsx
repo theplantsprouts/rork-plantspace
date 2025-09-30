@@ -226,41 +226,47 @@ function TabLayoutContent() {
       height: 72,
     },
     tabBarBackground: () => (
-      Platform.OS === 'web' ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 90,
-            bottom: 0,
-            borderRadius: 50,
-            overflow: 'hidden',
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.3)',
-          }}
-        />
-      ) : (
-        <BlurView
-          intensity={80}
-          tint="light"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 90,
-            bottom: 0,
-            borderRadius: 50,
-            overflow: 'hidden',
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.3)',
-          }}
-        />
-      )
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        gap: 8,
+      }}>
+        {Platform.OS === 'web' ? (
+          <View
+            style={{
+              flex: 1,
+              height: 56,
+              borderRadius: 28,
+              overflow: 'hidden',
+              backgroundColor: 'rgba(255, 255, 255, 0.5)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.3)',
+            }}
+          />
+        ) : (
+          <BlurView
+            intensity={80}
+            tint="light"
+            style={{
+              flex: 1,
+              height: 56,
+              borderRadius: 28,
+              overflow: 'hidden',
+              backgroundColor: 'rgba(255, 255, 255, 0.5)',
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.3)',
+            }}
+          />
+        )}
+      </View>
     ),
   }), [tabBarStyle]);
 
