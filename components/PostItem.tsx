@@ -197,8 +197,8 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
             activeOpacity={0.7}
           >
             <MoreVertical 
-              size={20} 
-              color={PlantTheme.colors.onSurfaceVariant}
+              size={24} 
+              color={PlantTheme.colors.textPrimary}
             />
           </TouchableOpacity>
         </View>
