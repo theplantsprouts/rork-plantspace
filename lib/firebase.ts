@@ -606,4 +606,43 @@ export const toggleShare = async (userId: string, postId: string): Promise<boole
   }
 };
 
+export const deletePost = async (userId: string, postId: string): Promise<void> => {
+  try {
+    const postRef = doc(db, 'posts', postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) {
+      throw new Error('Post not found');
+    }
+
+    const postData = postSnap.data();
+    
+    if (postData.author_id !== userId) {
+      throw new Error('You can only delete your own posts');
+    }
+
+    await deleteDoc(postRef);
+  } catch (error: any) {
+    console.error('Error deleting post:', error);
+    throw new Error(error.message || 'Failed to delete post');
+  }
+};
+
+export const reportPost = async (userId: string, postId: string, reason: string): Promise<void> => {
+  try {
+    const reportData = {
+      post_id: postId,
+      reported_by: userId,
+      reason,
+      created_at: new Date().toISOString(),
+      status: 'pending',
+    };
+
+    await addDoc(collection(db, 'reports'), reportData);
+  } catch (error: any) {
+    console.error('Error reporting post:', error);
+    throw new Error(error.message || 'Failed to report post');
+  }
+};
+
 export default app;

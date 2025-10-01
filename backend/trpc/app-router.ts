@@ -13,6 +13,8 @@ import { toggleLikeProcedure } from "./routes/posts/toggle-like/route";
 import { addCommentProcedure } from "./routes/posts/add-comment/route";
 import { toggleShareProcedure } from "./routes/posts/toggle-share/route";
 import { checkLikeProcedure } from "./routes/posts/check-like/route";
+import { deletePostProcedure } from "./routes/posts/delete/route";
+import { reportPostProcedure } from "./routes/posts/report/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -34,6 +36,8 @@ export const appRouter = createTRPCRouter({
     addComment: addCommentProcedure,
     toggleShare: toggleShareProcedure,
     checkLike: checkLikeProcedure,
+    delete: deletePostProcedure,
+    report: reportPostProcedure,
   }),
 });
 

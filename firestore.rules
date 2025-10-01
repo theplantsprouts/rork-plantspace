@@ -99,5 +99,12 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
       allow update: if isAuthenticated();
     }
+    
+    // Reports
+    match /reports/{reportId} {
+      allow read: if false;
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
   }
 }

@@ -1,11 +1,13 @@
 import React, { memo, useCallback, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Modal, Pressable } from "react-native";
 import { Image } from "expo-image";
-import { Sprout, Leaf, Heading, Bookmark } from "lucide-react-native";
+import { Sprout, Leaf, Heading, Bookmark, MoreVertical, Trash2, Flag } from "lucide-react-native";
 import { PlantTheme } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { type Post } from "@/hooks/use-posts";
 import * as Haptics from 'expo-haptics';
+import { useAuth } from "@/hooks/use-auth";
+import { deletePost, reportPost } from "@/lib/firebase";
 
 interface PostItemProps {
   post: Post;
@@ -13,11 +15,16 @@ interface PostItemProps {
   onComment?: () => void;
   onShare?: () => void;
   onBookmark?: () => void;
+  onDelete?: () => void;
   testID?: string;
 }
 
-function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: PostItemProps) {
+function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, testID }: PostItemProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const { user } = useAuth();
+  
+  const isOwnPost = user?.id === post.user.id;
   const handleLike = useCallback(async () => {
     console.log('Sunshine pressed for post:', post.id);
     
@@ -46,7 +53,6 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
   const handleBookmark = useCallback(async () => {
     console.log('Harvest pressed for post:', post.id);
     
-    // Haptic feedback
     if (Platform.OS !== 'web') {
       try {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -58,6 +64,94 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
     setIsBookmarked(!isBookmarked);
     onBookmark?.();
   }, [isBookmarked, onBookmark, post.id]);
+  
+  const handleMenuPress = useCallback(() => {
+    setMenuVisible(true);
+  }, []);
+  
+  const handleDeletePost = useCallback(() => {
+    setMenuVisible(false);
+    Alert.alert(
+      "Delete Post",
+      "Are you sure you want to delete this post? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            if (!user?.id) {
+              Alert.alert("Error", "You must be logged in to delete posts");
+              return;
+            }
+            try {
+              await deletePost(user.id, post.id);
+              Alert.alert("Success", "Post deleted successfully");
+              onDelete?.();
+            } catch (error: any) {
+              Alert.alert("Error", error.message || "Failed to delete post");
+            }
+          },
+        },
+      ]
+    );
+  }, [post.id, user?.id, onDelete]);
+  
+  const handleReportPost = useCallback(() => {
+    setMenuVisible(false);
+    Alert.alert(
+      "Report Post",
+      "Why are you reporting this post?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Spam",
+          onPress: async () => {
+            if (!user?.id) {
+              Alert.alert("Error", "You must be logged in to report posts");
+              return;
+            }
+            try {
+              await reportPost(user.id, post.id, "spam");
+              Alert.alert("Success", "Post reported successfully");
+            } catch (error: any) {
+              Alert.alert("Error", error.message || "Failed to report post");
+            }
+          },
+        },
+        {
+          text: "Inappropriate",
+          onPress: async () => {
+            if (!user?.id) {
+              Alert.alert("Error", "You must be logged in to report posts");
+              return;
+            }
+            try {
+              await reportPost(user.id, post.id, "inappropriate");
+              Alert.alert("Success", "Post reported successfully");
+            } catch (error: any) {
+              Alert.alert("Error", error.message || "Failed to report post");
+            }
+          },
+        },
+        {
+          text: "Misleading",
+          onPress: async () => {
+            if (!user?.id) {
+              Alert.alert("Error", "You must be logged in to report posts");
+              return;
+            }
+            try {
+              await reportPost(user.id, post.id, "misleading");
+              Alert.alert("Success", "Post reported successfully");
+            } catch (error: any) {
+              Alert.alert("Error", error.message || "Failed to report post");
+            }
+          },
+        },
+      ]
+    );
+  }, [post.id, user?.id]);
 
   return (
     <GlassCard style={styles.container} testID={testID}>
@@ -83,18 +177,31 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
           <Text style={styles.username}>{post.user.name}</Text>
           <Text style={styles.timestamp}>{post.timestamp}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.bookmarkButton}
-          onPress={handleBookmark}
-          testID={`bookmark-button-${post.id}`}
-          activeOpacity={0.7}
-        >
-          <Bookmark 
-            size={20} 
-            color={isBookmarked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
-            fill={isBookmarked ? PlantTheme.colors.primary : 'none'}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.bookmarkButton}
+            onPress={handleBookmark}
+            testID={`bookmark-button-${post.id}`}
+            activeOpacity={0.7}
+          >
+            <Bookmark 
+              size={20} 
+              color={isBookmarked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
+              fill={isBookmarked ? PlantTheme.colors.primary : 'none'}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={handleMenuPress}
+            testID={`menu-button-${post.id}`}
+            activeOpacity={0.7}
+          >
+            <MoreVertical 
+              size={20} 
+              color={PlantTheme.colors.onSurfaceVariant}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Text style={styles.content}>{post.content}</Text>
@@ -147,6 +254,40 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, testID }: Post
           <Text style={styles.actionText}>{post.shares || 0}</Text>
         </TouchableOpacity>
       </View>
+      
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setMenuVisible(false)}
+        >
+          <View style={styles.menuContainer}>
+            {isOwnPost ? (
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={handleDeletePost}
+                activeOpacity={0.7}
+              >
+                <Trash2 size={20} color={PlantTheme.colors.error} />
+                <Text style={[styles.menuText, styles.deleteText]}>Delete Post</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={handleReportPost}
+                activeOpacity={0.7}
+              >
+                <Flag size={20} color={PlantTheme.colors.onSurfaceVariant} />
+                <Text style={styles.menuText}>Report Post</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </Pressable>
+      </Modal>
     </GlassCard>
   );
 }
@@ -186,7 +327,15 @@ const styles = StyleSheet.create({
   userInfo: {
     flex: 1,
   },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
   bookmarkButton: {
+    padding: 8,
+  },
+  menuButton: {
     padding: 8,
   },
   username: {
@@ -227,7 +376,34 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 12,
     color: PlantTheme.colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '500' as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuContainer: {
+    backgroundColor: PlantTheme.colors.cardBackground,
+    borderRadius: PlantTheme.borderRadius.lg,
+    padding: 8,
+    minWidth: 200,
+    ...PlantTheme.shadows.lg,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  menuText: {
+    fontSize: 16,
+    color: PlantTheme.colors.textPrimary,
+    fontWeight: '500' as const,
+  },
+  deleteText: {
+    color: PlantTheme.colors.error,
   },
 });
 
