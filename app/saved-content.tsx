@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Bookmark } from 'lucide-react-native';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { getBookmarkedPosts, toggleBookmark } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -127,6 +127,7 @@ export default function SavedContentScreen() {
 
   return (
     <View style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity
