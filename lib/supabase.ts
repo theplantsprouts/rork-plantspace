@@ -50,6 +50,7 @@ export interface Profile {
   avatar?: string;
   followers?: number;
   following?: number;
+  is_admin?: boolean;
   created_at: string;
   updated_at: string;
 }

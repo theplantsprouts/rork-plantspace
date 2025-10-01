@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { protectedProcedure } from "../../../../create-context";
+import { adminProcedure } from "../../../../create-context";
 import { supabase } from "@/lib/supabase";
 
-export const suspendUserProcedure = protectedProcedure
+export const suspendUserProcedure = adminProcedure
   .input(
     z.object({
       userId: z.string(),

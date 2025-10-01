@@ -2,6 +2,7 @@ import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { auth, getProfile } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
@@ -20,8 +21,13 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
       const currentUser = auth.currentUser;
       
       if (currentUser) {
-        // Get user profile from Firestore
         const profile = await getProfile(currentUser.uid);
+        
+        const { data: supabaseProfile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', currentUser.uid)
+          .single();
         
         user = {
           id: currentUser.uid,
@@ -33,8 +39,9 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
           avatar: profile?.avatar,
           followers: profile?.followers || 0,
           following: profile?.following || 0,
+          isAdmin: supabaseProfile?.is_admin || false,
         };
-        console.log('Context user found:', user.id);
+        console.log('Context user found:', user.id, 'isAdmin:', user.isAdmin);
       } else {
         console.log('No authenticated Firebase user found');
       }
@@ -73,6 +80,28 @@ const isAuthed = t.middleware(({ next, ctx }) => {
   });
 });
 
+const isAdmin = t.middleware(({ next, ctx }) => {
+  if (!ctx.user) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Not authenticated",
+    });
+  }
+  if (!ctx.user.isAdmin) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+    },
+  });
+});
+
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(isAuthed);
+export const adminProcedure = t.procedure.use(isAdmin);

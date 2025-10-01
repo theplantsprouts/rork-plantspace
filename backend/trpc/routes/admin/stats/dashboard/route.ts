@@ -1,7 +1,7 @@
-import { protectedProcedure } from "../../../../create-context";
+import { adminProcedure } from "../../../../create-context";
 import { supabase } from "@/lib/supabase";
 
-export const dashboardStatsProcedure = protectedProcedure.query(async ({ ctx }) => {
+export const dashboardStatsProcedure = adminProcedure.query(async ({ ctx }) => {
   console.log("[Admin] Fetching dashboard stats");
 
   const [usersResult, postsResult, reportsResult] = await Promise.all([
