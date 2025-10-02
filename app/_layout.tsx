@@ -10,7 +10,7 @@ import { OfflineProvider } from "@/hooks/use-offline";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer } from "@/components/Toast";
-import { PlantTheme } from "@/constants/theme";
+
 import { trpc, getTrpcClient } from "@/lib/trpc";
 
 
@@ -82,9 +82,6 @@ function RootLayoutNav() {
       <Stack.Screen name="create-post" options={{ title: "Create Post" }} />
       <Stack.Screen name="post-detail" options={{ title: "Seed Details", headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
-      <Stack.Screen name="firebase-test" options={{ title: "Firebase Test" }} />
-      <Stack.Screen name="debug" options={{ title: "Debug" }} />
-      <Stack.Screen name="modal" options={{ presentation: "modal" }} />
     </Stack>
   );
 }
