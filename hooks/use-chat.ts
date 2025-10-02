@@ -61,9 +61,19 @@ export const useMessages = (conversationId: string | null) => {
   }, [conversationId]);
 
   const sendMessage = useCallback(
-    async (receiverId: string, text: string) => {
+    async (
+      receiverId: string,
+      text: string,
+      attachment?: {
+        url: string;
+        name: string;
+        size: number;
+        type: 'image' | 'file';
+        mimeType: string;
+      }
+    ) => {
       if (!conversationId) return null;
-      return await sendMessageToFirebase(receiverId, text);
+      return await sendMessageToFirebase(receiverId, text, attachment);
     },
     [conversationId]
   );

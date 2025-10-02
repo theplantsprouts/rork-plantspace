@@ -11,7 +11,11 @@ export interface ChatMessage {
   text: string;
   timestamp: number;
   read: boolean;
-  type: 'text';
+  type: 'text' | 'image' | 'file';
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentSize?: number;
+  attachmentType?: string;
 }
 
 export interface Conversation {
@@ -29,7 +33,14 @@ export const getConversationId = (userId1: string, userId2: string): string => {
 
 export const sendMessage = async (
   receiverId: string,
-  text: string
+  text: string,
+  attachment?: {
+    url: string;
+    name: string;
+    size: number;
+    type: 'image' | 'file';
+    mimeType: string;
+  }
 ): Promise<string | null> => {
   try {
     const user = auth.currentUser;
@@ -46,15 +57,25 @@ export const sendMessage = async (
       text,
       timestamp: Date.now(),
       read: false,
-      type: 'text',
+      type: attachment ? attachment.type : 'text',
+      ...(attachment && {
+        attachmentUrl: attachment.url,
+        attachmentName: attachment.name,
+        attachmentSize: attachment.size,
+        attachmentType: attachment.mimeType,
+      }),
     };
 
     await set(newMessageRef, message);
 
     const conversationRef = ref(rtdb, `conversations/${conversationId}`);
+    const lastMessageText = attachment 
+      ? (attachment.type === 'image' ? '📷 Image' : `📎 ${attachment.name}`)
+      : text;
+
     await update(conversationRef, {
       participants: [user.uid, receiverId],
-      lastMessage: text,
+      lastMessage: lastMessageText,
       lastMessageTime: Date.now(),
       lastMessageSenderId: user.uid,
       [`unreadCount/${receiverId}`]: (await get(ref(rtdb, `conversations/${conversationId}/unreadCount/${receiverId}`))).val() + 1 || 1,
