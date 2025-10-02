@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminProcedure } from "../../../../create-context";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 
 export const removePostProcedure = adminProcedure
   .input(
@@ -12,19 +13,17 @@ export const removePostProcedure = adminProcedure
   .mutation(async ({ input, ctx }) => {
     console.log("[Admin] Removing post:", input.postId);
 
-    const { error } = await supabase
-      .from("posts")
-      .update({ 
+    try {
+      const postRef = doc(db, "posts", input.postId);
+      await updateDoc(postRef, {
         status: "removed",
         removed_reason: input.reason,
         removed_at: new Date().toISOString(),
-      })
-      .eq("id", input.postId);
+      });
 
-    if (error) {
+      return { success: true };
+    } catch (error) {
       console.error("[Admin] Error removing post:", error);
       throw new Error("Failed to remove post");
     }
-
-    return { success: true };
   });

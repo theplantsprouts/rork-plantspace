@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminProcedure } from "../../../../create-context";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 
 export const resolveReportProcedure = adminProcedure
   .input(
@@ -13,21 +14,19 @@ export const resolveReportProcedure = adminProcedure
   .mutation(async ({ input, ctx }) => {
     console.log("[Admin] Resolving report:", input.reportId);
 
-    const { error } = await supabase
-      .from("post_reports")
-      .update({ 
+    try {
+      const reportRef = doc(db, "reports", input.reportId);
+      await updateDoc(reportRef, {
         status: "resolved",
         admin_action: input.action,
         admin_notes: input.notes,
         resolved_at: new Date().toISOString(),
         resolved_by: ctx.user.id,
-      })
-      .eq("id", input.reportId);
+      });
 
-    if (error) {
+      return { success: true };
+    } catch (error) {
       console.error("[Admin] Error resolving report:", error);
       throw new Error("Failed to resolve report");
     }
-
-    return { success: true };
   });

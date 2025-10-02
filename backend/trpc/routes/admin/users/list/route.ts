@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminProcedure } from "../../../../create-context";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, limit as firestoreLimit, getDocs, where } from "firebase/firestore";
 
 export const listUsersProcedure = adminProcedure
   .input(
@@ -14,34 +15,38 @@ export const listUsersProcedure = adminProcedure
   .query(async ({ input, ctx }) => {
     console.log("[Admin] Listing users:", input);
 
-    const { page, limit, search, status } = input;
-    const offset = (page - 1) * limit;
+    const { page, limit: limitCount, search, status } = input;
 
-    let query = supabase
-      .from("profiles")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    try {
+      const profilesRef = collection(db, "profiles");
+      let q = query(profilesRef, orderBy("created_at", "desc"), firestoreLimit(limitCount));
 
-    if (search) {
-      query = query.or(`username.ilike.%${search}%,full_name.ilike.%${search}%`);
-    }
+      if (status !== "all") {
+        q = query(profilesRef, where("status", "==", status), orderBy("created_at", "desc"), firestoreLimit(limitCount));
+      }
 
-    if (status !== "all") {
-      query = query.eq("status", status);
-    }
+      const querySnapshot = await getDocs(q);
+      let users = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-    const { data, error, count } = await query;
+      if (search) {
+        const searchLower = search.toLowerCase();
+        users = users.filter((user: any) => 
+          user.username?.toLowerCase().includes(searchLower) ||
+          user.name?.toLowerCase().includes(searchLower)
+        );
+      }
 
-    if (error) {
+      return {
+        users,
+        total: users.length,
+        page,
+        totalPages: 1,
+      };
+    } catch (error) {
       console.error("[Admin] Error fetching users:", error);
       throw new Error("Failed to fetch users");
     }
-
-    return {
-      users: data || [],
-      total: count || 0,
-      page,
-      totalPages: Math.ceil((count || 0) / limit),
-    };
   });

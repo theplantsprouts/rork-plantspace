@@ -1,30 +1,33 @@
 import { adminProcedure } from "../../../../create-context";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 export const dashboardStatsProcedure = adminProcedure.query(async ({ ctx }) => {
   console.log("[Admin] Fetching dashboard stats");
 
-  const [usersResult, postsResult, reportsResult] = await Promise.all([
-    supabase.from("profiles").select("*", { count: "exact", head: true }),
-    supabase.from("posts").select("*", { count: "exact", head: true }),
-    supabase.from("post_reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
-  ]);
+  try {
+    const profilesRef = collection(db, "profiles");
+    const postsRef = collection(db, "posts");
+    const reportsRef = collection(db, "reports");
 
-  const activeUsersResult = await supabase
-    .from("profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "active");
+    const [profilesSnapshot, postsSnapshot, reportsSnapshot] = await Promise.all([
+      getDocs(profilesRef),
+      getDocs(postsRef),
+      getDocs(query(reportsRef, where("status", "==", "pending"))),
+    ]);
 
-  const flaggedPostsResult = await supabase
-    .from("posts")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "flagged");
+    const activeUsersSnapshot = await getDocs(query(profilesRef, where("status", "==", "active")));
+    const flaggedPostsSnapshot = await getDocs(query(postsRef, where("status", "==", "flagged")));
 
-  return {
-    totalUsers: usersResult.count || 0,
-    activeUsers: activeUsersResult.count || 0,
-    totalPosts: postsResult.count || 0,
-    flaggedPosts: flaggedPostsResult.count || 0,
-    pendingReports: reportsResult.count || 0,
-  };
+    return {
+      totalUsers: profilesSnapshot.size,
+      activeUsers: activeUsersSnapshot.size,
+      totalPosts: postsSnapshot.size,
+      flaggedPosts: flaggedPostsSnapshot.size,
+      pendingReports: reportsSnapshot.size,
+    };
+  } catch (error) {
+    console.error("[Admin] Error fetching dashboard stats:", error);
+    throw new Error("Failed to fetch dashboard stats");
+  }
 });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminProcedure } from "../../../../create-context";
-import { supabase } from "@/lib/supabase";
+import { db, getProfile } from "@/lib/firebase";
+import { collection, query, orderBy, limit as firestoreLimit, getDocs, where } from "firebase/firestore";
 
 export const listPostsAdminProcedure = adminProcedure
   .input(
@@ -13,38 +14,43 @@ export const listPostsAdminProcedure = adminProcedure
   .query(async ({ input, ctx }) => {
     console.log("[Admin] Listing posts:", input);
 
-    const { page, limit, status } = input;
-    const offset = (page - 1) * limit;
+    const { page, limit: limitCount, status } = input;
 
-    let query = supabase
-      .from("posts")
-      .select(`
-        *,
-        profiles:user_id (
-          id,
-          username,
-          full_name,
-          avatar_url
-        )
-      `, { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    try {
+      const postsRef = collection(db, "posts");
+      let q = query(postsRef, orderBy("created_at", "desc"), firestoreLimit(limitCount));
 
-    if (status !== "all") {
-      query = query.eq("status", status);
-    }
+      if (status !== "all") {
+        q = query(postsRef, where("status", "==", status), orderBy("created_at", "desc"), firestoreLimit(limitCount));
+      }
 
-    const { data, error, count } = await query;
+      const querySnapshot = await getDocs(q);
+      const posts = [];
 
-    if (error) {
+      for (const docSnap of querySnapshot.docs) {
+        const postData: any = {
+          id: docSnap.id,
+          ...docSnap.data(),
+        };
+
+        if (postData.author_id) {
+          const profile = await getProfile(postData.author_id);
+          if (profile) {
+            postData.profiles = profile;
+          }
+        }
+
+        posts.push(postData);
+      }
+
+      return {
+        posts,
+        total: posts.length,
+        page,
+        totalPages: 1,
+      };
+    } catch (error) {
       console.error("[Admin] Error fetching posts:", error);
       throw new Error("Failed to fetch posts");
     }
-
-    return {
-      posts: data || [],
-      total: count || 0,
-      page,
-      totalPages: Math.ceil((count || 0) / limit),
-    };
   });

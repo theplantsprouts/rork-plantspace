@@ -645,4 +645,47 @@ export const reportPost = async (userId: string, postId: string, reason: string)
   }
 };
 
+export const setUserAsAdmin = async (userId: string, isAdmin: boolean = true): Promise<void> => {
+  try {
+    const adminDocRef = doc(db, 'admins', userId);
+    await setDoc(adminDocRef, {
+      isAdmin,
+      updated_at: new Date().toISOString(),
+    });
+    console.log(`User ${userId} admin status set to:`, isAdmin);
+  } catch (error: any) {
+    console.error('Error setting admin status:', error);
+    throw new Error(error.message || 'Failed to set admin status');
+  }
+};
+
+export const isUserAdmin = async (userId: string): Promise<boolean> => {
+  try {
+    const adminDocRef = doc(db, 'admins', userId);
+    const adminDoc = await getDoc(adminDocRef);
+    return adminDoc.exists() && adminDoc.data()?.isAdmin === true;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+};
+
+export const getUserByEmail = async (email: string): Promise<Profile | null> => {
+  try {
+    const profilesRef = collection(db, 'profiles');
+    const q = query(profilesRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    const docSnap = querySnapshot.docs[0];
+    return { id: docSnap.id, ...docSnap.data() } as Profile;
+  } catch (error) {
+    console.error('Error fetching user by email:', error);
+    return null;
+  }
+};
+
 export default app;

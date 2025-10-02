@@ -1,8 +1,8 @@
 import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import { auth, getProfile } from "@/lib/firebase";
-import { supabase } from "@/lib/supabase";
+import { auth, getProfile, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
@@ -23,11 +23,9 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
       if (currentUser) {
         const profile = await getProfile(currentUser.uid);
         
-        const { data: supabaseProfile } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', currentUser.uid)
-          .single();
+        const adminDocRef = doc(db, 'admins', currentUser.uid);
+        const adminDoc = await getDoc(adminDocRef);
+        const isAdmin = adminDoc.exists() && adminDoc.data()?.isAdmin === true;
         
         user = {
           id: currentUser.uid,
@@ -39,7 +37,7 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
           avatar: profile?.avatar,
           followers: profile?.followers || 0,
           following: profile?.following || 0,
-          isAdmin: supabaseProfile?.is_admin || false,
+          isAdmin,
         };
         console.log('Context user found:', user.id, 'isAdmin:', user.isAdmin);
       } else {

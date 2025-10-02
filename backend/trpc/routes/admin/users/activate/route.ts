@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminProcedure } from "../../../../create-context";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 
 export const activateUserProcedure = adminProcedure
   .input(
@@ -11,19 +12,17 @@ export const activateUserProcedure = adminProcedure
   .mutation(async ({ input, ctx }) => {
     console.log("[Admin] Activating user:", input.userId);
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ 
+    try {
+      const userRef = doc(db, "profiles", input.userId);
+      await updateDoc(userRef, {
         status: "active",
         suspended_reason: null,
         suspended_at: null,
-      })
-      .eq("id", input.userId);
+      });
 
-    if (error) {
+      return { success: true };
+    } catch (error) {
       console.error("[Admin] Error activating user:", error);
       throw new Error("Failed to activate user");
     }
-
-    return { success: true };
   });
