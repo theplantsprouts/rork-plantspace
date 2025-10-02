@@ -1,155 +1,141 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  FlatList,
-  useColorScheme,
   KeyboardAvoidingView,
   Platform,
+  FlatList,
+  useColorScheme,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
-import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ArrowLeft, Send, Image as ImageIcon } from 'lucide-react-native';
 import { Image } from 'expo-image';
-import { Send, Paperclip, Image as ImageIcon, ArrowLeft } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
+import { PlantTheme } from '@/constants/theme';
+import { router, useLocalSearchParams } from 'expo-router';
 import { trpc } from '@/lib/trpc';
-import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/use-auth';
 
 type Message = {
   id: string;
-  chatId: string;
-  senderId: string;
-  recipientId: string;
+  conversation_id: string;
+  sender_id: string;
   content: string;
-  createdAt: string;
-  read: boolean;
-  attachmentUrl?: string;
-  attachmentType?: 'image' | 'file';
-  attachmentName?: string;
+  image: string | null;
+  created_at: string;
 };
 
 export default function ChatScreen() {
-  const params = useLocalSearchParams<{
-    userId: string;
-    userName: string;
-    userAvatar: string;
-  }>();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const params = useLocalSearchParams<{ userId: string; conversationId?: string }>();
   const { user } = useAuth();
 
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
-  const sendMessageMutation = trpc.chat.sendMessage.useMutation();
-  const markAsReadMutation = trpc.chat.markAsRead.useMutation();
+  const conversationQuery = trpc.messages.getOrCreateConversation.useQuery(
+    { otherUserId: params.userId },
+    { enabled: !params.conversationId }
+  );
+
+  const conversationId = params.conversationId || conversationQuery.data?.conversationId;
+
+  const messagesQuery = trpc.messages.getMessages.useQuery(
+    { conversationId: conversationId || '' },
+    {
+      enabled: !!conversationId,
+      refetchInterval: 3000,
+    }
+  );
+
+  const sendMessageMutation = trpc.messages.sendMessage.useMutation({
+    onSuccess: () => {
+      setMessage('');
+      setSelectedImage(null);
+      messagesQuery.refetch();
+    },
+  });
+
+  const uploadImageMutation = trpc.posts.uploadImage.useMutation();
+
+  const messages = messagesQuery.data || [];
 
   const backgroundColor = isDark ? '#112111' : '#f6f8f6';
   const textColor = '#000000';
   const secondaryTextColor = '#424842';
+  const containerBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
+  const inputBg = isDark ? 'rgba(23, 207, 23, 0.2)' : 'rgba(23, 207, 23, 0.1)';
   const primaryColor = '#17cf17';
-  const messageBubbleSent = primaryColor;
-  const messageBubbleReceived = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+  const myMessageBg = isDark ? 'rgba(23, 207, 23, 0.3)' : 'rgba(23, 207, 23, 0.2)';
+  const otherMessageBg = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
 
   useEffect(() => {
-    if (!user?.id || !params.userId) return;
-
-    const chatId = [user.id, params.userId].sort().join('_');
-    const messagesRef = collection(db, 'messages');
-    const q = query(
-      messagesRef,
-      where('chatId', '==', chatId),
-      orderBy('createdAt', 'asc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newMessages: Message[] = [];
-      snapshot.forEach((doc) => {
-        newMessages.push({ id: doc.id, ...doc.data() } as Message);
-      });
-      setMessages(newMessages);
-      setIsLoading(false);
-
+    if (messages.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
-    });
-
-    if (params.userId) {
-      markAsReadMutation.mutate({ otherUserId: params.userId });
     }
-
-    return () => unsubscribe();
-  }, [user?.id, params.userId, markAsReadMutation]);
+  }, [messages.length]);
 
   const handleSend = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() && !selectedImage) return;
+    if (!params.userId) return;
 
-    const messageText = message.trim();
-    setMessage('');
+    let imageUrl: string | undefined;
 
-    try {
-      await sendMessageMutation.mutateAsync({
-        recipientId: params.userId,
-        content: messageText,
-      });
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      Alert.alert('Error', 'Failed to send message');
+    if (selectedImage) {
+      try {
+        const base64 = await fetch(selectedImage)
+          .then((res) => res.blob())
+          .then(
+            (blob) =>
+              new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  const base64String = reader.result as string;
+                  const base64Data = base64String.split(',')[1];
+                  resolve(base64Data);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              })
+          );
+
+        const uploadResult = await uploadImageMutation.mutateAsync({
+          base64,
+          filename: `message_${Date.now()}.jpg`,
+        });
+        imageUrl = uploadResult.imageUrl;
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        return;
+      }
     }
+
+    sendMessageMutation.mutate({
+      recipientId: params.userId,
+      content: message.trim() || '📷 Image',
+      image: imageUrl,
+    });
   };
 
-  const handleImagePick = async () => {
+  const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets[0]) {
-      try {
-        await sendMessageMutation.mutateAsync({
-          recipientId: params.userId,
-          attachmentUri: result.assets[0].uri,
-          attachmentType: 'image',
-          attachmentName: 'image.jpg',
-        });
-      } catch (error) {
-        console.error('Failed to send image:', error);
-        Alert.alert('Error', 'Failed to send image');
-      }
-    }
-  };
-
-  const handleFilePick = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        await sendMessageMutation.mutateAsync({
-          recipientId: params.userId,
-          attachmentUri: result.assets[0].uri,
-          attachmentType: 'file',
-          attachmentName: result.assets[0].name,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to send file:', error);
-      Alert.alert('Error', 'Failed to send file');
+      setSelectedImage(result.assets[0].uri);
     }
   };
 
@@ -159,152 +145,118 @@ export default function ChatScreen() {
   };
 
   const renderMessage = ({ item }: { item: Message }) => {
-    const isSent = item.senderId === user?.id;
+    const isMyMessage = item.sender_id === user?.id;
 
     return (
       <View
         style={[
           styles.messageContainer,
-          isSent ? styles.sentMessage : styles.receivedMessage,
+          isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer,
         ]}
       >
-        {!isSent && (
-          <Image
-            source={{ uri: params.userAvatar || 'https://via.placeholder.com/32' }}
-            style={styles.messageAvatar}
-          />
-        )}
         <View
           style={[
             styles.messageBubble,
             {
-              backgroundColor: isSent ? messageBubbleSent : messageBubbleReceived,
+              backgroundColor: isMyMessage ? myMessageBg : otherMessageBg,
             },
           ]}
         >
-          {item.attachmentUrl && item.attachmentType === 'image' && (
-            <Image
-              source={{ uri: item.attachmentUrl }}
-              style={styles.messageImage}
-            />
-          )}
-          {item.attachmentUrl && item.attachmentType === 'file' && (
-            <View style={styles.fileAttachment}>
-              <Paperclip size={16} color={isSent ? '#ffffff' : textColor} />
-              <Text
-                style={[
-                  styles.fileName,
-                  { color: isSent ? '#ffffff' : textColor },
-                ]}
-                numberOfLines={1}
-              >
-                {item.attachmentName}
-              </Text>
-            </View>
+          {item.image && (
+            <Image source={{ uri: item.image }} style={styles.messageImage} />
           )}
           {item.content && (
-            <Text
-              style={[
-                styles.messageText,
-                { color: isSent ? '#ffffff' : textColor },
-              ]}
-            >
+            <Text style={[styles.messageText, { color: textColor }]}>
               {item.content}
             </Text>
           )}
-          <Text
-            style={[
-              styles.messageTime,
-              { color: isSent ? 'rgba(255, 255, 255, 0.7)' : secondaryTextColor },
-            ]}
-          >
-            {formatTime(item.createdAt)}
+          <Text style={[styles.messageTime, { color: secondaryTextColor }]}>
+            {formatTime(item.created_at)}
           </Text>
         </View>
       </View>
     );
   };
 
+  if (!conversationId && conversationQuery.isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor }]}>
+        <LinearGradient
+          colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={primaryColor} />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerLeft: () => (
-            <TouchableOpacity
-              style={styles.headerLeft}
-              onPress={() => router.back()}
-            >
-              <ArrowLeft size={24} color={textColor} />
-              <Image
-                source={{ uri: params.userAvatar || 'https://via.placeholder.com/32' }}
-                style={styles.headerAvatar}
-              />
-              <Text style={[styles.headerTitle, { color: textColor }]}>
-                {params.userName}
-              </Text>
-            </TouchableOpacity>
-          ),
-          headerStyle: {
-            backgroundColor,
-          },
-        }}
+      <LinearGradient
+        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
+        style={StyleSheet.absoluteFillObject}
       />
+
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft size={24} color={textColor} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: textColor }]}>Chat</Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={100}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={primaryColor} />
+        <FlatList
+          ref={flatListRef}
+          data={[...messages].reverse()}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.messagesList}
+          showsVerticalScrollIndicator={false}
+          inverted={false}
+          onContentSizeChange={() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }}
+        />
+
+        {selectedImage && (
+          <View style={[styles.imagePreviewContainer, { backgroundColor: containerBg }]}>
+            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+            <TouchableOpacity
+              style={styles.removeImageButton}
+              onPress={() => setSelectedImage(null)}
+            >
+              <Text style={styles.removeImageText}>✕</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMessage}
-            contentContainerStyle={[
-              styles.messagesList,
-              { paddingBottom: insets.bottom + 80 },
-            ]}
-            onContentSizeChange={() =>
-              flatListRef.current?.scrollToEnd({ animated: true })
-            }
-          />
         )}
 
         <View
           style={[
             styles.inputContainer,
-            { backgroundColor, paddingBottom: insets.bottom + 8 },
+            { backgroundColor: inputBg, paddingBottom: insets.bottom + 8 },
           ]}
         >
           <TouchableOpacity
-            style={styles.attachButton}
-            onPress={handleImagePick}
+            style={styles.imageButton}
+            onPress={handlePickImage}
+            activeOpacity={0.7}
           >
             <ImageIcon size={24} color={primaryColor} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.attachButton}
-            onPress={handleFilePick}
-          >
-            <Paperclip size={24} color={primaryColor} />
-          </TouchableOpacity>
+
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: isDark
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'rgba(0, 0, 0, 0.05)',
-                color: textColor,
-              },
-            ]}
+            style={[styles.input, { color: textColor }]}
             placeholder="Type a message..."
             placeholderTextColor={secondaryTextColor}
             value={message}
@@ -312,19 +264,21 @@ export default function ChatScreen() {
             multiline
             maxLength={1000}
           />
+
           <TouchableOpacity
             style={[
               styles.sendButton,
               {
-                backgroundColor: message.trim() ? primaryColor : 'transparent',
+                backgroundColor: message.trim() || selectedImage ? primaryColor : containerBg,
               },
             ]}
             onPress={handleSend}
-            disabled={!message.trim()}
+            disabled={!message.trim() && !selectedImage}
+            activeOpacity={0.7}
           >
             <Send
               size={20}
-              color={message.trim() ? '#ffffff' : secondaryTextColor}
+              color={message.trim() || selectedImage ? '#FFFFFF' : secondaryTextColor}
             />
           </TouchableOpacity>
         </View>
@@ -337,51 +291,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  keyboardView: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerLeft: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  headerAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  backButton: {
+    padding: 8,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
   },
+  headerSpacer: {
+    width: 40,
+  },
+  keyboardView: {
+    flex: 1,
+  },
   messagesList: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingVertical: 16,
   },
   messageContainer: {
-    flexDirection: 'row',
     marginBottom: 12,
-    alignItems: 'flex-end',
+    maxWidth: '80%',
   },
-  sentMessage: {
-    justifyContent: 'flex-end',
+  myMessageContainer: {
+    alignSelf: 'flex-end',
   },
-  receivedMessage: {
-    justifyContent: 'flex-start',
-  },
-  messageAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 8,
+  otherMessageContainer: {
+    alignSelf: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '70%',
     borderRadius: 16,
     padding: 12,
   },
@@ -389,45 +338,60 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 12,
-    marginBottom: 4,
-  },
-  fileAttachment: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  fileName: {
-    fontSize: 14,
-    flex: 1,
+    marginBottom: 8,
   },
   messageText: {
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   messageTime: {
     fontSize: 11,
     marginTop: 4,
   },
+  imagePreviewContainer: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 12,
+    padding: 8,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeImageText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 12,
     gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
-  attachButton: {
+  imageButton: {
     padding: 8,
+    marginBottom: 4,
   },
   input: {
     flex: 1,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     fontSize: 16,
     maxHeight: 100,
+    paddingVertical: 8,
   },
   sendButton: {
     width: 40,
