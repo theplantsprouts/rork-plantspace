@@ -21,7 +21,7 @@ import { trpc } from '@/lib/trpc';
 
 export default function AdminDashboard() {
   const insets = useSafeAreaInsets();
-  const statsQuery = trpc().admin.stats.dashboard.useQuery();
+  const statsQuery = trpc.admin.stats.dashboard.useQuery();
   const stats = statsQuery.data;
   const isLoading = statsQuery.isLoading;
 

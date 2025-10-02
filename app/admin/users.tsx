@@ -23,9 +23,9 @@ export default function UserManagement() {
   const [status, setStatus] = useState<'all' | 'active' | 'suspended' | 'deleted'>('all');
   const [page, setPage] = useState(1);
 
-  const usersQuery = trpc().admin.users.list.useQuery({ page, limit: 20, search, status });
-  const suspendMutation = trpc().admin.users.suspend.useMutation();
-  const activateMutation = trpc().admin.users.activate.useMutation();
+  const usersQuery = trpc.admin.users.list.useQuery({ page, limit: 20, search, status });
+  const suspendMutation = trpc.admin.users.suspend.useMutation();
+  const activateMutation = trpc.admin.users.activate.useMutation();
 
   const handleSuspend = (userId: string, username: string) => {
     Alert.alert(
