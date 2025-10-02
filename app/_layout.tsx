@@ -4,15 +4,13 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { httpBatchLink } from '@trpc/client';
-import superjson from 'superjson';
 import { AppProvider } from "@/hooks/use-app-context";
 import { AuthProvider, useAuth, isProfileComplete } from "@/hooks/use-auth";
 import { OfflineProvider } from "@/hooks/use-offline";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer, AlertContainer } from "@/components/Toast";
-import { trpc } from "@/lib/trpc";
+import { PlantTheme } from "@/constants/theme";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -30,27 +28,6 @@ const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
-});
-
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return '';
-  }
-  return `http://localhost:${process.env.PORT ?? 8081}`;
-};
-
-const trpcClient = trpc.createClient({
-  links: [
-    httpBatchLink({
-      url: `${getBaseUrl()}/api/trpc`,
-      transformer: superjson,
-      headers() {
-        return {
-          'Content-Type': 'application/json',
-        };
-      },
-    }),
-  ],
 });
 
 function RootLayoutNav() {
@@ -142,21 +119,19 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
-          <AuthProvider>
-            <OfflineProvider>
-              <SettingsProvider>
-                <AppProvider>
-                  <GestureHandlerRootView style={styles.gestureHandler}>
-                    <AuthenticatedLayout />
-                    <ToastContainer />
-                    <AlertContainer />
-                  </GestureHandlerRootView>
-                </AppProvider>
-              </SettingsProvider>
-            </OfflineProvider>
-          </AuthProvider>
-        </trpc.Provider>
+        <AuthProvider>
+          <OfflineProvider>
+            <SettingsProvider>
+              <AppProvider>
+                <GestureHandlerRootView style={styles.gestureHandler}>
+                  <AuthenticatedLayout />
+                  <ToastContainer />
+                  <AlertContainer />
+                </GestureHandlerRootView>
+              </AppProvider>
+            </SettingsProvider>
+          </OfflineProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

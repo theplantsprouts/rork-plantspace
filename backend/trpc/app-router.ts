@@ -23,9 +23,6 @@ import { removePostProcedure } from "./routes/admin/posts/remove/route";
 import { listReportsProcedure } from "./routes/admin/reports/list/route";
 import { resolveReportProcedure } from "./routes/admin/reports/resolve/route";
 import { dashboardStatsProcedure } from "./routes/admin/stats/dashboard/route";
-import { sendMessageProcedure } from "./routes/chat/send-message/route";
-import { getUsersProcedure } from "./routes/chat/get-users/route";
-import { startConversationProcedure } from "./routes/chat/start-conversation/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -67,11 +64,6 @@ export const appRouter = createTRPCRouter({
     stats: createTRPCRouter({
       dashboard: dashboardStatsProcedure,
     }),
-  }),
-  chat: createTRPCRouter({
-    sendMessage: sendMessageProcedure,
-    getUsers: getUsersProcedure,
-    startConversation: startConversationProcedure,
   }),
 });
 
