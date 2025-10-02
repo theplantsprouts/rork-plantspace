@@ -21,7 +21,6 @@ import {
   HelpCircle,
   Flag,
   Info,
-  Shield,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/use-auth';
 import { PlantTheme } from '@/constants/theme';
@@ -45,10 +44,9 @@ interface SettingSection {
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
   const { settings, updateAppSetting } = useSettings();
   const darkMode = settings.app.darkMode;
-  const isAdmin = user?.isAdmin || false;
 
   const handleLogout = () => {
     Alert.alert(
@@ -73,19 +71,6 @@ export default function SettingsScreen() {
   };
 
   const settingSections: SettingSection[] = [
-    ...(isAdmin ? [{
-      title: 'Admin',
-      items: [
-        {
-          id: 'admin-panel',
-          title: 'Admin Panel',
-          subtitle: 'Manage users, posts, and reports',
-          icon: Shield,
-          type: 'navigation' as const,
-          onPress: () => router.push('/admin' as any),
-        },
-      ],
-    }] : []),
     {
       title: 'Account',
       items: [

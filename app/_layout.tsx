@@ -9,7 +9,7 @@ import { AuthProvider, useAuth, isProfileComplete } from "@/hooks/use-auth";
 import { OfflineProvider } from "@/hooks/use-offline";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ToastContainer, AlertContainer } from "@/components/Toast";
+import { ToastContainer } from "@/components/Toast";
 import { PlantTheme } from "@/constants/theme";
 
 
@@ -126,7 +126,6 @@ export default function RootLayout() {
                 <GestureHandlerRootView style={styles.gestureHandler}>
                   <AuthenticatedLayout />
                   <ToastContainer />
-                  <AlertContainer />
                 </GestureHandlerRootView>
               </AppProvider>
             </SettingsProvider>

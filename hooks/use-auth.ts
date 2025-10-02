@@ -1,7 +1,6 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { auth, db } from "@/lib/firebase";
-import { supabase } from "@/lib/supabase";
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -30,7 +29,6 @@ export interface User {
   avatar?: string;
   followers?: number;
   following?: number;
-  isAdmin?: boolean;
 }
 
 export const isProfileComplete = (user: User | null): boolean => {
@@ -69,13 +67,6 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       
       if (docSnap.exists()) {
         const data = docSnap.data();
-        
-        const { data: supabaseProfile } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', userId)
-          .single();
-        
         return {
           id: docSnap.id,
           email: data.email || '',
@@ -86,7 +77,6 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
           avatar: data.avatar,
           followers: data.followers || 0,
           following: data.following || 0,
-          isAdmin: supabaseProfile?.is_admin || false,
         };
       }
       return null;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,45 +7,31 @@ import {
   TouchableOpacity,
   useColorScheme,
   TextInput,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, Bell, MessageCircle } from 'lucide-react-native';
+import { Search, Bell } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { PlantTheme } from '@/constants/theme';
 import { router } from 'expo-router';
-import { trpc } from '@/lib/trpc';
 
-type TabType = 'previous' | 'new';
+type Conversation = {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  lastMessage: string;
+  timestamp: string;
+};
 
 export default function LeavesScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<TabType>('previous');
 
-  const conversationsQuery = trpc.messages.getConversations.useQuery(undefined, {
-    refetchInterval: 5000,
-  });
-
-  const searchUsersQuery = trpc.messages.searchUsers.useQuery(
-    { query: searchQuery },
-    { enabled: searchQuery.length > 0 }
-  );
-
-  const conversations = conversationsQuery.data || [];
-  const searchResults = searchUsersQuery.data || [];
-
-  const filteredConversations = useMemo(() => {
-    if (!searchQuery) return conversations;
-    return conversations.filter((conv) =>
-      conv.otherUser.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.otherUser.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.otherUser.id.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [conversations, searchQuery]);
+  const conversations: Conversation[] = [];
 
   const backgroundColor = isDark ? '#112111' : '#f6f8f6';
   const textColor = '#000000';
@@ -53,31 +39,6 @@ export default function LeavesScreen() {
   const containerBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
   const searchBg = isDark ? 'rgba(23, 207, 23, 0.2)' : 'rgba(23, 207, 23, 0.1)';
   const primaryColor = '#17cf17';
-  const tabActiveBg = isDark ? 'rgba(23, 207, 23, 0.3)' : 'rgba(23, 207, 23, 0.2)';
-  const tabInactiveBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
-
-  const handleUserPress = (userId: string) => {
-    router.push(`/chat?userId=${userId}` as any);
-  };
-
-  const handleConversationPress = (conversationId: string, otherUserId: string) => {
-    router.push(`/chat?userId=${otherUserId}&conversationId=${conversationId}` as any);
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays < 7) return `${diffDays}d`;
-    return date.toLocaleDateString();
-  };
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
@@ -102,54 +63,11 @@ export default function LeavesScreen() {
             <Search size={20} color={primaryColor} style={styles.searchIcon} />
             <TextInput
               style={[styles.searchInput, { color: textColor }]}
-              placeholder="Search by name or user ID"
+              placeholder="Search Leaves"
               placeholderTextColor={isDark ? 'rgba(23, 207, 23, 0.8)' : 'rgba(23, 207, 23, 0.8)'}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-          </View>
-
-          <View style={styles.tabsContainer}>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                { backgroundColor: activeTab === 'previous' ? tabActiveBg : tabInactiveBg },
-              ]}
-              onPress={() => setActiveTab('previous')}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  {
-                    color: activeTab === 'previous' ? primaryColor : secondaryTextColor,
-                    fontWeight: activeTab === 'previous' ? '700' : '500',
-                  },
-                ]}
-              >
-                Previous Chats
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                { backgroundColor: activeTab === 'new' ? tabActiveBg : tabInactiveBg },
-              ]}
-              onPress={() => setActiveTab('new')}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  {
-                    color: activeTab === 'new' ? primaryColor : secondaryTextColor,
-                    fontWeight: activeTab === 'new' ? '700' : '500',
-                  },
-                ]}
-              >
-                New Chats
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -158,119 +76,45 @@ export default function LeavesScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {activeTab === 'previous' ? (
-            conversationsQuery.isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={primaryColor} />
-              </View>
-            ) : filteredConversations.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateEmoji}>💬</Text>
-                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
-                  {searchQuery ? 'No conversations found' : 'No messages yet'}
-                </Text>
-                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
-                  {searchQuery
-                    ? 'Try searching with a different name or ID'
-                    : 'Start a conversation with someone from the community'}
-                </Text>
-              </View>
-            ) : (
-              filteredConversations.map((conversation) => (
-                <TouchableOpacity 
-                  key={conversation.id} 
-                  style={[styles.conversationItem, { backgroundColor: containerBg }]}
-                  activeOpacity={0.7}
-                  onPress={() => handleConversationPress(conversation.id, conversation.otherUser.id)}
-                >
-                  {conversation.otherUser.avatar ? (
-                    <Image 
-                      source={{ uri: conversation.otherUser.avatar }} 
-                      style={styles.avatar}
-                    />
-                  ) : (
-                    <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: primaryColor }]}>
-                      <Text style={styles.avatarText}>
-                        {conversation.otherUser.name?.charAt(0).toUpperCase() || '?'}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={styles.conversationContent}>
-                    <View style={styles.conversationHeader}>
-                      <Text style={[styles.userName, { color: textColor }]}>
-                        {conversation.otherUser.name || 'Unknown User'}
-                      </Text>
-                      <Text style={[styles.timestamp, { color: secondaryTextColor }]}>
-                        {formatTimestamp(conversation.lastMessageAt)}
-                      </Text>
-                    </View>
-                    <Text 
-                      style={[styles.lastMessage, { color: secondaryTextColor }]}
-                      numberOfLines={1}
-                    >
-                      {conversation.lastMessage || 'No messages yet'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))
-            )
+          {conversations.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>💬</Text>
+              <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                No messages yet
+              </Text>
+              <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                Start a conversation with someone from the community
+              </Text>
+            </View>
           ) : (
-            searchQuery.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateEmoji}>🔍</Text>
-                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
-                  Search for users
-                </Text>
-                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
-                  Enter a name or user ID to find someone to chat with
-                </Text>
-              </View>
-            ) : searchUsersQuery.isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={primaryColor} />
-              </View>
-            ) : searchResults.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateEmoji}>😕</Text>
-                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
-                  No users found
-                </Text>
-                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
-                  Try searching with a different name or ID
-                </Text>
-              </View>
-            ) : (
-              searchResults.map((user) => (
-                <TouchableOpacity 
-                  key={user.id} 
-                  style={[styles.conversationItem, { backgroundColor: containerBg }]}
-                  activeOpacity={0.7}
-                  onPress={() => handleUserPress(user.id)}
-                >
-                  {user.avatar ? (
-                    <Image 
-                      source={{ uri: user.avatar }} 
-                      style={styles.avatar}
-                    />
-                  ) : (
-                    <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: primaryColor }]}>
-                      <Text style={styles.avatarText}>
-                        {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={styles.conversationContent}>
+            conversations.map((conversation) => (
+              <TouchableOpacity 
+                key={conversation.id} 
+                style={[styles.conversationItem, { backgroundColor: containerBg }]}
+                activeOpacity={0.7}
+              >
+                <Image 
+                  source={{ uri: conversation.user.avatar }} 
+                  style={styles.avatar}
+                />
+                <View style={styles.conversationContent}>
+                  <View style={styles.conversationHeader}>
                     <Text style={[styles.userName, { color: textColor }]}>
-                      {user.name || 'No name'}
+                      {conversation.user.name}
                     </Text>
-                    <Text style={[styles.lastMessage, { color: secondaryTextColor }]}>
-                      @{user.username || user.id.slice(0, 8)}
+                    <Text style={[styles.timestamp, { color: secondaryTextColor }]}>
+                      {conversation.timestamp}
                     </Text>
                   </View>
-                  <MessageCircle size={20} color={primaryColor} />
-                </TouchableOpacity>
-              ))
-            )
+                  <Text 
+                    style={[styles.lastMessage, { color: secondaryTextColor }]}
+                    numberOfLines={1}
+                  >
+                    {conversation.lastMessage}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))
           )}
         </ScrollView>
       </View>
@@ -287,7 +131,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
   },
   headerTop: {
     flexDirection: 'row',
@@ -316,21 +160,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  tabText: {
-    fontSize: 14,
   },
   scrollView: {
     flex: 1,
@@ -392,19 +221,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 22,
-  },
-  loadingContainer: {
-    paddingVertical: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
 });

@@ -16,7 +16,6 @@ CREATE TABLE profiles (
   avatar TEXT,
   followers INTEGER DEFAULT 0,
   following INTEGER DEFAULT 0,
-  is_admin BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
