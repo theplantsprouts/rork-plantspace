@@ -5,7 +5,7 @@ import { useSettings } from './use-settings';
 
 export const [ThemeProvider, useTheme] = createContextHook(() => {
   const { settings, isLoading } = useSettings();
-  const [isDark, setIsDark] = useState(settings?.app?.darkMode ?? false);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     if (!isLoading && settings?.app?.darkMode !== undefined) {
@@ -20,6 +20,6 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
   return useMemo(() => ({
     theme,
     isDark,
-    colors: theme?.colors ?? LightTheme.colors,
+    colors: theme.colors,
   }), [theme, isDark]);
 });
