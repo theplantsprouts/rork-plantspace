@@ -11,13 +11,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, Bell } from 'lucide-react-native';
+import { Search, Bell, MessageCircle, X } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { PlantTheme } from '@/constants/theme';
 import { router } from 'expo-router';
-import { useConversations } from '@/hooks/use-chat';
+import { useConversations, useStartConversation } from '@/hooks/use-chat';
 import { auth, getProfile } from '@/lib/firebase';
 import type { Profile } from '@/lib/firebase';
+import { trpc } from '@/lib/trpc';
 
 type ConversationWithProfile = {
   id: string;
@@ -33,10 +34,17 @@ export default function LeavesScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const { conversations: rawConversations, loading } = useConversations();
   const [conversationsWithProfiles, setConversationsWithProfiles] = useState<ConversationWithProfile[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [fetchedConvIds, setFetchedConvIds] = useState<string>('');
+  const { startConversation } = useStartConversation();
+  
+  const searchUsersQuery = trpc.chat.getUsers.useQuery(
+    { searchQuery: searchQuery.trim(), limitCount: 20 },
+    { enabled: isSearchingUsers && searchQuery.trim().length > 0 }
+  );
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -85,12 +93,29 @@ export default function LeavesScreen() {
   }, [rawConversations, fetchedConvIds]);
 
   const filteredConversations = useMemo(() => {
-    if (!searchQuery) return conversationsWithProfiles;
+    if (!searchQuery || isSearchingUsers) return conversationsWithProfiles;
     return conversationsWithProfiles.filter((conv) =>
       conv.profile?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       conv.profile?.username?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [conversationsWithProfiles, searchQuery]);
+  }, [conversationsWithProfiles, searchQuery, isSearchingUsers]);
+
+  const handleStartChat = (userId: string, userName: string, userAvatar: string) => {
+    const conversationId = startConversation(userId);
+    if (conversationId) {
+      setSearchQuery('');
+      setIsSearchingUsers(false);
+      router.push({
+        pathname: '/chat' as any,
+        params: {
+          conversationId,
+          userId,
+          userName,
+          userAvatar,
+        },
+      });
+    }
+  };
 
   const formatTimestamp = (timestamp?: number) => {
     if (!timestamp) return '';
@@ -137,11 +162,57 @@ export default function LeavesScreen() {
             <Search size={20} color={primaryColor} style={styles.searchIcon} />
             <TextInput
               style={[styles.searchInput, { color: textColor }]}
-              placeholder="Search Leaves"
+              placeholder={isSearchingUsers ? "Search users to chat..." : "Search conversations..."}
               placeholderTextColor={isDark ? 'rgba(23, 207, 23, 0.8)' : 'rgba(23, 207, 23, 0.8)'}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchQuery('');
+                  setIsSearchingUsers(false);
+                }}
+                style={styles.clearButton}
+              >
+                <X size={18} color={primaryColor} />
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          <View style={styles.searchModeContainer}>
+            <TouchableOpacity
+              style={[
+                styles.searchModeButton,
+                !isSearchingUsers && [styles.searchModeButtonActive, { backgroundColor: primaryColor }],
+              ]}
+              onPress={() => setIsSearchingUsers(false)}
+            >
+              <Text
+                style={[
+                  styles.searchModeText,
+                  { color: !isSearchingUsers ? '#FFFFFF' : textColor },
+                ]}
+              >
+                Conversations
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.searchModeButton,
+                isSearchingUsers && [styles.searchModeButtonActive, { backgroundColor: primaryColor }],
+              ]}
+              onPress={() => setIsSearchingUsers(true)}
+            >
+              <Text
+                style={[
+                  styles.searchModeText,
+                  { color: isSearchingUsers ? '#FFFFFF' : textColor },
+                ]}
+              >
+                New Chat
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -150,7 +221,58 @@ export default function LeavesScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {loading || loadingProfiles ? (
+          {isSearchingUsers ? (
+            searchUsersQuery.isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={primaryColor} />
+              </View>
+            ) : searchQuery.trim().length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateEmoji}>🔍</Text>
+                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                  Search for users
+                </Text>
+                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                  Enter a username or display name to find people to chat with
+                </Text>
+              </View>
+            ) : searchUsersQuery.data && searchUsersQuery.data.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateEmoji}>😔</Text>
+                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                  No users found
+                </Text>
+                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                  Try searching with a different username
+                </Text>
+              </View>
+            ) : (
+              searchUsersQuery.data?.map((user: any) => (
+                <TouchableOpacity
+                  key={user.id}
+                  style={[styles.conversationItem, { backgroundColor: containerBg }]}
+                  activeOpacity={0.7}
+                  onPress={() => handleStartChat(user.id, user.name || user.username, user.avatar || '')}
+                >
+                  <Image
+                    source={{ uri: user.avatar || 'https://via.placeholder.com/56' }}
+                    style={styles.avatar}
+                  />
+                  <View style={styles.conversationContent}>
+                    <Text style={[styles.userName, { color: textColor }]}>
+                      {user.name || user.username}
+                    </Text>
+                    {user.username && user.name && (
+                      <Text style={[styles.usernameText, { color: secondaryTextColor }]}>
+                        @{user.username}
+                      </Text>
+                    )}
+                  </View>
+                  <MessageCircle size={20} color={primaryColor} />
+                </TouchableOpacity>
+              ))
+            )
+          ) : loading || loadingProfiles ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={primaryColor} />
             </View>
@@ -163,7 +285,7 @@ export default function LeavesScreen() {
               <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
                 {searchQuery
                   ? 'Try searching for a different name'
-                  : 'Start a conversation with someone from the community'}
+                  : 'Connect with people from the community! Tap "New Chat" to start a conversation.'}
               </Text>
             </View>
           ) : (
@@ -350,5 +472,37 @@ const styles = StyleSheet.create({
   },
   unreadMessage: {
     fontWeight: '600',
+  },
+  searchModeContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  searchModeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  searchModeButtonActive: {
+    shadowColor: '#17cf17',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchModeText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  clearButton: {
+    padding: 4,
+  },
+  usernameText: {
+    fontSize: 13,
+    marginTop: 2,
   },
 });
