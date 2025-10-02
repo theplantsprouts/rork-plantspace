@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   useColorScheme,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,15 +15,17 @@ import { Search, Bell } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { PlantTheme } from '@/constants/theme';
 import { router } from 'expo-router';
+import { useConversations } from '@/hooks/use-chat';
+import { auth, getProfile } from '@/lib/firebase';
+import type { Profile } from '@/lib/firebase';
 
-type Conversation = {
+type ConversationWithProfile = {
   id: string;
-  user: {
-    name: string;
-    avatar: string;
-  };
-  lastMessage: string;
-  timestamp: string;
+  otherUserId: string;
+  profile?: Profile;
+  lastMessage?: string;
+  lastMessageTime?: number;
+  unreadCount: number;
 };
 
 export default function LeavesScreen() {
@@ -30,8 +33,64 @@ export default function LeavesScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
+  const { conversations: rawConversations, loading } = useConversations();
+  const [conversationsWithProfiles, setConversationsWithProfiles] = useState<ConversationWithProfile[]>([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
 
-  const conversations: Conversation[] = [];
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const user = auth.currentUser;
+      if (!user || rawConversations.length === 0) {
+        setLoadingProfiles(false);
+        return;
+      }
+
+      const conversationsWithData = await Promise.all(
+        rawConversations.map(async (conv) => {
+          const otherUserId = conv.participants.find((id) => id !== user.uid) || '';
+          const profile = await getProfile(otherUserId);
+          const unreadCount = conv.unreadCount?.[user.uid] || 0;
+
+          return {
+            id: conv.id,
+            otherUserId,
+            profile: profile || undefined,
+            lastMessage: conv.lastMessage,
+            lastMessageTime: conv.lastMessageTime,
+            unreadCount,
+          };
+        })
+      );
+
+      setConversationsWithProfiles(conversationsWithData);
+      setLoadingProfiles(false);
+    };
+
+    fetchProfiles();
+  }, [rawConversations]);
+
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery) return conversationsWithProfiles;
+    return conversationsWithProfiles.filter((conv) =>
+      conv.profile?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.profile?.username?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [conversationsWithProfiles, searchQuery]);
+
+  const formatTimestamp = (timestamp?: number) => {
+    if (!timestamp) return '';
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m`;
+    if (hours < 24) return `${hours}h`;
+    if (days < 7) return `${days}d`;
+    return new Date(timestamp).toLocaleDateString();
+  };
 
   const backgroundColor = isDark ? '#112111' : '#f6f8f6';
   const textColor = '#000000';
@@ -76,41 +135,69 @@ export default function LeavesScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {conversations.length === 0 ? (
+          {loading || loadingProfiles ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={primaryColor} />
+            </View>
+          ) : filteredConversations.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateEmoji}>💬</Text>
               <Text style={[styles.emptyStateTitle, { color: textColor }]}>
-                No messages yet
+                {searchQuery ? 'No conversations found' : 'No messages yet'}
               </Text>
               <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
-                Start a conversation with someone from the community
+                {searchQuery
+                  ? 'Try searching for a different name'
+                  : 'Start a conversation with someone from the community'}
               </Text>
             </View>
           ) : (
-            conversations.map((conversation) => (
+            filteredConversations.map((conversation) => (
               <TouchableOpacity 
                 key={conversation.id} 
                 style={[styles.conversationItem, { backgroundColor: containerBg }]}
                 activeOpacity={0.7}
+                onPress={() => router.push({
+                  pathname: '/chat' as any,
+                  params: {
+                    conversationId: conversation.id,
+                    userId: conversation.otherUserId,
+                    userName: conversation.profile?.name || conversation.profile?.username || 'User',
+                    userAvatar: conversation.profile?.avatar || '',
+                  },
+                })}
               >
-                <Image 
-                  source={{ uri: conversation.user.avatar }} 
-                  style={styles.avatar}
-                />
+                <View style={styles.avatarContainer}>
+                  <Image 
+                    source={{ uri: conversation.profile?.avatar || 'https://via.placeholder.com/56' }} 
+                    style={styles.avatar}
+                  />
+                  {conversation.unreadCount > 0 && (
+                    <View style={[styles.unreadBadge, { backgroundColor: primaryColor }]}>
+                      <Text style={styles.unreadText}>
+                        {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <View style={styles.conversationContent}>
                   <View style={styles.conversationHeader}>
                     <Text style={[styles.userName, { color: textColor }]}>
-                      {conversation.user.name}
+                      {conversation.profile?.name || conversation.profile?.username || 'User'}
                     </Text>
                     <Text style={[styles.timestamp, { color: secondaryTextColor }]}>
-                      {conversation.timestamp}
+                      {formatTimestamp(conversation.lastMessageTime)}
                     </Text>
                   </View>
                   <Text 
-                    style={[styles.lastMessage, { color: secondaryTextColor }]}
+                    style={[
+                      styles.lastMessage,
+                      { color: secondaryTextColor },
+                      conversation.unreadCount > 0 && styles.unreadMessage,
+                    ]}
                     numberOfLines={1}
                   >
-                    {conversation.lastMessage}
+                    {conversation.lastMessage || 'No messages yet'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -221,5 +308,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+  },
+  avatarContainer: {
+    position: 'relative',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  unreadText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  unreadMessage: {
+    fontWeight: '600',
   },
 });
