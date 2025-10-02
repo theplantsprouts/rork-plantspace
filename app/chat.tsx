@@ -9,12 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Send, Phone, ArrowLeft } from 'lucide-react-native';
+import { Send, ArrowLeft } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { PlantTheme } from '@/constants/theme';
 import { useMessages } from '@/hooks/use-chat';
@@ -64,27 +63,7 @@ export default function ChatScreen() {
     }
   };
 
-  const handleVoiceCall = () => {
-    if (Platform.OS !== 'web') {
-      Alert.alert(
-        'Not Available',
-        'Voice calls are currently only supported on web. Native support requires a custom development build.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-    
-    router.push({
-      pathname: '/voice-call' as any,
-      params: {
-        conversationId: params.conversationId,
-        userId: params.userId,
-        userName: params.userName,
-        userAvatar: params.userAvatar,
-        isCaller: 'true',
-      },
-    });
-  };
+
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isMe = item.senderId === currentUser?.uid;
@@ -146,9 +125,6 @@ export default function ChatScreen() {
               <View style={styles.headerInfo}>
                 <Text style={styles.headerName}>{params.userName}</Text>
               </View>
-              <TouchableOpacity onPress={handleVoiceCall} style={styles.callButton}>
-                <Phone size={24} color="#17cf17" />
-              </TouchableOpacity>
             </View>
           ),
         }}
@@ -247,9 +223,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#000000',
   },
-  callButton: {
-    padding: 8,
-  },
+
   loadingContainer: {
     flex: 1,
     alignItems: 'center',

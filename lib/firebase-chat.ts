@@ -11,7 +11,7 @@ export interface ChatMessage {
   text: string;
   timestamp: number;
   read: boolean;
-  type: 'text' | 'call-offer' | 'call-answer' | 'call-end';
+  type: 'text';
 }
 
 export interface Conversation {
@@ -23,22 +23,13 @@ export interface Conversation {
   unreadCount?: { [userId: string]: number };
 }
 
-export interface CallSignal {
-  type: 'offer' | 'answer' | 'ice-candidate' | 'end-call';
-  from: string;
-  to: string;
-  data?: any;
-  timestamp: number;
-}
-
 export const getConversationId = (userId1: string, userId2: string): string => {
   return [userId1, userId2].sort().join('_');
 };
 
 export const sendMessage = async (
   receiverId: string,
-  text: string,
-  type: 'text' | 'call-offer' | 'call-answer' | 'call-end' = 'text'
+  text: string
 ): Promise<string | null> => {
   try {
     const user = auth.currentUser;
@@ -55,7 +46,7 @@ export const sendMessage = async (
       text,
       timestamp: Date.now(),
       read: false,
-      type,
+      type: 'text',
     };
 
     await set(newMessageRef, message);
@@ -146,51 +137,6 @@ export const markMessagesAsRead = async (conversationId: string, userId: string)
   }
 };
 
-export const sendCallSignal = async (signal: Omit<CallSignal, 'timestamp'>) => {
-  try {
-    const user = auth.currentUser;
-    if (!user) throw new Error('User not authenticated');
-
-    const conversationId = getConversationId(signal.from, signal.to);
-    const signalRef = ref(rtdb, `call-signals/${conversationId}/${signal.type}`);
-    
-    await set(signalRef, {
-      ...signal,
-      timestamp: Date.now(),
-    });
-  } catch (error) {
-    console.error('Error sending call signal:', error);
-    throw error;
-  }
-};
-
-export const subscribeToCallSignals = (
-  conversationId: string,
-  callback: (signal: CallSignal) => void
-) => {
-  const signalsRef = ref(rtdb, `call-signals/${conversationId}`);
-
-  const listener = onValue(signalsRef, (snapshot) => {
-    snapshot.forEach((childSnapshot) => {
-      const signal = childSnapshot.val();
-      if (signal) {
-        callback(signal);
-      }
-    });
-  });
-
-  return () => off(signalsRef, 'value', listener);
-};
-
-export const clearCallSignals = async (conversationId: string) => {
-  try {
-    const signalsRef = ref(rtdb, `call-signals/${conversationId}`);
-    await remove(signalsRef);
-  } catch (error) {
-    console.error('Error clearing call signals:', error);
-  }
-};
-
 export const deleteConversation = async (conversationId: string) => {
   try {
     const user = auth.currentUser;
@@ -198,7 +144,6 @@ export const deleteConversation = async (conversationId: string) => {
 
     await remove(ref(rtdb, `messages/${conversationId}`));
     await remove(ref(rtdb, `conversations/${conversationId}`));
-    await remove(ref(rtdb, `call-signals/${conversationId}`));
   } catch (error) {
     console.error('Error deleting conversation:', error);
     throw error;
