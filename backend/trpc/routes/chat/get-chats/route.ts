@@ -1,6 +1,6 @@
 import { protectedProcedure } from "@/backend/trpc/create-context";
 import { db, getProfile } from "@/lib/firebase";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 export const getChatsProcedure = protectedProcedure.query(async ({ ctx }) => {
   const userId = ctx.user.id;
@@ -8,8 +8,7 @@ export const getChatsProcedure = protectedProcedure.query(async ({ ctx }) => {
   const chatsRef = collection(db, 'chats');
   const q = query(
     chatsRef,
-    where('participants', 'array-contains', userId),
-    orderBy('lastMessageTime', 'desc')
+    where('participants', 'array-contains', userId)
   );
 
   const querySnapshot = await getDocs(q);
@@ -31,11 +30,17 @@ export const getChatsProcedure = protectedProcedure.query(async ({ ctx }) => {
           avatar: otherUserProfile?.avatar || '',
         },
         lastMessage: chatData.lastMessage || '',
-        lastMessageTime: chatData.lastMessageTime || '',
+        lastMessageTime: chatData.lastMessageTime || new Date().toISOString(),
         unreadCount: 0,
       });
     }
   }
+
+  chats.sort((a, b) => {
+    const timeA = new Date(a.lastMessageTime).getTime();
+    const timeB = new Date(b.lastMessageTime).getTime();
+    return timeB - timeA;
+  });
 
   return chats;
 });
