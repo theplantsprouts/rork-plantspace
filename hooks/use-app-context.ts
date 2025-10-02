@@ -33,7 +33,7 @@ interface AppState {
 export const [AppProvider, useAppContext] = createContextHook(() => {
   const { user: authUser } = useAuth();
   const [appState, setAppState] = useState<AppState>({
-    currentUser: null,
+    currentUser: authUser,
     followedUsers: [],
     searchHistory: [],
     notifications: [],
@@ -42,8 +42,10 @@ export const [AppProvider, useAppContext] = createContextHook(() => {
 
   // Update currentUser when auth user changes
   useEffect(() => {
-    setAppState(prev => ({ ...prev, currentUser: authUser }));
-  }, [authUser]);
+    if (appState.currentUser?.id !== authUser?.id) {
+      setAppState(prev => ({ ...prev, currentUser: authUser }));
+    }
+  }, [authUser, appState.currentUser?.id]);
 
   useEffect(() => {
     const loadAppState = async () => {

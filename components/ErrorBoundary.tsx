@@ -2,8 +2,7 @@ import React, { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
-import { GlassCard } from './GlassContainer';
+import { PlantTheme, borderRadius, elevation, shadows } from '@/constants/theme';
 
 interface Props {
   children: ReactNode;
@@ -47,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
             style={StyleSheet.absoluteFillObject}
           />
           <View style={styles.content}>
-            <GlassCard style={styles.errorCard}>
+            <View style={styles.errorCard}>
               <View style={styles.iconContainer}>
                 <AlertTriangle color={PlantTheme.colors.error} size={48} />
               </View>
@@ -64,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <RefreshCw color={PlantTheme.colors.white} size={20} />
                 <Text style={styles.retryText}>Try Again</Text>
               </TouchableOpacity>
-            </GlassCard>
+            </View>
           </View>
         </View>
       );
@@ -89,12 +88,17 @@ const styles = StyleSheet.create({
     padding: 32,
     maxWidth: 400,
     width: '100%',
+    backgroundColor: PlantTheme.colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.outlineVariant,
+    ...elevation.level2,
   },
   iconContainer: {
     marginBottom: 24,
     padding: 16,
     backgroundColor: 'rgba(244, 67, 54, 0.1)',
-    borderRadius: PlantTheme.borderRadius.full,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
     borderColor: 'rgba(244, 67, 54, 0.2)',
   },
@@ -120,7 +124,7 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     backgroundColor: 'rgba(244, 67, 54, 0.1)',
     padding: 12,
-    borderRadius: PlantTheme.borderRadius.sm,
+    borderRadius: borderRadius.sm,
   },
   retryButton: {
     flexDirection: 'row',
@@ -128,9 +132,9 @@ const styles = StyleSheet.create({
     backgroundColor: PlantTheme.colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: PlantTheme.borderRadius.lg,
+    borderRadius: borderRadius.lg,
     gap: 8,
-    ...PlantTheme.shadows.md,
+    ...shadows.md,
   },
   retryText: {
     color: PlantTheme.colors.white,
