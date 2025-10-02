@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,6 +65,15 @@ export default function ChatScreen() {
   };
 
   const handleVoiceCall = () => {
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Not Available',
+        'Voice calls are currently only supported on web. Native support requires a custom development build.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
     router.push({
       pathname: '/voice-call' as any,
       params: {

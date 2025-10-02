@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +38,15 @@ export default function VoiceCallScreen() {
     if (!currentUser || !params.conversationId || !params.userId) {
       Alert.alert('Error', 'Invalid call parameters');
       router.back();
+      return;
+    }
+
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Not Available',
+        'Voice calls are currently only supported on web. Native support requires a custom development build with react-native-webrtc.',
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
       return;
     }
 

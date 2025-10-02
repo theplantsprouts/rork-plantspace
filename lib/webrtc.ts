@@ -25,18 +25,15 @@ export class WebRTCService {
 
   async initializeLocalStream(): Promise<MediaStream> {
     try {
-      if (Platform.OS === 'web') {
-        this.localStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false,
-        });
-      } else {
-        const { mediaDevices } = require('react-native-webrtc');
-        this.localStream = await mediaDevices.getUserMedia({
-          audio: true,
-          video: false,
-        });
+      if (Platform.OS !== 'web') {
+        throw new Error('Voice calls are only supported on web. Native support requires a custom development build.');
       }
+      
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      
       if (!this.localStream) {
         throw new Error('Failed to initialize local stream');
       }
@@ -52,12 +49,11 @@ export class WebRTCService {
     onConnectionStateChange: (state: string) => void
   ) {
     try {
-      if (Platform.OS === 'web') {
-        this.peerConnection = new RTCPeerConnection(ICE_SERVERS);
-      } else {
-        const { RTCPeerConnection } = require('react-native-webrtc');
-        this.peerConnection = new RTCPeerConnection(ICE_SERVERS);
+      if (Platform.OS !== 'web') {
+        throw new Error('Voice calls are only supported on web. Native support requires a custom development build.');
       }
+      
+      this.peerConnection = new RTCPeerConnection(ICE_SERVERS);
 
       if (this.localStream && this.peerConnection) {
         this.localStream.getTracks().forEach((track) => {
