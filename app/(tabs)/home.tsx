@@ -76,11 +76,7 @@ export default function HomeScreen() {
             <Text style={styles.emptyTitle}>🌱 Connection Issue</Text>
             <Text style={styles.emptyText}>{error}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={() => {
-              if (Platform.OS === 'web') {
-                window.location.reload();
-              } else {
-                refresh();
-              }
+              refresh();
             }}>
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
