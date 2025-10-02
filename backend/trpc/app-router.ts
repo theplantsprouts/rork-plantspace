@@ -15,6 +15,10 @@ import { toggleShareProcedure } from "./routes/posts/toggle-share/route";
 import { checkLikeProcedure } from "./routes/posts/check-like/route";
 import { deletePostProcedure } from "./routes/posts/delete/route";
 import { reportPostProcedure } from "./routes/posts/report/route";
+import { searchUsersProcedure } from "./routes/messages/search-users/route";
+import { getConversationsProcedure } from "./routes/messages/get-conversations/route";
+import { getMessagesProcedure } from "./routes/messages/get-messages/route";
+import { sendMessageProcedure } from "./routes/messages/send-message/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -38,6 +42,12 @@ export const appRouter = createTRPCRouter({
     checkLike: checkLikeProcedure,
     delete: deletePostProcedure,
     report: reportPostProcedure,
+  }),
+  messages: createTRPCRouter({
+    searchUsers: searchUsersProcedure,
+    getConversations: getConversationsProcedure,
+    getMessages: getMessagesProcedure,
+    sendMessage: sendMessageProcedure,
   }),
 });
 

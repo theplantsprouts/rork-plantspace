@@ -1,45 +1,57 @@
-import { z } from "zod";
 import { protectedProcedure } from "../../../create-context";
-import { supabase } from "@/lib/supabase";
+import { z } from "zod";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 
 export const getMessagesProcedure = protectedProcedure
   .input(
     z.object({
-      conversationId: z.string(),
-      limit: z.number().optional().default(50),
-      offset: z.number().optional().default(0),
+      otherUserId: z.string(),
     })
   )
   .query(async ({ input, ctx }) => {
-    console.log("[getMessages] Fetching messages for conversation:", input.conversationId);
-
-    const { data: conversation, error: convError } = await supabase
-      .from("conversations")
-      .select("user1_id, user2_id")
-      .eq("id", input.conversationId)
-      .single();
-
-    if (convError || !conversation) {
-      console.error("[getMessages] Conversation not found:", convError);
-      throw new Error("Conversation not found");
+    try {
+      console.log('Getting messages between', ctx.user.id, 'and', input.otherUserId);
+      
+      const messagesRef = collection(db, 'messages');
+      
+      const sentQuery = query(
+        messagesRef,
+        where('senderId', '==', ctx.user.id),
+        where('receiverId', '==', input.otherUserId),
+        orderBy('createdAt', 'asc')
+      );
+      
+      const receivedQuery = query(
+        messagesRef,
+        where('senderId', '==', input.otherUserId),
+        where('receiverId', '==', ctx.user.id),
+        orderBy('createdAt', 'asc')
+      );
+      
+      const [sentSnapshot, receivedSnapshot] = await Promise.all([
+        getDocs(sentQuery),
+        getDocs(receivedQuery)
+      ]);
+      
+      const messages = [
+        ...sentSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        })),
+        ...receivedSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        }))
+      ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      
+      console.log(`Found ${messages.length} messages`);
+      
+      return { messages };
+    } catch (error: any) {
+      console.error('Error getting messages:', error);
+      throw new Error('Failed to get messages');
     }
-
-    if (conversation.user1_id !== ctx.user.id && conversation.user2_id !== ctx.user.id) {
-      throw new Error("Unauthorized access to conversation");
-    }
-
-    const { data: messages, error } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", input.conversationId)
-      .order("created_at", { ascending: false })
-      .range(input.offset, input.offset + input.limit - 1);
-
-    if (error) {
-      console.error("[getMessages] Error:", error);
-      throw new Error("Failed to fetch messages");
-    }
-
-    console.log("[getMessages] Returning messages:", messages?.length || 0);
-    return messages || [];
   });

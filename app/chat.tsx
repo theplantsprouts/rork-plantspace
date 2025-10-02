@@ -3,70 +3,76 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
+  ScrollView,
   TouchableOpacity,
+  useColorScheme,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
-  FlatList,
-  useColorScheme,
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Send, Image as ImageIcon } from 'lucide-react-native';
+import { ArrowLeft, Send } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { PlantTheme } from '@/constants/theme';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '@/lib/trpc';
-import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/use-auth';
 
 type Message = {
   id: string;
-  conversation_id: string;
-  sender_id: string;
-  content: string;
-  image: string | null;
-  created_at: string;
+  senderId: string;
+  receiverId: string;
+  text?: string;
+  imageUrl?: string;
+  createdAt: string;
+  read: boolean;
 };
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const params = useLocalSearchParams<{ userId: string; conversationId?: string }>();
+  const params = useLocalSearchParams<{ userId: string; name: string }>();
   const { user } = useAuth();
-
-  const [message, setMessage] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const flatListRef = useRef<FlatList>(null);
-
-  const conversationQuery = trpc.messages.getOrCreateConversation.useQuery(
-    { otherUserId: params.userId },
-    { enabled: !params.conversationId }
-  );
-
-  const conversationId = params.conversationId || conversationQuery.data?.conversationId;
+  
+  const [messageText, setMessageText] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const messagesQuery = trpc.messages.getMessages.useQuery(
-    { conversationId: conversationId || '' },
-    {
-      enabled: !!conversationId,
-      refetchInterval: 3000,
-    }
+    { otherUserId: params.userId || '' },
+    { enabled: !!params.userId, refetchInterval: 3000 }
   );
 
   const sendMessageMutation = trpc.messages.sendMessage.useMutation({
     onSuccess: () => {
-      setMessage('');
-      setSelectedImage(null);
+      setMessageText('');
       messagesQuery.refetch();
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     },
   });
 
-  const uploadImageMutation = trpc.posts.uploadImage.useMutation();
+  useEffect(() => {
+    if (messagesQuery.data?.messages.length) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: false });
+      }, 100);
+    }
+  }, [messagesQuery.data?.messages.length]);
 
-  const messages = messagesQuery.data || [];
+  const handleSend = () => {
+    if (!messageText.trim() || !params.userId) return;
+
+    sendMessageMutation.mutate({
+      receiverId: params.userId,
+      text: messageText.trim(),
+    });
+  };
+
+  const messages: Message[] = (messagesQuery.data?.messages || []) as Message[];
 
   const backgroundColor = isDark ? '#112111' : '#f6f8f6';
   const textColor = '#000000';
@@ -74,227 +80,160 @@ export default function ChatScreen() {
   const containerBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
   const inputBg = isDark ? 'rgba(23, 207, 23, 0.2)' : 'rgba(23, 207, 23, 0.1)';
   const primaryColor = '#17cf17';
-  const myMessageBg = isDark ? 'rgba(23, 207, 23, 0.3)' : 'rgba(23, 207, 23, 0.2)';
-  const otherMessageBg = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+  const myMessageBg = primaryColor;
+  const theirMessageBg = containerBg;
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages.length]);
-
-  const handleSend = async () => {
-    if (!message.trim() && !selectedImage) return;
-    if (!params.userId) return;
-
-    let imageUrl: string | undefined;
-
-    if (selectedImage) {
-      try {
-        const base64 = await fetch(selectedImage)
-          .then((res) => res.blob())
-          .then(
-            (blob) =>
-              new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  const base64String = reader.result as string;
-                  const base64Data = base64String.split(',')[1];
-                  resolve(base64Data);
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              })
-          );
-
-        const uploadResult = await uploadImageMutation.mutateAsync({
-          base64,
-          filename: `message_${Date.now()}.jpg`,
-        });
-        imageUrl = uploadResult.imageUrl;
-      } catch (error) {
-        console.error('Failed to upload image:', error);
-        return;
-      }
-    }
-
-    sendMessageMutation.mutate({
-      recipientId: params.userId,
-      content: message.trim() || '📷 Image',
-      image: imageUrl,
-    });
-  };
-
-  const handlePickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
-
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isMyMessage = item.sender_id === user?.id;
-
-    return (
-      <View
-        style={[
-          styles.messageContainer,
-          isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer,
-        ]}
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
+      />
+      <KeyboardAvoidingView
+        style={[styles.container, { backgroundColor }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
       >
-        <View
-          style={[
-            styles.messageBubble,
-            {
-              backgroundColor: isMyMessage ? myMessageBg : otherMessageBg,
-            },
-          ]}
-        >
-          {item.image && (
-            <Image source={{ uri: item.image }} style={styles.messageImage} />
-          )}
-          {item.content && (
-            <Text style={[styles.messageText, { color: textColor }]}>
-              {item.content}
-            </Text>
-          )}
-          <Text style={[styles.messageTime, { color: secondaryTextColor }]}>
-            {formatTime(item.created_at)}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
-  if (!conversationId && conversationQuery.isLoading) {
-    return (
-      <View style={[styles.container, { backgroundColor }]}>
         <LinearGradient
           colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
           style={StyleSheet.absoluteFillObject}
         />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={primaryColor} />
-        </View>
-      </View>
-    );
-  }
 
-  return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <LinearGradient
-        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={24} color={textColor} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: textColor }]}>Chat</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        <FlatList
-          ref={flatListRef}
-          data={[...messages].reverse()}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.messagesList}
-          showsVerticalScrollIndicator={false}
-          inverted={false}
-          onContentSizeChange={() => {
-            flatListRef.current?.scrollToEnd({ animated: true });
-          }}
-        />
-
-        {selectedImage && (
-          <View style={[styles.imagePreviewContainer, { backgroundColor: containerBg }]}>
-            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
-            <TouchableOpacity
-              style={styles.removeImageButton}
-              onPress={() => setSelectedImage(null)}
-            >
-              <Text style={styles.removeImageText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <View
-          style={[
-            styles.inputContainer,
-            { backgroundColor: inputBg, paddingBottom: insets.bottom + 8 },
-          ]}
-        >
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <TouchableOpacity
-            style={styles.imageButton}
-            onPress={handlePickImage}
-            activeOpacity={0.7}
+            style={styles.backButton}
+            onPress={() => router.back()}
           >
-            <ImageIcon size={24} color={primaryColor} />
+            <ArrowLeft size={24} color={textColor} />
           </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: textColor }]}>
+            {params.name || 'Chat'}
+          </Text>
+          <View style={styles.headerRight} />
+        </View>
 
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {messagesQuery.isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={primaryColor} />
+            </View>
+          ) : messages.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>👋</Text>
+              <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                Start the conversation
+              </Text>
+              <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                Send a message to {params.name}
+              </Text>
+            </View>
+          ) : (
+            messages.map((message, index) => {
+              const isMyMessage = message.senderId === user?.id;
+              const showDate =
+                index === 0 ||
+                !isSameDay(
+                  new Date(message.createdAt),
+                  new Date(messages[index - 1].createdAt)
+                );
+
+              return (
+                <View key={message.id}>
+                  {showDate && (
+                    <View style={styles.dateContainer}>
+                      <Text style={[styles.dateText, { color: secondaryTextColor }]}>
+                        {formatDate(message.createdAt)}
+                      </Text>
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      styles.messageContainer,
+                      isMyMessage ? styles.myMessage : styles.theirMessage,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.messageBubble,
+                        {
+                          backgroundColor: isMyMessage ? myMessageBg : theirMessageBg,
+                        },
+                      ]}
+                    >
+                      {message.imageUrl && (
+                        <Image
+                          source={{ uri: message.imageUrl }}
+                          style={styles.messageImage}
+                        />
+                      )}
+                      {message.text && (
+                        <Text
+                          style={[
+                            styles.messageText,
+                            { color: isMyMessage ? '#fff' : textColor },
+                          ]}
+                        >
+                          {message.text}
+                        </Text>
+                      )}
+                      <Text
+                        style={[
+                          styles.messageTime,
+                          { color: isMyMessage ? 'rgba(255,255,255,0.7)' : secondaryTextColor },
+                        ]}
+                      >
+                        {formatTime(message.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </ScrollView>
+
+        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8, backgroundColor: inputBg }]}>
           <TextInput
             style={[styles.input, { color: textColor }]}
             placeholder="Type a message..."
             placeholderTextColor={secondaryTextColor}
-            value={message}
-            onChangeText={setMessage}
+            value={messageText}
+            onChangeText={setMessageText}
             multiline
             maxLength={1000}
           />
-
           <TouchableOpacity
             style={[
               styles.sendButton,
-              {
-                backgroundColor: message.trim() || selectedImage ? primaryColor : containerBg,
-              },
+              { backgroundColor: messageText.trim() ? primaryColor : containerBg },
             ]}
             onPress={handleSend}
-            disabled={!message.trim() && !selectedImage}
-            activeOpacity={0.7}
+            disabled={!messageText.trim() || sendMessageMutation.isPending}
           >
-            <Send
-              size={20}
-              color={message.trim() || selectedImage ? '#FFFFFF' : secondaryTextColor}
-            />
+            {sendMessageMutation.isPending ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Send
+                size={20}
+                color={messageText.trim() ? '#fff' : secondaryTextColor}
+              />
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -309,25 +248,61 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
   },
-  headerSpacer: {
+  headerRight: {
     width: 40,
   },
-  keyboardView: {
+  scrollView: {
     flex: 1,
   },
-  messagesList: {
+  scrollContent: {
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 16,
+  },
+  loadingContainer: {
+    paddingVertical: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 40,
+  },
+  emptyStateEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  dateContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dateText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   messageContainer: {
-    marginBottom: 12,
+    marginBottom: 8,
     maxWidth: '80%',
   },
-  myMessageContainer: {
+  myMessage: {
     alignSelf: 'flex-end',
   },
-  otherMessageContainer: {
+  theirMessage: {
     alignSelf: 'flex-start',
   },
   messageBubble: {
@@ -341,40 +316,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   messageText: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 20,
   },
   messageTime: {
     fontSize: 11,
     marginTop: 4,
-  },
-  imagePreviewContainer: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 12,
-    padding: 8,
-    position: 'relative',
-  },
-  imagePreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeImageText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -382,10 +329,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     gap: 8,
-  },
-  imageButton: {
-    padding: 8,
-    marginBottom: 4,
   },
   input: {
     flex: 1,
@@ -401,3 +344,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+function formatTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+function formatDate(timestamp: string): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffDays = Math.floor(
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) {
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  }
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+  });
+}
+
+function isSameDay(date1: Date, date2: Date): boolean {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+}

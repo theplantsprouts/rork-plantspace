@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   useColorScheme,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,24 +15,57 @@ import { Search, Bell } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { PlantTheme } from '@/constants/theme';
 import { router } from 'expo-router';
+import { trpc } from '@/lib/trpc';
 
 type Conversation = {
   id: string;
   user: {
+    id: string;
     name: string;
+    username: string;
     avatar: string;
   };
   lastMessage: string;
   timestamp: string;
+  unread?: boolean;
 };
+
+type SearchUser = {
+  id: string;
+  username: string;
+  name: string;
+  avatar: string;
+  bio: string;
+};
+
+type TabType = 'previous' | 'new';
 
 export default function LeavesScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabType>('previous');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const conversations: Conversation[] = [];
+  const conversationsQuery = trpc.messages.getConversations.useQuery(undefined, {
+    enabled: activeTab === 'previous',
+  });
+
+  const searchUsersQuery = trpc.messages.searchUsers.useQuery(
+    { searchQuery: debouncedSearch },
+    { enabled: activeTab === 'new' && debouncedSearch.length > 0 }
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const conversations: Conversation[] = conversationsQuery.data?.conversations || [];
+  const searchResults: SearchUser[] = searchUsersQuery.data?.users || [];
 
   const backgroundColor = isDark ? '#112111' : '#f6f8f6';
   const textColor = '#000000';
@@ -63,11 +97,52 @@ export default function LeavesScreen() {
             <Search size={20} color={primaryColor} style={styles.searchIcon} />
             <TextInput
               style={[styles.searchInput, { color: textColor }]}
-              placeholder="Search Leaves"
+              placeholder={activeTab === 'previous' ? 'Search conversations' : 'Search users by name or username'}
               placeholderTextColor={isDark ? 'rgba(23, 207, 23, 0.8)' : 'rgba(23, 207, 23, 0.8)'}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
+          </View>
+
+          <View style={styles.tabsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'previous' && [styles.activeTab, { backgroundColor: primaryColor }],
+              ]}
+              onPress={() => {
+                setActiveTab('previous');
+                setSearchQuery('');
+              }}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  { color: activeTab === 'previous' ? '#fff' : textColor },
+                ]}
+              >
+                Previous Chats
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'new' && [styles.activeTab, { backgroundColor: primaryColor }],
+              ]}
+              onPress={() => {
+                setActiveTab('new');
+                setSearchQuery('');
+              }}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  { color: activeTab === 'new' ? '#fff' : textColor },
+                ]}
+              >
+                New Chats
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -76,45 +151,118 @@ export default function LeavesScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {conversations.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateEmoji}>💬</Text>
-              <Text style={[styles.emptyStateTitle, { color: textColor }]}>
-                No messages yet
-              </Text>
-              <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
-                Start a conversation with someone from the community
-              </Text>
-            </View>
-          ) : (
-            conversations.map((conversation) => (
-              <TouchableOpacity 
-                key={conversation.id} 
-                style={[styles.conversationItem, { backgroundColor: containerBg }]}
-                activeOpacity={0.7}
-              >
-                <Image 
-                  source={{ uri: conversation.user.avatar }} 
-                  style={styles.avatar}
-                />
-                <View style={styles.conversationContent}>
-                  <View style={styles.conversationHeader}>
-                    <Text style={[styles.userName, { color: textColor }]}>
-                      {conversation.user.name}
-                    </Text>
-                    <Text style={[styles.timestamp, { color: secondaryTextColor }]}>
-                      {conversation.timestamp}
-                    </Text>
-                  </View>
-                  <Text 
-                    style={[styles.lastMessage, { color: secondaryTextColor }]}
-                    numberOfLines={1}
+          {activeTab === 'previous' ? (
+            conversationsQuery.isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={primaryColor} />
+              </View>
+            ) : conversations.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateEmoji}>💬</Text>
+                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                  No messages yet
+                </Text>
+                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                  Start a conversation with someone from the community
+                </Text>
+              </View>
+            ) : (
+              conversations
+                .filter((conv) =>
+                  searchQuery
+                    ? conv.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      conv.user.username.toLowerCase().includes(searchQuery.toLowerCase())
+                    : true
+                )
+                .map((conversation) => (
+                  <TouchableOpacity 
+                    key={conversation.id} 
+                    style={[styles.conversationItem, { backgroundColor: containerBg }]}
+                    activeOpacity={0.7}
+                    onPress={() => router.push(`/chat?userId=${conversation.user.id}&name=${encodeURIComponent(conversation.user.name)}`)}
                   >
-                    {conversation.lastMessage}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))
+                    <Image 
+                      source={{ uri: conversation.user.avatar || 'https://via.placeholder.com/56' }} 
+                      style={styles.avatar}
+                    />
+                    <View style={styles.conversationContent}>
+                      <View style={styles.conversationHeader}>
+                        <Text style={[styles.userName, { color: textColor }]}>
+                          {conversation.user.name}
+                        </Text>
+                        <Text style={[styles.timestamp, { color: secondaryTextColor }]}>
+                          {formatTimestamp(conversation.timestamp)}
+                        </Text>
+                      </View>
+                      <Text 
+                        style={[styles.lastMessage, { color: secondaryTextColor }]}
+                        numberOfLines={1}
+                      >
+                        {conversation.lastMessage}
+                      </Text>
+                    </View>
+                    {conversation.unread && (
+                      <View style={[styles.unreadBadge, { backgroundColor: primaryColor }]} />
+                    )}
+                  </TouchableOpacity>
+                ))
+            )
+          ) : (
+            searchUsersQuery.isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={primaryColor} />
+              </View>
+            ) : searchQuery.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateEmoji}>🔍</Text>
+                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                  Search for users
+                </Text>
+                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                  Enter a name or username to find people to chat with
+                </Text>
+              </View>
+            ) : searchResults.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateEmoji}>😔</Text>
+                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                  No users found
+                </Text>
+                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                  Try searching with a different name or username
+                </Text>
+              </View>
+            ) : (
+              searchResults.map((user) => (
+                <TouchableOpacity 
+                  key={user.id} 
+                  style={[styles.conversationItem, { backgroundColor: containerBg }]}
+                  activeOpacity={0.7}
+                  onPress={() => router.push(`/chat?userId=${user.id}&name=${encodeURIComponent(user.name)}`)}
+                >
+                  <Image 
+                    source={{ uri: user.avatar || 'https://via.placeholder.com/56' }} 
+                    style={styles.avatar}
+                  />
+                  <View style={styles.conversationContent}>
+                    <Text style={[styles.userName, { color: textColor }]}>
+                      {user.name}
+                    </Text>
+                    <Text style={[styles.username, { color: secondaryTextColor }]}>
+                      @{user.username}
+                    </Text>
+                    {user.bio && (
+                      <Text 
+                        style={[styles.bio, { color: secondaryTextColor }]}
+                        numberOfLines={1}
+                      >
+                        {user.bio}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))
+            )
           )}
         </ScrollView>
       </View>
@@ -222,4 +370,66 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  tabsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  activeTab: {
+    shadowColor: '#17cf17',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    paddingVertical: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unreadBadge: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    position: 'absolute',
+    right: 12,
+    top: 12,
+  },
+  username: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  bio: {
+    fontSize: 13,
+    marginTop: 4,
+    lineHeight: 16,
+  },
 });
+
+function formatTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}

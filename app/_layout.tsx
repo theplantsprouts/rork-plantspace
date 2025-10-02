@@ -11,6 +11,7 @@ import { SettingsProvider } from "@/hooks/use-settings";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer } from "@/components/Toast";
 import { PlantTheme } from "@/constants/theme";
+import { trpc, getTrpcClient } from "@/lib/trpc";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -29,6 +30,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const trpcClient = getTrpcClient();
 
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
@@ -78,6 +81,7 @@ function RootLayoutNav() {
       <Stack.Screen name="profile-setup" options={{ headerShown: false }} />
       <Stack.Screen name="create-post" options={{ title: "Create Post" }} />
       <Stack.Screen name="post-detail" options={{ title: "Seed Details", headerShown: false }} />
+      <Stack.Screen name="chat" options={{ headerShown: false }} />
       <Stack.Screen name="firebase-test" options={{ title: "Firebase Test" }} />
       <Stack.Screen name="debug" options={{ title: "Debug" }} />
       <Stack.Screen name="modal" options={{ presentation: "modal" }} />
@@ -119,18 +123,20 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <OfflineProvider>
-            <SettingsProvider>
-              <AppProvider>
-                <GestureHandlerRootView style={styles.gestureHandler}>
-                  <AuthenticatedLayout />
-                  <ToastContainer />
-                </GestureHandlerRootView>
-              </AppProvider>
-            </SettingsProvider>
-          </OfflineProvider>
-        </AuthProvider>
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <AuthProvider>
+            <OfflineProvider>
+              <SettingsProvider>
+                <AppProvider>
+                  <GestureHandlerRootView style={styles.gestureHandler}>
+                    <AuthenticatedLayout />
+                    <ToastContainer />
+                  </GestureHandlerRootView>
+                </AppProvider>
+              </SettingsProvider>
+            </OfflineProvider>
+          </AuthProvider>
+        </trpc.Provider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

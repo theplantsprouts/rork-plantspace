@@ -1,63 +1,76 @@
 import { protectedProcedure } from "../../../create-context";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
 
-export const getConversationsProcedure = protectedProcedure.query(
-  async ({ ctx }) => {
-    console.log("[getConversations] Fetching conversations for user:", ctx.user.id);
-
-    const { data: conversations, error } = await supabase
-      .from("conversations")
-      .select(`
-        id,
-        user1_id,
-        user2_id,
-        last_message,
-        last_message_at,
-        created_at,
-        updated_at
-      `)
-      .or(`user1_id.eq.${ctx.user.id},user2_id.eq.${ctx.user.id}`)
-      .order("last_message_at", { ascending: false });
-
-    if (error) {
-      console.error("[getConversations] Error:", error);
-      throw new Error("Failed to fetch conversations");
-    }
-
-    if (!conversations || conversations.length === 0) {
-      return [];
-    }
-
-    const otherUserIds = conversations.map((conv) =>
-      conv.user1_id === ctx.user.id ? conv.user2_id : conv.user1_id
+export const getConversationsProcedure = protectedProcedure.query(async ({ ctx }) => {
+  try {
+    console.log('Getting conversations for user:', ctx.user.id);
+    
+    const messagesRef = collection(db, 'messages');
+    
+    const sentQuery = query(
+      messagesRef,
+      where('senderId', '==', ctx.user.id),
+      orderBy('createdAt', 'desc')
     );
-
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, name, username, avatar")
-      .in("id", otherUserIds);
-
-    if (profilesError) {
-      console.error("[getConversations] Error fetching profiles:", profilesError);
-      throw new Error("Failed to fetch user profiles");
-    }
-
-    const profilesMap = new Map(profiles?.map((p) => [p.id, p]) || []);
-
-    const result = conversations.map((conv) => {
-      const otherUserId = conv.user1_id === ctx.user.id ? conv.user2_id : conv.user1_id;
-      const profile = profilesMap.get(otherUserId);
-
-      return {
-        id: conv.id,
-        otherUser: profile || { id: otherUserId, name: "Unknown", username: "", avatar: "" },
-        lastMessage: conv.last_message || "",
-        lastMessageAt: conv.last_message_at,
-        createdAt: conv.created_at,
-      };
-    });
-
-    console.log("[getConversations] Returning conversations:", result.length);
-    return result;
+    
+    const receivedQuery = query(
+      messagesRef,
+      where('receiverId', '==', ctx.user.id),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const [sentSnapshot, receivedSnapshot] = await Promise.all([
+      getDocs(sentQuery),
+      getDocs(receivedQuery)
+    ]);
+    
+    const conversationsMap = new Map<string, any>();
+    
+    const processMessage = async (messageDoc: any) => {
+      const messageData = messageDoc.data();
+      const otherUserId = messageData.senderId === ctx.user.id 
+        ? messageData.receiverId 
+        : messageData.senderId;
+      
+      const existingConv = conversationsMap.get(otherUserId);
+      const messageTime = messageData.createdAt?.toDate?.() || new Date();
+      
+      if (!existingConv || messageTime > existingConv.lastMessageTime) {
+        const profileRef = doc(db, 'profiles', otherUserId);
+        const profileSnap = await getDoc(profileRef);
+        const profileData = profileSnap.exists() ? profileSnap.data() : {};
+        
+        conversationsMap.set(otherUserId, {
+          id: otherUserId,
+          user: {
+            id: otherUserId,
+            name: profileData.name || 'Unknown User',
+            username: profileData.username || '',
+            avatar: profileData.avatar || '',
+          },
+          lastMessage: messageData.text || (messageData.imageUrl ? '📷 Image' : ''),
+          timestamp: messageTime.toISOString(),
+          lastMessageTime: messageTime,
+          unread: messageData.receiverId === ctx.user.id && !messageData.read,
+        });
+      }
+    };
+    
+    await Promise.all([
+      ...sentSnapshot.docs.map(processMessage),
+      ...receivedSnapshot.docs.map(processMessage)
+    ]);
+    
+    const conversations = Array.from(conversationsMap.values())
+      .sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime())
+      .map(({ lastMessageTime, ...conv }) => conv);
+    
+    console.log(`Found ${conversations.length} conversations`);
+    
+    return { conversations };
+  } catch (error: any) {
+    console.error('Error getting conversations:', error);
+    throw new Error('Failed to get conversations');
   }
-);
+});
