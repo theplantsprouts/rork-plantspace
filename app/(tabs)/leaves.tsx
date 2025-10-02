@@ -76,7 +76,7 @@ export default function LeavesScreen() {
   const containerBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
   const searchBg = isDark ? 'rgba(23, 207, 23, 0.2)' : 'rgba(23, 207, 23, 0.1)';
   const primaryColor = '#17cf17';
-  const modalBg = isDark ? '#1a2e1a' : '#ffffff';
+  const modalBg = isDark ? '#f6f8f6' : '#ffffff';
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
