@@ -23,8 +23,8 @@ import {
   Info,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/use-auth';
-import { PlantTheme } from '@/constants/theme';
 import { useSettings } from '@/hooks/use-settings';
+import { useTheme } from '@/hooks/use-theme';
 
 interface SettingItem {
   id: string;
@@ -46,6 +46,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { logout } = useAuth();
   const { settings, updateAppSetting } = useSettings();
+  const { colors } = useTheme();
   const darkMode = settings.app.darkMode;
 
   const handleLogout = () => {
@@ -173,18 +174,18 @@ export default function SettingsScreen() {
           activeOpacity={0.7}
         >
           <View style={styles.settingItemLeft}>
-            <View style={styles.settingIconContainer}>
+            <View style={[styles.settingIconContainer, { backgroundColor: `${colors.primary}33` }]}>
               <IconComponent
-                color={PlantTheme.colors.primary}
+                color={colors.primary}
                 size={24}
               />
             </View>
             <View style={styles.settingTextContainer}>
-              <Text style={styles.settingTitle}>
+              <Text style={[styles.settingTitle, { color: colors.onSurface }]}>
                 {item.title}
               </Text>
               {item.subtitle && (
-                <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                <Text style={[styles.settingSubtitle, { color: colors.onSurfaceVariant }]}>{item.subtitle}</Text>
               )}
             </View>
           </View>
@@ -194,22 +195,22 @@ export default function SettingsScreen() {
               value={item.value as boolean}
               onValueChange={item.onToggle}
               trackColor={{
-                false: '#E8EAE6',
-                true: 'rgba(23, 207, 23, 0.3)',
+                false: colors.outlineVariant,
+                true: `${colors.primary}4D`,
               }}
-              thumbColor={item.value ? PlantTheme.colors.primary : '#C1C8C0'}
-              ios_backgroundColor="#E8EAE6"
+              thumbColor={item.value ? colors.primary : colors.outline}
+              ios_backgroundColor={colors.outlineVariant}
             />
           ) : item.value && typeof item.value === 'string' ? (
             <View style={styles.settingValueContainer}>
-              <Text style={styles.settingValue}>{item.value}</Text>
-              <Text style={styles.chevron}>›</Text>
+              <Text style={[styles.settingValue, { color: colors.onSurfaceVariant }]}>{item.value}</Text>
+              <Text style={[styles.chevron, { color: colors.onSurfaceVariant }]}>›</Text>
             </View>
           ) : (
-            <Text style={styles.chevron}>›</Text>
+            <Text style={[styles.chevron, { color: colors.onSurfaceVariant }]}>›</Text>
           )}
         </TouchableOpacity>
-        {!isLast && <View style={styles.divider} />}
+        {!isLast && <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />}
       </View>
     );
   };
@@ -217,14 +218,14 @@ export default function SettingsScreen() {
   const renderSection = (section: SettingSection, index: number) => {
     return (
       <View key={section.title} style={styles.section}>
-        <Text style={styles.sectionTitle}>{section.title}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>{section.title}</Text>
         {index === 1 ? (
-          <View style={styles.groupedCard}>
+          <View style={[styles.groupedCard, { backgroundColor: colors.surfaceContainer }]}>
             {section.items.map((item, idx) => renderSettingItem(item, idx === section.items.length - 1))}
           </View>
         ) : (
           section.items.map((item) => (
-            <View key={item.id} style={styles.settingCard}>
+            <View key={item.id} style={[styles.settingCard, { backgroundColor: colors.surfaceContainer }]}>
               {renderSettingItem(item, true)}
             </View>
           ))
@@ -234,21 +235,21 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
           headerShown: false,
         }}
       />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 16, backgroundColor: colors.background }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
         >
-          <ArrowLeft color="#1a1c1a" size={24} />
+          <ArrowLeft color={colors.onSurface} size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Settings</Text>
         <View style={styles.headerSpacer} />
       </View>
       
@@ -269,14 +270,12 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
   },
   backButton: {
     width: 40,
@@ -288,7 +287,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1a1c1a',
     textAlign: 'center',
     marginRight: 40,
   },
@@ -308,20 +306,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700' as const,
-    color: PlantTheme.colors.primary,
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
     textTransform: 'uppercase',
   },
   settingCard: {
-    backgroundColor: '#EEF0ED',
     borderRadius: 16,
     marginBottom: 12,
     overflow: 'hidden',
   },
   groupedCard: {
-    backgroundColor: '#EEF0ED',
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -340,7 +335,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(23, 207, 23, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -351,12 +345,10 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#1a1c1a',
     marginBottom: 2,
   },
   settingSubtitle: {
     fontSize: 14,
-    color: '#424842',
   },
   settingValueContainer: {
     flexDirection: 'row',
@@ -365,16 +357,13 @@ const styles = StyleSheet.create({
   },
   settingValue: {
     fontSize: 14,
-    color: '#424842',
   },
   chevron: {
     fontSize: 24,
-    color: '#424842',
     fontWeight: '300' as const,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E8EAE6',
     marginLeft: 80,
   },
 });

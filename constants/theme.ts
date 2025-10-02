@@ -1,6 +1,5 @@
-export const PlantTheme = {
+export const LightTheme = {
   colors: {
-    // Primary plant-inspired greens (Material 3 expressive palette)
     primary: '#17cf17',
     primaryLight: '#a3f7a3',
     primaryDark: '#005300',
@@ -14,105 +13,155 @@ export const PlantTheme = {
     tertiary: '#7BD389',
     tertiaryDark: '#2F6B3B',
 
-    // Accent flowers and fruits
     accent: '#FF7043',
     accentLight: '#FFB199',
     accentDark: '#D84315',
 
-    // Material surfaces
     surface: '#ffffff',
     surfaceVariant: '#E3F2E6',
     surfaceContainer: '#F6F8F6',
     surfaceContainerHigh: '#E9ECE9',
-    surfaceDark: '#1C2B1C',
     onSurface: '#1a1c1a',
     onSurfaceVariant: '#424942',
-    onSurfaceDark: '#e2e3e2',
 
     outline: '#727972',
     outlineVariant: '#c2c9c2',
 
-    // Background gradients
+    background: '#f6f8f6',
     backgroundStart: '#f6f8f6',
     backgroundEnd: '#F1F8E9',
-    backgroundDark: '#112111',
 
-    // Card backgrounds
     cardBackground: '#FFFFFF',
     cardBorder: 'rgba(23, 207, 23, 0.18)',
     cardShadow: 'rgba(0, 0, 0, 0.08)',
 
-    // Glass
     glassBorder: 'rgba(23, 207, 23, 0.28)',
     glassBackground: 'rgba(255, 255, 255, 0.12)',
 
-    // Text colors
     textPrimary: '#2E7D32',
     textSecondary: '#5C6F57',
     textLight: '#81C784',
     textDark: '#1B5E20',
 
-    // Status colors
     success: '#4CAF50',
     warning: '#FF9800',
     error: '#F44336',
     info: '#2196F3',
 
-    // Neutral
     white: '#FFFFFF',
     black: '#000000',
     gray: '#9E9E9E',
     lightGray: '#F5F5F5',
     darkGray: '#424242',
   },
+};
 
-  spacing: {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
-    xxl: 48,
+export const DarkTheme = {
+  colors: {
+    primary: '#7BD389',
+    primaryLight: '#a3f7a3',
+    primaryDark: '#4CAF50',
+    primaryContainer: '#1a3d1f',
+    onPrimaryContainer: '#a3f7a3',
+
+    secondary: '#81C784',
+    secondaryLight: '#A5D6A7',
+    secondaryDark: '#66BB6A',
+
+    tertiary: '#7BD389',
+    tertiaryDark: '#4CAF50',
+
+    accent: '#FF8A65',
+    accentLight: '#FFB199',
+    accentDark: '#FF7043',
+
+    surface: '#1a1c1a',
+    surfaceVariant: '#2d3a2d',
+    surfaceContainer: '#1f2b1f',
+    surfaceContainerHigh: '#2a362a',
+    onSurface: '#e2e3e2',
+    onSurfaceVariant: '#c2c9c2',
+
+    outline: '#8c938c',
+    outlineVariant: '#424942',
+
+    background: '#0f120f',
+    backgroundStart: '#0f120f',
+    backgroundEnd: '#1a2e1a',
+
+    cardBackground: '#1f2b1f',
+    cardBorder: 'rgba(123, 211, 137, 0.25)',
+    cardShadow: 'rgba(0, 0, 0, 0.4)',
+
+    glassBorder: 'rgba(123, 211, 137, 0.35)',
+    glassBackground: 'rgba(26, 61, 31, 0.3)',
+
+    textPrimary: '#7BD389',
+    textSecondary: '#A5D6A7',
+    textLight: '#C8E6C9',
+    textDark: '#4CAF50',
+
+    success: '#66BB6A',
+    warning: '#FFB74D',
+    error: '#EF5350',
+    info: '#42A5F5',
+
+    white: '#FFFFFF',
+    black: '#000000',
+    gray: '#9E9E9E',
+    lightGray: '#2a362a',
+    darkGray: '#424242',
   },
+};
 
-  borderRadius: {
-    sm: 8,
-    md: 14,
-    lg: 20,
-    xl: 28,
-    full: 9999,
+export const PlantTheme = LightTheme;
+
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+};
+
+export const borderRadius = {
+  sm: 8,
+  md: 14,
+  lg: 20,
+  xl: 28,
+  full: 9999,
+};
+
+export const elevation = {
+  level0: { shadowColor: '#000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
+  level1: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 2, elevation: 1 },
+  level2: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  level3: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
+  level4: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 12, elevation: 6 },
+};
+
+export const shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-
-  elevation: {
-    level0: { shadowColor: '#000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
-    level1: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 2, elevation: 1 },
-    level2: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-    level3: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
-    level4: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 12, elevation: 6 },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
-
-  shadows: {
-    sm: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    md: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
-      elevation: 4,
-    },
-    lg: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.2,
-      shadowRadius: 16,
-      elevation: 8,
-    },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
 };
 

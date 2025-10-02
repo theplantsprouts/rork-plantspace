@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ViewStyle, StyleSheet, Platform } from 'react-native';
-import { PlantTheme } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { borderRadius, elevation, spacing } from '@/constants/theme';
 
 interface CardContainerProps {
   children: React.ReactNode;
@@ -13,8 +14,9 @@ export function GlassContainer({
   style, 
   testID 
 }: CardContainerProps) {
+  const { colors } = useTheme();
   return (
-    <View testID={testID} style={[styles.cardContainer, style]}>
+    <View testID={testID} style={[styles.cardContainer, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }, style]}>
       {children}
     </View>
   );
@@ -23,7 +25,7 @@ export function GlassContainer({
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  padding?: keyof typeof PlantTheme.spacing;
+  padding?: keyof typeof spacing;
   testID?: string;
 }
 
@@ -33,12 +35,13 @@ export function GlassCard({
   padding = 'md',
   testID 
 }: CardProps) {
+  const { colors } = useTheme();
   return (
     <View
       testID={testID}
       style={[
         styles.card,
-        { padding: PlantTheme.spacing[padding] },
+        { padding: spacing[padding as keyof typeof spacing], backgroundColor: colors.surface, borderColor: colors.outlineVariant },
         style
       ]}
     >
@@ -53,25 +56,19 @@ export const Card = GlassCard;
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: PlantTheme.colors.surface,
-    borderRadius: PlantTheme.borderRadius.lg,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.outlineVariant,
-    ...PlantTheme.elevation.level1,
+    ...elevation.level1,
     ...(Platform.OS === 'android' && {
-      backgroundColor: PlantTheme.colors.surface,
       elevation: 2,
       shadowColor: 'transparent',
     }),
   },
   card: {
-    backgroundColor: PlantTheme.colors.surface,
-    borderRadius: PlantTheme.borderRadius.lg,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.outlineVariant,
-    ...PlantTheme.elevation.level2,
+    ...elevation.level2,
     ...(Platform.OS === 'android' && {
-      backgroundColor: PlantTheme.colors.surface,
       elevation: 3,
       shadowColor: 'transparent',
     }),

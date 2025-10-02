@@ -12,8 +12,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Sprout, Leaf, Heading, Bookmark, Bell } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
 import { usePosts, type Post } from '@/hooks/use-posts';
+import { useTheme } from '@/hooks/use-theme';
+import { borderRadius, shadows } from '@/constants/theme';
 
 import * as Haptics from 'expo-haptics';
 import { useTabBar } from './_layout';
@@ -24,6 +25,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { posts, toggleLike, togglePostBookmark, toggleShare, addComment, isLoading, error, refresh } = usePosts();
   const { handleScroll } = useTabBar();
+  const { colors } = useTheme();
   
   const onScroll = useCallback((event: any) => {
     if (event?.nativeEvent?.contentOffset?.y !== undefined) {
@@ -47,15 +49,15 @@ export default function HomeScreen() {
   }, [posts]);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundStart }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: `${colors.background}CC`, borderBottomColor: `${colors.outline}33` }]}>
         <View style={styles.headerSpacer} />
-        <Text style={styles.headerTitle}>Garden</Text>
+        <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Garden</Text>
         <TouchableOpacity 
           style={styles.notificationButton}
           onPress={() => router.push('/notifications')}
         >
-          <Bell color={PlantTheme.colors.onSurface} size={24} />
+          <Bell color={colors.onSurface} size={24} />
         </TouchableOpacity>
       </View>
 
@@ -68,29 +70,30 @@ export default function HomeScreen() {
       >
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={PlantTheme.colors.primary} />
-            <Text style={styles.loadingText}>Watering your garden...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Watering your garden...</Text>
           </View>
         ) : error ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>🌱 Connection Issue</Text>
-            <Text style={styles.emptyText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => {
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>🌱 Connection Issue</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{error}</Text>
+            <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={() => {
               refresh();
             }}>
-              <Text style={styles.retryButtonText}>Try Again</Text>
+              <Text style={[styles.retryButtonText, { color: colors.white }]}>Try Again</Text>
             </TouchableOpacity>
           </View>
         ) : memoizedPosts.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>🌿 Welcome to Your Garden!</Text>
-            <Text style={styles.emptyText}>Your community garden is ready to grow. Start by planting your first seed!</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>🌿 Welcome to Your Garden!</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Your community garden is ready to grow. Start by planting your first seed!</Text>
           </View>
         ) : (
           memoizedPosts.map((post) => (
             <PostCard 
               key={post.id} 
-              post={post} 
+              post={post}
+              colors={colors}
               onLike={() => handleLike(post.id)}
               onBookmark={() => togglePostBookmark(post.id)}
               onComment={() => {
@@ -128,15 +131,16 @@ export default function HomeScreen() {
 
 interface PostCardProps {
   post: Post;
+  colors: any;
   onLike: () => void;
   onBookmark: () => void;
   onComment: () => void;
   onShare: () => void;
 }
 
-const PostCard = React.memo<PostCardProps>(({ post, onLike, onBookmark, onComment, onShare }) => {
+const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, onComment, onShare }) => {
   return (
-    <View style={styles.postCard}>
+    <View style={[styles.postCard, { backgroundColor: colors.surface }]}>
       {post.image && (
         <Image
           source={{ uri: post.image }}
@@ -162,49 +166,49 @@ const PostCard = React.memo<PostCardProps>(({ post, onLike, onBookmark, onCommen
                 recyclingKey={post.user.avatar}
               />
             ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>
+              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primaryLight }]}>
+                <Text style={[styles.avatarText, { color: colors.primary }]}>
                   {post.user.name.charAt(0).toUpperCase()}
                 </Text>
               </View>
             )}
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.username}>{post.user.name}</Text>
-            <Text style={styles.timestamp}>{post.timestamp}</Text>
+            <Text style={[styles.username, { color: colors.onSurface }]}>{post.user.name}</Text>
+            <Text style={[styles.timestamp, { color: colors.onSurfaceVariant }]}>{post.timestamp}</Text>
           </View>
           <TouchableOpacity style={styles.bookmarkButton} onPress={onBookmark}>
             <Bookmark 
               size={20} 
-              color={post.isBookmarked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
-              fill={post.isBookmarked ? PlantTheme.colors.primary : 'none'}
+              color={post.isBookmarked ? colors.primary : colors.onSurfaceVariant}
+              fill={post.isBookmarked ? colors.primary : 'none'}
             />
           </TouchableOpacity>
         </View>
-        <Text style={styles.postText}>{post.content}</Text>
+        <Text style={[styles.postText, { color: colors.onSurfaceVariant }]}>{post.content}</Text>
       </View>
-      <View style={styles.postActions}>
+      <View style={[styles.postActions, { borderTopColor: `${colors.outline}33` }]}>
         <TouchableOpacity style={styles.actionButton} onPress={onLike}>
           <View style={styles.actionIconContainer}>
             <Sprout 
               size={20} 
-              color={post.isLiked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
-              fill={post.isLiked ? PlantTheme.colors.primary : 'none'}
+              color={post.isLiked ? colors.primary : colors.onSurfaceVariant}
+              fill={post.isLiked ? colors.primary : 'none'}
             />
           </View>
-          <Text style={styles.actionText}>{post.likes}</Text>
+          <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.likes}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton} onPress={onComment}>
           <View style={styles.actionIconContainer}>
-            <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
+            <Leaf size={20} color={colors.onSurfaceVariant} />
           </View>
-          <Text style={styles.actionText}>{post.comments}</Text>
+          <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.comments}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton} onPress={onShare}>
           <View style={styles.actionIconContainer}>
-            <Heading size={20} color={PlantTheme.colors.onSurfaceVariant} />
+            <Heading size={20} color={colors.onSurfaceVariant} />
           </View>
-          <Text style={styles.actionText}>{post.shares || 0}</Text>
+          <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.shares || 0}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -216,7 +220,6 @@ PostCard.displayName = 'PostCard';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PlantTheme.colors.backgroundStart,
   },
   header: {
     flexDirection: 'row',
@@ -224,9 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: 'rgba(246, 248, 246, 0.8)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(114, 121, 111, 0.2)',
   },
   headerSpacer: {
     width: 40,
@@ -240,7 +241,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: PlantTheme.colors.onSurface,
   },
   scrollView: {
     flex: 1,
@@ -251,11 +251,10 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   postCard: {
-    backgroundColor: PlantTheme.colors.surface,
     borderRadius: 24,
     marginBottom: 16,
     overflow: 'hidden',
-    ...PlantTheme.shadows.sm,
+    ...shadows.sm,
   },
   postImage: {
     width: '100%',
@@ -281,14 +280,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: PlantTheme.colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: PlantTheme.colors.primary,
   },
   userInfo: {
     flex: 1,
@@ -299,23 +296,19 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: PlantTheme.colors.onSurface,
   },
   timestamp: {
     fontSize: 14,
-    color: PlantTheme.colors.onSurfaceVariant,
     marginTop: 2,
   },
   postText: {
     fontSize: 14,
     lineHeight: 20,
-    color: PlantTheme.colors.onSurfaceVariant,
   },
   postActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(114, 121, 111, 0.2)',
     paddingVertical: 4,
   },
   actionButton: {
@@ -335,7 +328,6 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: PlantTheme.colors.onSurfaceVariant,
   },
   loadingContainer: {
     flex: 1,
@@ -344,7 +336,6 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   loadingText: {
-    color: PlantTheme.colors.textSecondary,
     fontSize: 16,
     marginTop: 16,
     textAlign: 'center',
@@ -359,13 +350,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: PlantTheme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 12,
   },
   emptyText: {
     fontSize: 16,
-    color: PlantTheme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -374,11 +363,9 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: PlantTheme.colors.primary,
-    borderRadius: PlantTheme.borderRadius.md,
+    borderRadius: borderRadius.md,
   },
   retryButtonText: {
-    color: PlantTheme.colors.white,
     fontSize: 16,
     fontWeight: '600' as const,
     textAlign: 'center',

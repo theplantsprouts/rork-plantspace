@@ -8,6 +8,7 @@ import { AppProvider } from "@/hooks/use-app-context";
 import { AuthProvider, useAuth, isProfileComplete } from "@/hooks/use-auth";
 import { OfflineProvider } from "@/hooks/use-offline";
 import { SettingsProvider } from "@/hooks/use-settings";
+import { ThemeProvider } from "@/hooks/use-theme";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer } from "@/components/Toast";
 
@@ -124,12 +125,14 @@ export default function RootLayout() {
           <AuthProvider>
             <OfflineProvider>
               <SettingsProvider>
-                <AppProvider>
-                  <GestureHandlerRootView style={styles.gestureHandler}>
-                    <AuthenticatedLayout />
-                    <ToastContainer />
-                  </GestureHandlerRootView>
-                </AppProvider>
+                <ThemeProvider>
+                  <AppProvider>
+                    <GestureHandlerRootView style={styles.gestureHandler}>
+                      <AuthenticatedLayout />
+                      <ToastContainer />
+                    </GestureHandlerRootView>
+                  </AppProvider>
+                </ThemeProvider>
               </SettingsProvider>
             </OfflineProvider>
           </AuthProvider>
