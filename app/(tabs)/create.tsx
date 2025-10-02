@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, ImagePlus, Bell } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
+import { PlantTheme, borderRadius } from '@/constants/theme';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { usePosts } from '@/hooks/use-posts';
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     backgroundColor: PlantTheme.colors.backgroundStart,
     borderWidth: 1,
     borderColor: PlantTheme.colors.cardBorder,
-    borderRadius: PlantTheme.borderRadius.xl,
+    borderRadius: borderRadius.xl,
   },
   imagePreview: {
     position: 'relative',
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   previewImage: {
     width: '100%',
     height: 200,
-    borderRadius: PlantTheme.borderRadius.md,
+    borderRadius: borderRadius.md,
   },
   removeImageButton: {
     position: 'absolute',
