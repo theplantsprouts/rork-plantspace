@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Send } from 'lucide-react-native';
+import { ArrowLeft, Send, ImagePlus, X } from 'lucide-react-native';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { PlantTheme } from '@/constants/theme';
 import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '@/lib/trpc';
@@ -38,6 +39,9 @@ export default function ChatScreen() {
   const { user } = useAuth();
   
   const [messageText, setMessageText] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const messagesQuery = trpc.messages.getMessages.useQuery(
@@ -45,9 +49,13 @@ export default function ChatScreen() {
     { enabled: !!params.userId, refetchInterval: 3000 }
   );
 
+  const uploadImageMutation = trpc.posts.uploadImage.useMutation();
+
   const sendMessageMutation = trpc.messages.sendMessage.useMutation({
     onSuccess: () => {
       setMessageText('');
+      setSelectedImage(null);
+      setSelectedImageBase64(null);
       messagesQuery.refetch();
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -63,13 +71,51 @@ export default function ChatScreen() {
     }
   }, [messagesQuery.data?.messages.length]);
 
-  const handleSend = () => {
-    if (!messageText.trim() || !params.userId) return;
+  const handlePickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        base64: true,
+      });
 
-    sendMessageMutation.mutate({
-      receiverId: params.userId,
-      text: messageText.trim(),
-    });
+      if (!result.canceled && result.assets[0].base64) {
+        setSelectedImage(result.assets[0].uri);
+        setSelectedImageBase64(result.assets[0].base64);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+    }
+  };
+
+  const handleSend = async () => {
+    if ((!messageText.trim() && !selectedImage) || !params.userId) return;
+
+    try {
+      let imageUrl: string | undefined;
+
+      if (selectedImage && selectedImageBase64) {
+        setIsUploadingImage(true);
+        const uploadResult = await uploadImageMutation.mutateAsync({
+          base64: selectedImageBase64,
+          filename: `message_${Date.now()}.jpg`,
+        });
+
+        imageUrl = uploadResult.imageUrl;
+        setIsUploadingImage(false);
+      }
+
+      sendMessageMutation.mutate({
+        receiverId: params.userId,
+        text: messageText.trim() || undefined,
+        imageUrl,
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setIsUploadingImage(false);
+    }
   };
 
   const messages: Message[] = (messagesQuery.data?.messages || []) as Message[];
@@ -199,32 +245,52 @@ export default function ChatScreen() {
         </ScrollView>
 
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8, backgroundColor: inputBg }]}>
-          <TextInput
-            style={[styles.input, { color: textColor }]}
-            placeholder="Type a message..."
-            placeholderTextColor={secondaryTextColor}
-            value={messageText}
-            onChangeText={setMessageText}
-            multiline
-            maxLength={1000}
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              { backgroundColor: messageText.trim() ? primaryColor : containerBg },
-            ]}
-            onPress={handleSend}
-            disabled={!messageText.trim() || sendMessageMutation.isPending}
-          >
-            {sendMessageMutation.isPending ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Send
-                size={20}
-                color={messageText.trim() ? '#fff' : secondaryTextColor}
-              />
-            )}
-          </TouchableOpacity>
+          {selectedImage && (
+            <View style={styles.imagePreviewContainer}>
+              <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+              <TouchableOpacity
+                style={styles.removeImageButton}
+                onPress={() => setSelectedImage(null)}
+              >
+                <X size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          )}
+          <View style={styles.inputRow}>
+            <TouchableOpacity
+              style={styles.imageButton}
+              onPress={handlePickImage}
+              disabled={isUploadingImage || sendMessageMutation.isPending}
+            >
+              <ImagePlus size={24} color={primaryColor} />
+            </TouchableOpacity>
+            <TextInput
+              style={[styles.input, { color: textColor }]}
+              placeholder="Type a message..."
+              placeholderTextColor={secondaryTextColor}
+              value={messageText}
+              onChangeText={setMessageText}
+              multiline
+              maxLength={1000}
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                { backgroundColor: (messageText.trim() || selectedImage) ? primaryColor : containerBg },
+              ]}
+              onPress={handleSend}
+              disabled={(!messageText.trim() && !selectedImage) || sendMessageMutation.isPending || isUploadingImage}
+            >
+              {sendMessageMutation.isPending || isUploadingImage ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Send
+                  size={20}
+                  color={(messageText.trim() || selectedImage) ? '#fff' : secondaryTextColor}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </>
@@ -324,11 +390,36 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 12,
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  imagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
     gap: 8,
+  },
+  imageButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   input: {
     flex: 1,
