@@ -36,15 +36,29 @@ export default function LeavesScreen() {
   const { conversations: rawConversations, loading } = useConversations();
   const [conversationsWithProfiles, setConversationsWithProfiles] = useState<ConversationWithProfile[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [fetchedConvIds, setFetchedConvIds] = useState<string>('');
 
   useEffect(() => {
     const fetchProfiles = async () => {
       const user = auth.currentUser;
-      if (!user || rawConversations.length === 0) {
+      if (!user) {
         setLoadingProfiles(false);
+        setConversationsWithProfiles([]);
         return;
       }
 
+      if (rawConversations.length === 0) {
+        setLoadingProfiles(false);
+        setConversationsWithProfiles([]);
+        return;
+      }
+
+      const currentConvIds = rawConversations.map(c => c.id).sort().join(',');
+      if (currentConvIds === fetchedConvIds) {
+        return;
+      }
+
+      setLoadingProfiles(true);
       const conversationsWithData = await Promise.all(
         rawConversations.map(async (conv) => {
           const otherUserId = conv.participants.find((id) => id !== user.uid) || '';
@@ -63,11 +77,12 @@ export default function LeavesScreen() {
       );
 
       setConversationsWithProfiles(conversationsWithData);
+      setFetchedConvIds(currentConvIds);
       setLoadingProfiles(false);
     };
 
     fetchProfiles();
-  }, [rawConversations]);
+  }, [rawConversations, fetchedConvIds]);
 
   const filteredConversations = useMemo(() => {
     if (!searchQuery) return conversationsWithProfiles;
