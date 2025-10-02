@@ -11,6 +11,9 @@ import { SettingsProvider } from "@/hooks/use-settings";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer, AlertContainer } from "@/components/Toast";
 import { PlantTheme } from "@/constants/theme";
+import { trpc } from "@/lib/trpc";
+import { httpBatchLink } from "@trpc/client";
+import superjson from "superjson";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -28,6 +31,27 @@ const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
+});
+
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return '';
+  }
+  return `http://localhost:${process.env.PORT ?? 8081}`;
+};
+
+const trpcClient = trpc.createClient({
+  links: [
+    httpBatchLink({
+      url: `${getBaseUrl()}/api/trpc`,
+      transformer: superjson,
+      headers() {
+        return {
+          'Content-Type': 'application/json',
+        };
+      },
+    }),
+  ],
 });
 
 function RootLayoutNav() {
@@ -118,21 +142,23 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <OfflineProvider>
-            <SettingsProvider>
-              <AppProvider>
-                <GestureHandlerRootView style={styles.gestureHandler}>
-                  <AuthenticatedLayout />
-                  <ToastContainer />
-                  <AlertContainer />
-                </GestureHandlerRootView>
-              </AppProvider>
-            </SettingsProvider>
-          </OfflineProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <OfflineProvider>
+              <SettingsProvider>
+                <AppProvider>
+                  <GestureHandlerRootView style={styles.gestureHandler}>
+                    <AuthenticatedLayout />
+                    <ToastContainer />
+                    <AlertContainer />
+                  </GestureHandlerRootView>
+                </AppProvider>
+              </SettingsProvider>
+            </OfflineProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </trpc.Provider>
     </ErrorBoundary>
   );
 }
