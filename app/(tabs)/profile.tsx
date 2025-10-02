@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTabBar } from './_layout';
 import { useAppContext } from '@/hooks/use-app-context';
 import { usePosts } from '@/hooks/use-posts';
+import { useTheme } from '@/hooks/use-theme';
 
 
 
@@ -23,6 +24,7 @@ import { usePosts } from '@/hooks/use-posts';
 export default function ProfileScreen() {
   const { currentUser } = useAppContext();
   const { posts } = usePosts();
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<'seeds' | 'gardeners' | 'tending'>('seeds');
 
   const { handleScroll } = useTabBar();
@@ -255,28 +257,28 @@ export default function ProfileScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft color="#1a1c19" size={24} />
+            <ArrowLeft color={colors.onSurface} size={24} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Profile</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity 
               onPress={() => router.push('/saved-content')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={styles.headerIconButton}
             >
-              <Bookmark color="#1a1c19" size={24} />
+              <Bookmark color={colors.onSurface} size={24} />
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={() => router.push('/settings')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={styles.headerIconButton}
             >
-              <Settings color="#1a1c19" size={24} />
+              <Settings color={colors.onSurface} size={24} />
             </TouchableOpacity>
           </View>
         </View>
@@ -303,7 +305,7 @@ export default function ProfileScreen() {
             />
             <View style={styles.coverImageOverlay}>
               <View style={styles.cameraIconContainer}>
-                <Camera color="#FFFFFF" size={24} />
+                <Camera color={colors.white} size={24} />
               </View>
             </View>
           </TouchableOpacity>
@@ -326,9 +328,9 @@ export default function ProfileScreen() {
 
           {/* Profile Info */}
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{currentUser?.name || 'Flora Green'}</Text>
-            <Text style={styles.profileHandle}>@{currentUser?.username || 'floragreen'}</Text>
-            <Text style={styles.profileBio}>
+            <Text style={[styles.profileName, { color: colors.onSurface }]}>{currentUser?.name || 'Flora Green'}</Text>
+            <Text style={[styles.profileHandle, { color: colors.onSurfaceVariant }]}>@{currentUser?.username || 'floragreen'}</Text>
+            <Text style={[styles.profileBio, { color: colors.onSurface }]}>
               {currentUser?.bio || 'Plant enthusiast | Nature lover'}
             </Text>
           </View>
@@ -339,38 +341,38 @@ export default function ProfileScreen() {
           {/* Stats */}
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{userPosts.length}</Text>
-              <Text style={styles.statLabel}>Seeds</Text>
+              <Text style={[styles.statNumber, { color: colors.onSurface }]}>{userPosts.length}</Text>
+              <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>Seeds</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{currentUser?.followers || 0}</Text>
-              <Text style={styles.statLabel}>Garden Friends</Text>
+              <Text style={[styles.statNumber, { color: colors.onSurface }]}>{currentUser?.followers || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>Garden Friends</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{currentUser?.following || 0}</Text>
-              <Text style={styles.statLabel}>Tending</Text>
+              <Text style={[styles.statNumber, { color: colors.onSurface }]}>{currentUser?.following || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>Tending</Text>
             </View>
           </View>
 
           {/* Tabs */}
-          <View style={styles.tabsContainer}>
+          <View style={[styles.tabsContainer, { borderBottomColor: colors.outline }]}>
             <TouchableOpacity 
-              style={[styles.tab, activeTab === 'seeds' && styles.activeTab]}
+              style={[styles.tab, activeTab === 'seeds' && [styles.activeTab, { borderBottomColor: colors.primary }]]}
               onPress={() => setActiveTab('seeds')}
             >
-              <Text style={[styles.tabText, activeTab === 'seeds' && styles.activeTabText]}>Seeds</Text>
+              <Text style={[styles.tabText, { color: colors.onSurfaceVariant }, activeTab === 'seeds' && { color: colors.primary, fontWeight: '700' as const }]}>Seeds</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.tab, activeTab === 'gardeners' && styles.activeTab]}
+              style={[styles.tab, activeTab === 'gardeners' && [styles.activeTab, { borderBottomColor: colors.primary }]]}
               onPress={() => setActiveTab('gardeners')}
             >
-              <Text style={[styles.tabText, activeTab === 'gardeners' && styles.activeTabText]}>Garden Friends</Text>
+              <Text style={[styles.tabText, { color: colors.onSurfaceVariant }, activeTab === 'gardeners' && { color: colors.primary, fontWeight: '700' as const }]}>Garden Friends</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.tab, activeTab === 'tending' && styles.activeTab]}
+              style={[styles.tab, activeTab === 'tending' && [styles.activeTab, { borderBottomColor: colors.primary }]]}
               onPress={() => setActiveTab('tending')}
             >
-              <Text style={[styles.tabText, activeTab === 'tending' && styles.activeTabText]}>Tending</Text>
+              <Text style={[styles.tabText, { color: colors.onSurfaceVariant }, activeTab === 'tending' && { color: colors.primary, fontWeight: '700' as const }]}>Tending</Text>
             </TouchableOpacity>
           </View>
 
@@ -379,14 +381,14 @@ export default function ProfileScreen() {
             <View style={styles.postsGrid}>
               {userPosts.length === 0 ? (
                 <View style={styles.emptyPosts}>
-                  <Text style={styles.emptyPostsText}>No seeds planted yet</Text>
-                  <Text style={styles.emptyPostsSubtext}>Start sharing your plant journey!</Text>
+                  <Text style={[styles.emptyPostsText, { color: colors.onSurface }]}>No seeds planted yet</Text>
+                  <Text style={[styles.emptyPostsSubtext, { color: colors.onSurfaceVariant }]}>Start sharing your plant journey!</Text>
                 </View>
               ) : (
                 userPosts.map((post) => (
                   <TouchableOpacity 
                     key={post.id} 
-                    style={styles.postCard}
+                    style={[styles.postCard, { backgroundColor: colors.surface }]}
                     activeOpacity={0.8}
                     onPress={() => handlePostPress(post)}
                   >
@@ -398,17 +400,17 @@ export default function ProfileScreen() {
                         contentFit="cover"
                       />
                     ) : (
-                      <View style={styles.textPostCard}>
-                        <Text style={styles.textPostContent} numberOfLines={4}>
+                      <View style={[styles.textPostCard, { backgroundColor: colors.surfaceVariant }]}>
+                        <Text style={[styles.textPostContent, { color: colors.onSurface }]} numberOfLines={4}>
                           {post.content}
                         </Text>
                       </View>
                     )}
                     <View style={styles.postCardContent}>
-                      <Text style={styles.postCardTitle} numberOfLines={1}>
+                      <Text style={[styles.postCardTitle, { color: colors.onSurface }]} numberOfLines={1}>
                         {post.content.substring(0, 30)}...
                       </Text>
-                      <Text style={styles.postCardMeta}>
+                      <Text style={[styles.postCardMeta, { color: colors.onSurfaceVariant }]}>
                         {post.likes} views · 2d
                       </Text>
                     </View>
@@ -420,15 +422,15 @@ export default function ProfileScreen() {
 
           {activeTab === 'gardeners' && (
             <View style={styles.emptyPosts}>
-              <Text style={styles.emptyPostsText}>No garden friends yet</Text>
-              <Text style={styles.emptyPostsSubtext}>Connect with other plant lovers!</Text>
+              <Text style={[styles.emptyPostsText, { color: colors.onSurface }]}>No garden friends yet</Text>
+              <Text style={[styles.emptyPostsSubtext, { color: colors.onSurfaceVariant }]}>Connect with other plant lovers!</Text>
             </View>
           )}
 
           {activeTab === 'tending' && (
             <View style={styles.emptyPosts}>
-              <Text style={styles.emptyPostsText}>Not tending anyone yet</Text>
-              <Text style={styles.emptyPostsSubtext}>Discover amazing plant enthusiasts!</Text>
+              <Text style={[styles.emptyPostsText, { color: colors.onSurface }]}>Not tending anyone yet</Text>
+              <Text style={[styles.emptyPostsSubtext, { color: colors.onSurfaceVariant }]}>Discover amazing plant enthusiasts!</Text>
             </View>
           )}
         </ScrollView>
@@ -440,7 +442,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
   },
   safeArea: {
     flex: 1,
@@ -451,12 +452,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#F6F8F6',
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1a1c19',
+    fontWeight: 'bold' as const,
   },
   scrollView: {
     flex: 1,
@@ -497,7 +496,7 @@ const styles = StyleSheet.create({
     height: 128,
     borderRadius: 64,
     borderWidth: 4,
-    borderColor: '#F6F8F6',
+    borderColor: 'transparent',
     overflow: 'hidden',
   },
   profilePicture: {
@@ -510,18 +509,15 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1c19',
+    fontWeight: 'bold' as const,
     marginBottom: 4,
   },
   profileHandle: {
     fontSize: 14,
-    color: '#42493f',
     marginBottom: 4,
   },
   profileBio: {
     fontSize: 14,
-    color: '#1a1c19',
     textAlign: 'center',
     marginTop: 4,
   },
@@ -537,18 +533,15 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1a1c19',
+    fontWeight: 'bold' as const,
   },
   statLabel: {
     fontSize: 12,
-    color: '#42493f',
     marginTop: 4,
   },
   tabsContainer: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#72796f',
     marginTop: 16,
   },
   tab: {
@@ -559,23 +552,16 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#17cf17',
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#42493f',
-  },
-  activeTabText: {
-    color: '#17cf17',
-    fontWeight: 'bold',
+    fontWeight: '500' as const,
   },
   postsGrid: {
     padding: 16,
     gap: 16,
   },
   postCard: {
-    backgroundColor: '#ffffff',
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 16,
@@ -587,14 +573,12 @@ const styles = StyleSheet.create({
   textPostCard: {
     width: '100%',
     height: 192,
-    backgroundColor: '#e2e3dd',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   textPostContent: {
     fontSize: 14,
-    color: '#1a1c19',
     textAlign: 'center',
   },
   postCardContent: {
@@ -602,13 +586,11 @@ const styles = StyleSheet.create({
   },
   postCardTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1a1c19',
+    fontWeight: 'bold' as const,
     marginBottom: 4,
   },
   postCardMeta: {
     fontSize: 12,
-    color: 'rgba(42, 73, 63, 0.7)',
   },
   emptyPosts: {
     alignItems: 'center',
@@ -617,13 +599,11 @@ const styles = StyleSheet.create({
   },
   emptyPostsText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1c19',
+    fontWeight: '600' as const,
     marginBottom: 8,
   },
   emptyPostsSubtext: {
     fontSize: 14,
-    color: '#42493f',
     textAlign: 'center',
   },
   headerActions: {

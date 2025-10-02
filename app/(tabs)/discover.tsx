@@ -9,42 +9,43 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Bell } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
 import { router } from 'expo-router';
+import { useTheme } from '@/hooks/use-theme';
 
 
 
 export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+    <View style={[styles.container, { backgroundColor: colors.surfaceContainer }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: `${colors.background}CC`, borderBottomColor: `${colors.outline}33` }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerSpacer} />
-          <Text style={styles.headerTitle}>Explore Garden</Text>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Explore Garden</Text>
           <TouchableOpacity 
             style={styles.notificationButton}
             onPress={() => router.push('/notifications')}
           >
-            <Bell color={PlantTheme.colors.onSurface} size={24} />
+            <Bell color={colors.onSurface} size={24} />
           </TouchableOpacity>
         </View>
         
-        <View style={styles.searchContainer}>
+        <View style={[styles.searchContainer, { backgroundColor: colors.surfaceVariant }]}>
           <Search 
-            color={PlantTheme.colors.onSurfaceVariant} 
+            color={colors.onSurfaceVariant} 
             size={20} 
             style={styles.searchIcon}
           />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.onSurface }]}
             placeholder="Search PlantSpace"
-            placeholderTextColor={PlantTheme.colors.onSurfaceVariant}
+            placeholderTextColor={colors.onSurfaceVariant}
             value={searchQuery}
             onChangeText={handleSearch}
           />
@@ -57,9 +58,9 @@ export default function DiscoverScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
       >
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateTitle}>Explore Garden</Text>
-          <Text style={styles.emptyStateText}>Discover trending topics, popular gardeners, and content tailored for you.</Text>
-          <Text style={styles.emptyStateSubtext}>Start by searching or browsing the garden!</Text>
+          <Text style={[styles.emptyStateTitle, { color: colors.onSurface }]}>Explore Garden</Text>
+          <Text style={[styles.emptyStateText, { color: colors.onSurfaceVariant }]}>Discover trending topics, popular gardeners, and content tailored for you.</Text>
+          <Text style={[styles.emptyStateSubtext, { color: colors.outline }]}>Start by searching or browsing the garden!</Text>
         </View>
       </ScrollView>
     </View>
@@ -69,14 +70,11 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PlantTheme.colors.surfaceContainer,
   },
   header: {
     paddingHorizontal: 16,
     paddingBottom: 16,
-    backgroundColor: 'rgba(246, 248, 246, 0.8)',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(114, 121, 114, 0.2)',
   },
   headerContent: {
     flexDirection: 'row',
@@ -90,7 +88,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: PlantTheme.colors.onSurface,
   },
   notificationButton: {
     width: 40,
@@ -101,8 +98,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(226, 226, 226, 0.5)',
-    borderRadius: PlantTheme.borderRadius.full,
+    borderRadius: 9999,
     height: 48,
     paddingHorizontal: 16,
   },
@@ -112,7 +108,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: PlantTheme.colors.onSurface,
   },
   scrollView: {
     flex: 1,
@@ -130,20 +125,17 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: PlantTheme.colors.onSurface,
     marginBottom: 12,
     textAlign: 'center',
   },
   emptyStateText: {
     fontSize: 16,
-    color: PlantTheme.colors.onSurfaceVariant,
     textAlign: 'center',
     marginBottom: 8,
     lineHeight: 24,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: PlantTheme.colors.outline,
     textAlign: 'center',
   },
 });

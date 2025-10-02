@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  useColorScheme,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
@@ -13,9 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Search, Bell } from 'lucide-react-native';
 import { Image } from 'expo-image';
-import { PlantTheme } from '@/constants/theme';
 import { router } from 'expo-router';
 import { trpc } from '@/lib/trpc';
+import { useTheme } from '@/hooks/use-theme';
 
 type Conversation = {
   id: string;
@@ -42,8 +41,7 @@ type TabType = 'previous' | 'new';
 
 export default function LeavesScreen() {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('previous');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -67,38 +65,31 @@ export default function LeavesScreen() {
   const conversations: Conversation[] = conversationsQuery.data?.conversations || [];
   const searchResults: SearchUser[] = searchUsersQuery.data?.users || [];
 
-  const backgroundColor = isDark ? '#112111' : '#f6f8f6';
-  const textColor = '#000000';
-  const secondaryTextColor = '#424842';
-  const containerBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
-  const searchBg = isDark ? 'rgba(23, 207, 23, 0.2)' : 'rgba(23, 207, 23, 0.1)';
-  const primaryColor = '#17cf17';
-
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={[PlantTheme.colors.backgroundStart, PlantTheme.colors.backgroundEnd]}
+        colors={[colors.backgroundStart, colors.backgroundEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Text style={[styles.headerTitle, { color: textColor }]}>Leaves</Text>
+            <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Leaves</Text>
             <TouchableOpacity 
               style={styles.notificationButton}
               onPress={() => router.push('/notifications')}
             >
-              <Bell size={24} color={textColor} />
+              <Bell size={24} color={colors.onSurface} />
             </TouchableOpacity>
           </View>
           
-          <View style={[styles.searchContainer, { backgroundColor: searchBg }]}>
-            <Search size={20} color={primaryColor} style={styles.searchIcon} />
+          <View style={[styles.searchContainer, { backgroundColor: colors.surfaceVariant }]}>
+            <Search size={20} color={colors.primary} style={styles.searchIcon} />
             <TextInput
-              style={[styles.searchInput, { color: textColor }]}
+              style={[styles.searchInput, { color: colors.onSurface }]}
               placeholder={activeTab === 'previous' ? 'Search conversations' : 'Search users by name or username'}
-              placeholderTextColor={isDark ? 'rgba(23, 207, 23, 0.8)' : 'rgba(23, 207, 23, 0.8)'}
+              placeholderTextColor={colors.onSurfaceVariant}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -108,7 +99,8 @@ export default function LeavesScreen() {
             <TouchableOpacity
               style={[
                 styles.tab,
-                activeTab === 'previous' && [styles.activeTab, { backgroundColor: primaryColor }],
+                { backgroundColor: colors.surfaceVariant },
+                activeTab === 'previous' && [styles.activeTab, { backgroundColor: colors.primary }],
               ]}
               onPress={() => {
                 setActiveTab('previous');
@@ -118,7 +110,7 @@ export default function LeavesScreen() {
               <Text
                 style={[
                   styles.tabText,
-                  { color: activeTab === 'previous' ? '#fff' : textColor },
+                  { color: activeTab === 'previous' ? colors.white : colors.onSurface },
                 ]}
               >
                 Previous Chats
@@ -127,7 +119,8 @@ export default function LeavesScreen() {
             <TouchableOpacity
               style={[
                 styles.tab,
-                activeTab === 'new' && [styles.activeTab, { backgroundColor: primaryColor }],
+                { backgroundColor: colors.surfaceVariant },
+                activeTab === 'new' && [styles.activeTab, { backgroundColor: colors.primary }],
               ]}
               onPress={() => {
                 setActiveTab('new');
@@ -137,7 +130,7 @@ export default function LeavesScreen() {
               <Text
                 style={[
                   styles.tabText,
-                  { color: activeTab === 'new' ? '#fff' : textColor },
+                  { color: activeTab === 'new' ? colors.white : colors.onSurface },
                 ]}
               >
                 New Chats
@@ -154,15 +147,15 @@ export default function LeavesScreen() {
           {activeTab === 'previous' ? (
             conversationsQuery.isLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={primaryColor} />
+                <ActivityIndicator size="large" color={colors.primary} />
               </View>
             ) : conversations.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateEmoji}>💬</Text>
-                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                <Text style={[styles.emptyStateTitle, { color: colors.onSurface }]}>
                   No messages yet
                 </Text>
-                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                <Text style={[styles.emptyStateText, { color: colors.onSurfaceVariant }]}>
                   Start a conversation with someone from the community
                 </Text>
               </View>
@@ -177,7 +170,7 @@ export default function LeavesScreen() {
                 .map((conversation) => (
                   <TouchableOpacity 
                     key={conversation.id} 
-                    style={[styles.conversationItem, { backgroundColor: containerBg }]}
+                    style={[styles.conversationItem, { backgroundColor: colors.surfaceVariant }]}
                     activeOpacity={0.7}
                     onPress={() => router.push(`/chat?userId=${conversation.user.id}&name=${encodeURIComponent(conversation.user.name)}`)}
                   >
@@ -187,22 +180,22 @@ export default function LeavesScreen() {
                     />
                     <View style={styles.conversationContent}>
                       <View style={styles.conversationHeader}>
-                        <Text style={[styles.userName, { color: textColor }]}>
+                        <Text style={[styles.userName, { color: colors.onSurface }]}>
                           {conversation.user.name}
                         </Text>
-                        <Text style={[styles.timestamp, { color: secondaryTextColor }]}>
+                        <Text style={[styles.timestamp, { color: colors.onSurfaceVariant }]}>
                           {formatTimestamp(conversation.timestamp)}
                         </Text>
                       </View>
                       <Text 
-                        style={[styles.lastMessage, { color: secondaryTextColor }]}
+                        style={[styles.lastMessage, { color: colors.onSurfaceVariant }]}
                         numberOfLines={1}
                       >
                         {conversation.lastMessage}
                       </Text>
                     </View>
                     {conversation.unread && (
-                      <View style={[styles.unreadBadge, { backgroundColor: primaryColor }]} />
+                      <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]} />
                     )}
                   </TouchableOpacity>
                 ))
@@ -210,25 +203,25 @@ export default function LeavesScreen() {
           ) : (
             searchUsersQuery.isLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={primaryColor} />
+                <ActivityIndicator size="large" color={colors.primary} />
               </View>
             ) : searchQuery.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateEmoji}>🔍</Text>
-                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                <Text style={[styles.emptyStateTitle, { color: colors.onSurface }]}>
                   Search for users
                 </Text>
-                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                <Text style={[styles.emptyStateText, { color: colors.onSurfaceVariant }]}>
                   Enter a name or username to find people to chat with
                 </Text>
               </View>
             ) : searchResults.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateEmoji}>😔</Text>
-                <Text style={[styles.emptyStateTitle, { color: textColor }]}>
+                <Text style={[styles.emptyStateTitle, { color: colors.onSurface }]}>
                   No users found
                 </Text>
-                <Text style={[styles.emptyStateText, { color: secondaryTextColor }]}>
+                <Text style={[styles.emptyStateText, { color: colors.onSurfaceVariant }]}>
                   Try searching with a different name or username
                 </Text>
               </View>
@@ -236,7 +229,7 @@ export default function LeavesScreen() {
               searchResults.map((user) => (
                 <TouchableOpacity 
                   key={user.id} 
-                  style={[styles.conversationItem, { backgroundColor: containerBg }]}
+                  style={[styles.conversationItem, { backgroundColor: colors.surfaceVariant }]}
                   activeOpacity={0.7}
                   onPress={() => router.push(`/chat?userId=${user.id}&name=${encodeURIComponent(user.name)}`)}
                 >
@@ -245,15 +238,15 @@ export default function LeavesScreen() {
                     style={styles.avatar}
                   />
                   <View style={styles.conversationContent}>
-                    <Text style={[styles.userName, { color: textColor }]}>
+                    <Text style={[styles.userName, { color: colors.onSurface }]}>
                       {user.name}
                     </Text>
-                    <Text style={[styles.username, { color: secondaryTextColor }]}>
+                    <Text style={[styles.username, { color: colors.onSurfaceVariant }]}>
                       @{user.username}
                     </Text>
                     {user.bio && (
                       <Text 
-                        style={[styles.bio, { color: secondaryTextColor }]}
+                        style={[styles.bio, { color: colors.onSurfaceVariant }]}
                         numberOfLines={1}
                       >
                         {user.bio}
@@ -381,10 +374,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 24,
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   activeTab: {
-    shadowColor: '#17cf17',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
