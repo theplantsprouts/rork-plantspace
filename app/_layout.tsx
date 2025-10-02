@@ -10,9 +10,7 @@ import { OfflineProvider } from "@/hooks/use-offline";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastContainer, AlertContainer } from "@/components/Toast";
-import { trpc } from "@/lib/trpc";
-import { httpBatchLink } from "@trpc/client";
-import superjson from "superjson";
+import { PlantTheme } from "@/constants/theme";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -30,27 +28,6 @@ const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
-});
-
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return '';
-  }
-  return `http://localhost:${process.env.PORT ?? 8081}`;
-};
-
-const trpcClient = trpc.createClient({
-  links: [
-    httpBatchLink({
-      url: `${getBaseUrl()}/api/trpc`,
-      transformer: superjson,
-      headers() {
-        return {
-          'Content-Type': 'application/json',
-        };
-      },
-    }),
-  ],
 });
 
 function RootLayoutNav() {
@@ -103,29 +80,6 @@ function RootLayoutNav() {
       <Stack.Screen name="post-detail" options={{ title: "Seed Details", headerShown: false }} />
       <Stack.Screen name="firebase-test" options={{ title: "Firebase Test" }} />
       <Stack.Screen name="debug" options={{ title: "Debug" }} />
-      <Stack.Screen name="chat" options={{ title: "Chat" }} />
-      <Stack.Screen name="settings" options={{ title: "Settings" }} />
-      <Stack.Screen name="saved-content" options={{ title: "Saved Content" }} />
-      <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
-      <Stack.Screen name="forgot-password" options={{ title: "Forgot Password", headerShown: false }} />
-      <Stack.Screen name="reset-email-sent" options={{ title: "Reset Email Sent", headerShown: false }} />
-      <Stack.Screen name="set-new-password" options={{ title: "Set New Password", headerShown: false }} />
-      <Stack.Screen name="password-reset-success" options={{ title: "Password Reset Success", headerShown: false }} />
-      <Stack.Screen name="account-settings" options={{ title: "Account Settings" }} />
-      <Stack.Screen name="change-username" options={{ title: "Change Username" }} />
-      <Stack.Screen name="change-email" options={{ title: "Change Email" }} />
-      <Stack.Screen name="change-password" options={{ title: "Change Password" }} />
-      <Stack.Screen name="delete-account" options={{ title: "Delete Account" }} />
-      <Stack.Screen name="privacy-settings" options={{ title: "Privacy Settings" }} />
-      <Stack.Screen name="ad-preferences" options={{ title: "Ad Preferences" }} />
-      <Stack.Screen name="download-data" options={{ title: "Download Data" }} />
-      <Stack.Screen name="blocked-accounts" options={{ title: "Blocked Accounts" }} />
-      <Stack.Screen name="notification-preferences" options={{ title: "Notification Preferences" }} />
-      <Stack.Screen name="help-support" options={{ title: "Help & Support" }} />
-      <Stack.Screen name="report-problem" options={{ title: "Report Problem" }} />
-      <Stack.Screen name="about" options={{ title: "About" }} />
-      <Stack.Screen name="admin/index" options={{ title: "Admin Dashboard" }} />
-      <Stack.Screen name="admin/users" options={{ title: "User Management" }} />
       <Stack.Screen name="modal" options={{ presentation: "modal" }} />
     </Stack>
   );
@@ -164,23 +118,21 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <OfflineProvider>
-              <SettingsProvider>
-                <AppProvider>
-                  <GestureHandlerRootView style={styles.gestureHandler}>
-                    <AuthenticatedLayout />
-                    <ToastContainer />
-                    <AlertContainer />
-                  </GestureHandlerRootView>
-                </AppProvider>
-              </SettingsProvider>
-            </OfflineProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <OfflineProvider>
+            <SettingsProvider>
+              <AppProvider>
+                <GestureHandlerRootView style={styles.gestureHandler}>
+                  <AuthenticatedLayout />
+                  <ToastContainer />
+                  <AlertContainer />
+                </GestureHandlerRootView>
+              </AppProvider>
+            </SettingsProvider>
+          </OfflineProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }
