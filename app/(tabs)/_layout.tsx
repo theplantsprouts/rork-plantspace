@@ -205,13 +205,15 @@ function TabLayoutContent() {
                 backgroundColor: isDark 
                   ? 'rgba(26, 28, 26, 0.85)' 
                   : 'rgba(255, 255, 255, 0.85)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
                 borderWidth: 1,
                 borderColor: isDark 
                   ? 'rgba(123, 211, 137, 0.15)' 
                   : 'rgba(23, 207, 23, 0.15)',
-              }
+              },
+              Platform.OS === 'web' && {
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+              } as any
             ]}
           />
         ) : (
