@@ -1,13 +1,15 @@
-import { Tabs } from "expo-router";
+import { Tabs, usePathname } from "expo-router";
 import { Home, Compass, Plus, MessageCircle, User } from "lucide-react-native";
-import React, { useCallback, useMemo, useRef } from "react";
-import { Platform, Animated, View } from "react-native";
-import { PlantTheme } from "@/constants/theme";
+import React, { useCallback, useMemo, useRef, useEffect } from "react";
+import { Platform, Animated, View, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import createContextHook from '@nkzw/create-context-hook';
+import { useTheme } from '@/hooks/use-theme';
 
-// Create a context for tab bar animation
+const TAB_WIDTH = 64;
+const INDICATOR_PADDING = 8;
+
 const [TabBarProvider, useTabBar] = createContextHook(() => {
   const tabBarAnimation = useRef(new Animated.Value(0)).current;
   const lastScrollY = useRef(0);
@@ -17,25 +19,25 @@ const [TabBarProvider, useTabBar] = createContextHook(() => {
     const currentScrollY = event.nativeEvent.contentOffset.y;
     const scrollDiff = currentScrollY - lastScrollY.current;
     
-    // Only animate if scroll difference is significant and we're not at the top
     if (Math.abs(scrollDiff) > 10 && currentScrollY > 50) {
       const newDirection = scrollDiff > 0 ? 'down' : 'up';
       
       if (newDirection !== scrollDirection.current) {
         scrollDirection.current = newDirection;
         
-        Animated.timing(tabBarAnimation, {
+        Animated.spring(tabBarAnimation, {
           toValue: newDirection === 'down' ? 100 : 0,
-          duration: 300,
           useNativeDriver: true,
+          damping: 20,
+          stiffness: 90,
         }).start();
       }
     } else if (currentScrollY <= 50) {
-      // Always show tab bar when near the top
-      Animated.timing(tabBarAnimation, {
+      Animated.spring(tabBarAnimation, {
         toValue: 0,
-        duration: 300,
         useNativeDriver: true,
+        damping: 20,
+        stiffness: 90,
       }).start();
     }
     
@@ -61,208 +63,189 @@ export default function TabLayout() {
 
 function TabLayoutContent() {
   const { tabBarAnimation } = useTabBar();
+  const { colors, isDark } = useTheme();
+  const pathname = usePathname();
+  const indicatorAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnims = useRef([0, 1, 2, 3].map(() => new Animated.Value(1))).current;
 
-  const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, label: string, isCreateButton: boolean = false) => {
+  const tabs = useMemo(() => [
+    { name: 'home', icon: Home, route: '/home' },
+    { name: 'discover', icon: Compass, route: '/discover' },
+    { name: 'leaves', icon: MessageCircle, route: '/leaves' },
+    { name: 'profile', icon: User, route: '/profile' },
+  ], []);
+
+  const activeIndex = useMemo(() => {
+    const index = tabs.findIndex(tab => pathname === tab.route);
+    return index >= 0 ? index : 0;
+  }, [pathname, tabs]);
+
+  useEffect(() => {
+    Animated.spring(indicatorAnim, {
+      toValue: activeIndex,
+      useNativeDriver: true,
+      damping: 18,
+      stiffness: 120,
+      mass: 0.8,
+    }).start();
+  }, [activeIndex, indicatorAnim]);
+
+  const createTabIcon = useCallback((IconComponent: React.ComponentType<{ color: string; size: number }>, index: number) => {
     const TabIcon = ({ focused }: { color: string; size: number; focused: boolean }) => {
-      if (isCreateButton) {
-        return (
-          <View style={{
-            width: 70,
-            height: 70,
-            borderRadius: 35,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 0,
-            overflow: 'hidden',
-            ...Platform.select({
-              ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.05,
-                shadowRadius: 12,
-              },
-              android: {
-                elevation: 4,
-              },
-              web: {
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-              },
-            }),
-          }}>
-            {Platform.OS === 'web' ? (
-              <View style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(135deg, rgba(128, 255, 0, 0.6), rgba(0, 255, 128, 0.6))',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-              }} />
-            ) : (
-              <BlurView
-                intensity={80}
-                tint="light"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                }}
-              >
-                <LinearGradient
-                  colors={['rgba(128, 255, 0, 0.6)', 'rgba(0, 255, 128, 0.6)']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                  }}
-                />
-              </BlurView>
-            )}
-            <View style={{
-              borderWidth: 1,
-              borderColor: 'rgba(255, 255, 255, 0.4)',
-              borderRadius: 35,
-              width: '100%',
-              height: '100%',
-              position: 'absolute',
-            }} />
-            <IconComponent 
-              color="#000000" 
-              size={36} 
-            />
-          </View>
-        );
-      }
-      
+      useEffect(() => {
+        Animated.spring(scaleAnims[index], {
+          toValue: focused ? 1.1 : 1,
+          useNativeDriver: true,
+          damping: 12,
+          stiffness: 150,
+        }).start();
+      }, [focused]);
+
       return (
-        <View style={{
-          width: 48,
-          height: 48,
+        <Animated.View style={{
+          transform: [{ scale: scaleAnims[index] }],
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 24,
-          backgroundColor: focused ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
         }}>
           <IconComponent 
-            color={focused ? '#222222' : '#555555'} 
-            size={28} 
+            color={focused ? colors.primary : colors.onSurfaceVariant} 
+            size={24} 
           />
-        </View>
+        </Animated.View>
       );
     };
-    TabIcon.displayName = `TabIcon_${label}`;
+    TabIcon.displayName = `TabIcon_${index}`;
     return TabIcon;
-  }, []);
+  }, [colors, scaleAnims]);
 
   const renderHomeIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Home, 'Home')(props), [createTabIcon]);
+    createTabIcon(Home, 0)(props), [createTabIcon]);
 
   const renderExploreIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Compass, 'Explore')(props), [createTabIcon]);
+    createTabIcon(Compass, 1)(props), [createTabIcon]);
 
   const renderMessageIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(MessageCircle, 'Message')(props), [createTabIcon]);
+    createTabIcon(MessageCircle, 2)(props), [createTabIcon]);
 
   const renderProfileIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(User, 'Profile')(props), [createTabIcon]);
+    createTabIcon(User, 3)(props), [createTabIcon]);
 
-  const renderCreateIcon = useCallback((props: { color: string; size: number; focused: boolean }) => 
-    createTabIcon(Plus, 'Create', true)(props), [createTabIcon]);
+  const renderCreateIcon = useCallback(() => {
+    return (
+      <View style={styles.fabContainer}>
+        <LinearGradient
+          colors={[colors.primary, colors.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.fab}
+        >
+          <Plus color={isDark ? colors.surface : colors.white} size={28} strokeWidth={2.5} />
+        </LinearGradient>
+      </View>
+    );
+  }, [colors, isDark]);
   
-  const tabBarStyle = useMemo(() => {
-    return {
-      position: 'absolute' as const,
-      bottom: Platform.OS === 'ios' ? 20 : 16,
-      left: 16,
-      right: 16,
-      height: 72,
-      borderRadius: 50,
-      paddingBottom: 0,
-      paddingTop: 0,
-      paddingHorizontal: 12,
-      transform: [{ translateY: tabBarAnimation }],
-      backgroundColor: 'transparent',
-      borderWidth: 0,
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 12,
-        },
-        android: {
-          elevation: 4,
-        },
-        web: {
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-        },
-      }),
-    };
-  }, [tabBarAnimation]);
-  
-  // Tab bar animation is now controlled by the context
+  const indicatorTranslateX = indicatorAnim.interpolate({
+    inputRange: [0, 1, 2, 3],
+    outputRange: [INDICATOR_PADDING, TAB_WIDTH + INDICATOR_PADDING, TAB_WIDTH * 2 + INDICATOR_PADDING, TAB_WIDTH * 3 + INDICATOR_PADDING],
+  });
+
+  const tabBarStyle = useMemo(() => ({
+    position: 'absolute' as const,
+    bottom: Platform.OS === 'ios' ? 24 : 20,
+    left: 20,
+    right: 20,
+    height: 68,
+    borderRadius: 34,
+    paddingBottom: 0,
+    paddingTop: 0,
+    paddingHorizontal: 0,
+    transform: [{ translateY: tabBarAnimation }],
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.black,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: isDark ? 0.4 : 0.12,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.12)',
+      },
+    }),
+  }), [tabBarAnimation, colors, isDark]);
   
   const screenOptions = useMemo(() => ({
     headerShown: false,
     tabBarStyle,
-    tabBarActiveTintColor: PlantTheme.colors.primary,
-    tabBarInactiveTintColor: PlantTheme.colors.textSecondary,
+    tabBarActiveTintColor: colors.primary,
+    tabBarInactiveTintColor: colors.onSurfaceVariant,
     tabBarShowLabel: false,
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 12,
-      paddingHorizontal: 4,
+      paddingVertical: 0,
+      paddingHorizontal: 0,
       justifyContent: 'center',
       alignItems: 'center',
-      height: 72,
+      height: 68,
+      width: TAB_WIDTH,
     },
     tabBarBackground: () => (
-      Platform.OS === 'web' ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 90,
-            bottom: 0,
-            borderRadius: 50,
-            overflow: 'hidden',
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.3)',
-          }}
+      <View style={styles.tabBarContainer}>
+        {Platform.OS === 'web' ? (
+          <View
+            style={[
+              styles.tabBarBackground,
+              {
+                backgroundColor: isDark 
+                  ? 'rgba(26, 28, 26, 0.85)' 
+                  : 'rgba(255, 255, 255, 0.85)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderWidth: 1,
+                borderColor: isDark 
+                  ? 'rgba(123, 211, 137, 0.15)' 
+                  : 'rgba(23, 207, 23, 0.15)',
+              }
+            ]}
+          />
+        ) : (
+          <BlurView
+            intensity={isDark ? 60 : 80}
+            tint={isDark ? 'dark' : 'light'}
+            style={[
+              styles.tabBarBackground,
+              {
+                backgroundColor: isDark 
+                  ? 'rgba(26, 28, 26, 0.7)' 
+                  : 'rgba(255, 255, 255, 0.7)',
+                borderWidth: 1,
+                borderColor: isDark 
+                  ? 'rgba(123, 211, 137, 0.15)' 
+                  : 'rgba(23, 207, 23, 0.15)',
+              }
+            ]}
+          />
+        )}
+        <Animated.View
+          style={[
+            styles.activeIndicator,
+            {
+              backgroundColor: isDark 
+                ? 'rgba(123, 211, 137, 0.2)' 
+                : 'rgba(23, 207, 23, 0.12)',
+              transform: [{ translateX: indicatorTranslateX }],
+            }
+          ]}
         />
-      ) : (
-        <BlurView
-          intensity={80}
-          tint="light"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 90,
-            bottom: 0,
-            borderRadius: 50,
-            overflow: 'hidden',
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.3)',
-          }}
-        />
-      )
+      </View>
     ),
-  }), [tabBarStyle]);
+  }), [tabBarStyle, colors, isDark, indicatorTranslateX]);
 
   return (
     <Tabs screenOptions={screenOptions}>
@@ -309,3 +292,55 @@ function TabLayoutContent() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBarContainer: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: 34,
+  },
+  tabBarBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 34,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  fabContainer: {
+    width: 64,
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+      },
+    }),
+  },
+});
