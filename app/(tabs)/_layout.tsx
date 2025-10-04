@@ -106,6 +106,8 @@ function TabLayoutContent() {
           transform: [{ scale: scaleAnims[index] }],
           alignItems: 'center',
           justifyContent: 'center',
+          width: 48,
+          height: 48,
         }}>
           <IconComponent 
             color={focused ? colors.primary : colors.onSurfaceVariant} 
@@ -139,7 +141,7 @@ function TabLayoutContent() {
           end={{ x: 1, y: 1 }}
           style={styles.fab}
         >
-          <Plus color={isDark ? colors.surface : colors.white} size={28} strokeWidth={2.5} />
+          <Plus color={isDark ? colors.surface : colors.white} size={26} strokeWidth={2.5} />
         </LinearGradient>
       </View>
     );
@@ -152,11 +154,11 @@ function TabLayoutContent() {
 
   const tabBarStyle = useMemo(() => ({
     position: 'absolute' as const,
-    bottom: Platform.OS === 'ios' ? 24 : 20,
-    left: 20,
-    right: 20,
-    height: 68,
-    borderRadius: 34,
+    bottom: Platform.OS === 'ios' ? 20 : 16,
+    left: 16,
+    right: 16,
+    height: 64,
+    borderRadius: 32,
     paddingBottom: 0,
     paddingTop: 0,
     paddingHorizontal: 0,
@@ -190,9 +192,10 @@ function TabLayoutContent() {
     tabBarItemStyle: {
       paddingVertical: 0,
       paddingHorizontal: 0,
+      margin: 0,
       justifyContent: 'center',
       alignItems: 'center',
-      height: 68,
+      height: 64,
       width: TAB_WIDTH,
     },
     tabBarBackground: () => (
@@ -299,7 +302,7 @@ const styles = StyleSheet.create({
   tabBarContainer: {
     flex: 1,
     overflow: 'hidden',
-    borderRadius: 34,
+    borderRadius: 32,
   },
   tabBarBackground: {
     position: 'absolute',
@@ -307,11 +310,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 34,
+    borderRadius: 32,
   },
   activeIndicator: {
     position: 'absolute',
-    top: 10,
+    top: 8,
     left: 0,
     width: 48,
     height: 48,
@@ -322,12 +325,11 @@ const styles = StyleSheet.create({
     height: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
   fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
