@@ -4,37 +4,22 @@ import { LightTheme, DarkTheme } from '@/constants/theme';
 import { useSettings } from './use-settings';
 
 export const [ThemeProvider, useTheme] = createContextHook(() => {
-  const { settings, isLoading: settingsLoading } = useSettings();
+  const { settings, isLoading } = useSettings();
   const [isDark, setIsDark] = useState(false);
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (!settingsLoading) {
-      if (settings?.app?.darkMode !== undefined) {
-        setIsDark(settings.app.darkMode);
-      }
-      setIsReady(true);
+    if (!isLoading && settings?.app?.darkMode !== undefined) {
+      setIsDark(settings.app.darkMode);
     }
-  }, [settings?.app?.darkMode, settingsLoading]);
+  }, [settings?.app?.darkMode, isLoading]);
 
   const theme = useMemo(() => {
     return isDark ? DarkTheme : LightTheme;
   }, [isDark]);
 
-  const colors = useMemo(() => theme.colors, [theme]);
-  const spacing = useMemo(() => theme.spacing, [theme]);
-  const borderRadius = useMemo(() => theme.borderRadius, [theme]);
-  const elevation = useMemo(() => theme.elevation, [theme]);
-  const shadows = useMemo(() => theme.shadows, [theme]);
-
   return useMemo(() => ({
     theme,
     isDark,
-    colors,
-    spacing,
-    borderRadius,
-    elevation,
-    shadows,
-    isLoading: !isReady,
-  }), [theme, isDark, colors, spacing, borderRadius, elevation, shadows, isReady]);
+    colors: theme.colors,
+  }), [theme, isDark]);
 });
