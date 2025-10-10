@@ -69,29 +69,29 @@ function TabLayoutContent() {
         return (
           <View style={{
             width: 64,
-            height: 64,
+            height: 80,
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: -32,
             overflow: 'visible',
           }}>
             <View style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
+              width: 56,
+              height: 56,
+              borderRadius: 28,
               overflow: 'hidden',
+              marginTop: -8,
               ...Platform.select({
                 ios: {
                   shadowColor: PlantTheme.colors.primary,
-                  shadowOffset: { width: 0, height: 8 },
+                  shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.3,
-                  shadowRadius: 16,
+                  shadowRadius: 12,
                 },
                 android: {
-                  elevation: 8,
+                  elevation: 6,
                 },
                 web: {
-                  boxShadow: `0 8px 24px ${PlantTheme.colors.primary}40`,
+                  boxShadow: `0 4px 16px ${PlantTheme.colors.primary}50`,
                 },
               }),
             }}>
@@ -126,24 +126,24 @@ function TabLayoutContent() {
               }}>
                 <IconComponent 
                   color="#FFFFFF" 
-                  size={32} 
+                  size={28} 
                 />
               </View>
             </View>
             <View style={{
               position: 'absolute',
-              top: -4,
-              right: -4,
-              width: 20,
-              height: 20,
-              borderRadius: 10,
+              top: 8,
+              right: 4,
+              width: 18,
+              height: 18,
+              borderRadius: 9,
               backgroundColor: PlantTheme.colors.accent,
               alignItems: 'center',
               justifyContent: 'center',
               borderWidth: 2,
               borderColor: '#FFFFFF',
             }}>
-              <Leaf color="#FFFFFF" size={12} />
+              <Leaf color="#FFFFFF" size={10} />
             </View>
           </View>
         );
@@ -151,27 +151,27 @@ function TabLayoutContent() {
       
       return (
         <View style={{
+          width: '100%',
+          height: 80,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingVertical: 8,
         }}>
           <View style={{
-            width: 56,
-            height: 56,
+            width: 48,
+            height: 48,
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 28,
+            borderRadius: 24,
             backgroundColor: focused ? `${PlantTheme.colors.primary}15` : 'transparent',
-            transform: [{ scale: focused ? 1 : 0.9 }],
           }}>
             <IconComponent 
               color={focused ? PlantTheme.colors.primary : PlantTheme.colors.textSecondary} 
-              size={focused ? 28 : 24} 
+              size={24} 
             />
           </View>
           {focused && (
             <View style={{
-              width: 32,
+              width: 4,
               height: 4,
               borderRadius: 2,
               backgroundColor: PlantTheme.colors.primary,
@@ -333,8 +333,8 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 0,
-      paddingHorizontal: 0,
+      padding: 0,
+      margin: 0,
       justifyContent: 'center',
       alignItems: 'center',
       height: 80,
