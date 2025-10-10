@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import { Home, Compass, Plus, MessageCircle, User, Leaf } from "lucide-react-native";
 import React, { useCallback, useMemo, useRef } from "react";
-import { Platform, Animated, View } from "react-native";
+import { Platform, Animated, View, Text } from "react-native";
 import { PlantTheme } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -200,7 +200,7 @@ function TabLayoutContent() {
         }}>
           <View style={{
             width: 64,
-            height: 48,
+            height: 56,
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 24,
@@ -217,10 +217,22 @@ function TabLayoutContent() {
                 opacity: 0.12,
               }} />
             )}
-            <IconComponent 
-              color={focused ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant} 
-              size={24} 
-            />
+            <View style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+            }}>
+              <IconComponent 
+                color={focused ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant} 
+                size={24} 
+              />
+              <Text style={{
+                fontSize: 8,
+                color: focused ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant,
+                opacity: 0.6,
+                fontWeight: '600' as const,
+              }}>•</Text>
+            </View>
           </View>
         </Animated.View>
       );
