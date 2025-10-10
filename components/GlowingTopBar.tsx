@@ -273,6 +273,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'transparent',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
       },
       android: {
-        elevation: 2,
+        elevation: 0,
       },
     }),
   },

@@ -36,9 +36,11 @@ function TabLayoutContent() {
     return 'home';
   }, [pathname]);
 
+  const isCreatePage = pathname.includes('/create');
+
   return (
     <View style={styles.container}>
-      <GlowingTopBar activeTab={activeTab} />
+      {!isCreatePage && <GlowingTopBar activeTab={activeTab} />}
       
       <SwipeableTabContainer>
         <Stack
@@ -81,7 +83,7 @@ function TabLayoutContent() {
         </Stack>
       </SwipeableTabContainer>
       
-      <FloatingCapsule />
+      {!isCreatePage && <FloatingCapsule />}
     </View>
   );
 }

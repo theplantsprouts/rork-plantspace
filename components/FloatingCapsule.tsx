@@ -86,13 +86,13 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
       icon: Bell,
       label: 'Notifications',
       onPress: () => handleMenuAction(() => router.push('/notifications')),
-      translateY: -140,
+      translateY: -200,
     },
     {
       icon: Bookmark,
       label: 'Bookmarks',
       onPress: () => handleMenuAction(() => router.push('/saved-content')),
-      translateY: -100,
+      translateY: -130,
     },
     {
       icon: Settings,
@@ -103,7 +103,12 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
   ];
 
   const menuItems = hideNotifications
-    ? allMenuItems.filter((item) => item.label !== 'Notifications')
+    ? allMenuItems
+        .filter((item) => item.label !== 'Notifications')
+        .map((item, index) => ({
+          ...item,
+          translateY: index === 0 ? -130 : -60,
+        }))
     : allMenuItems;
 
   return (
