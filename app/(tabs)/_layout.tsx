@@ -69,7 +69,6 @@ function TabLayoutContent() {
         return (
           <View style={{
             width: 64,
-            height: 80,
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'visible',
@@ -79,7 +78,7 @@ function TabLayoutContent() {
               height: 56,
               borderRadius: 28,
               overflow: 'hidden',
-              marginTop: -8,
+              marginTop: -12,
               ...Platform.select({
                 ios: {
                   shadowColor: PlantTheme.colors.primary,
@@ -151,8 +150,6 @@ function TabLayoutContent() {
       
       return (
         <View style={{
-          width: '100%',
-          height: 80,
           alignItems: 'center',
           justifyContent: 'center',
         }}>
@@ -337,7 +334,6 @@ function TabLayoutContent() {
       margin: 0,
       justifyContent: 'center',
       alignItems: 'center',
-      height: 80,
       flex: 1,
     },
     tabBarBackground: OrganicTabBarBackground,
