@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { X, Image as ImageIcon } from "lucide-react-native";
+import { Image as ImageIcon, X } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { usePosts } from "@/hooks/use-posts";
 import { router } from "expo-router";
@@ -93,25 +93,9 @@ export default function CreatePostScreen() {
     }
   }, [content, selectedImage, user, addPost]);
 
-  const handleClose = useCallback(() => {
-    router.back();
-  }, []);
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.topBar}>
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={handleClose}
-            testID="close-button"
-          >
-            <X size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.primary }]}>Plant Seed</Text>
-          <View style={{ width: 48 }} />
-        </View>
-
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -190,26 +174,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(23, 207, 23, 0.1)',
-  },
-  closeButton: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    letterSpacing: 0.5,
-  },
+
   scrollView: {
     flex: 1,
   },
