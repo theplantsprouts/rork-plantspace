@@ -404,8 +404,8 @@ function TabLayoutContent() {
       flex: 1,
       height: 80,
     },
-    tabBarBackground: OrganicTabBarBackground,
-  }), [tabBarStyle, OrganicTabBarBackground]);
+    tabBarBackground: () => <OrganicTabBarBackground />,
+  }), [tabBarStyle]);
 
   return (
     <Tabs screenOptions={screenOptions}>
