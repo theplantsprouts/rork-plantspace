@@ -80,7 +80,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="profile-setup" options={{ headerShown: false }} />
-      <Stack.Screen name="create-post" options={{ title: "Create Post" }} />
+      <Stack.Screen name="create-post" options={{ headerShown: false }} />
       <Stack.Screen name="post-detail" options={{ title: "Seed Details", headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
     </Stack>
