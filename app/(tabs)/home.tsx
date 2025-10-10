@@ -219,7 +219,11 @@ const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, 
         <Text style={[styles.postText, { color: colors.onSurfaceVariant }]}>{post.content}</Text>
       </View>
       <View style={[styles.postActions, { borderTopColor: `${colors.outline}33` }]}>
-        <TouchableOpacity style={styles.actionButton} onPress={onLike}>
+        <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: `${colors.surfaceVariant}80` }]} 
+          onPress={onLike}
+          activeOpacity={0.7}
+        >
           <View style={styles.actionIconContainer}>
             <Sprout 
               size={20} 
@@ -229,13 +233,21 @@ const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, 
           </View>
           <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.likes}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={onComment}>
+        <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: `${colors.surfaceVariant}80` }]} 
+          onPress={onComment}
+          activeOpacity={0.7}
+        >
           <View style={styles.actionIconContainer}>
             <Leaf size={20} color={colors.onSurfaceVariant} />
           </View>
           <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.comments}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={onShare}>
+        <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: `${colors.surfaceVariant}80` }]} 
+          onPress={onShare}
+          activeOpacity={0.7}
+        >
           <View style={styles.actionIconContainer}>
             <Heading size={20} color={colors.onSurfaceVariant} />
           </View>
@@ -350,15 +362,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderTopWidth: 1,
-    paddingVertical: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    gap: 8,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    flex: 1,
+    minHeight: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   actionIconContainer: {
     width: 20,
