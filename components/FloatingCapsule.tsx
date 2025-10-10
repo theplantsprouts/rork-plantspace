@@ -246,7 +246,7 @@ export function FloatingCapsule() {
                   style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
                 />
               )}
-              <Plus size={28} color="#FFFFFF" strokeWidth={3} />
+              <Plus size={32} color="#FFFFFF" strokeWidth={3} />
             </TouchableOpacity>
           </Animated.View>
         </View>

@@ -104,19 +104,18 @@ export default function CreatePostScreen() {
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={[styles.header, { borderBottomColor: borderColor }]}>
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={handleClose}
-            testID="close-button"
-          >
-            <X size={24} color={textColor} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: textColor }]}>Plant Seed</Text>
-          <View style={styles.headerSpacer} />
-        </View>
 
         <View style={styles.content}>
+          <View style={styles.topBar}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={handleClose}
+              testID="close-button"
+            >
+              <X size={24} color={textColor} />
+            </TouchableOpacity>
+            <View style={{ width: 24 }} />
+          </View>
           <View style={styles.postContainer}>
             <Image 
               source={{ uri: user?.avatar || 'https://via.placeholder.com/48' }} 
@@ -189,25 +188,15 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
+    paddingBottom: 16,
   },
   closeButton: {
-    padding: 0,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    textAlign: 'center',
-    flex: 1,
-  },
-  headerSpacer: {
-    width: 32,
+    padding: 8,
   },
   content: {
     flex: 1,
