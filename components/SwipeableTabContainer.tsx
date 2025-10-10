@@ -39,15 +39,21 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
     if (isAnimating.current) return;
 
     const currentIndex = getCurrentTabIndex();
-    let nextIndex = currentIndex;
+    let nextIndex = -1;
 
-    if (direction === 'left' && currentIndex < TAB_ORDER.length - 1) {
-      nextIndex = currentIndex + 1;
-    } else if (direction === 'right' && currentIndex > 0) {
-      nextIndex = currentIndex - 1;
+    if (currentIndex === 0) {
+      if (direction === 'left') nextIndex = 1;
+    } else if (currentIndex === 1) {
+      if (direction === 'right') nextIndex = 0;
+      else if (direction === 'left') nextIndex = 2;
+    } else if (currentIndex === 2) {
+      if (direction === 'right') nextIndex = 1;
+      else if (direction === 'left') nextIndex = 3;
+    } else if (currentIndex === 3) {
+      if (direction === 'right') nextIndex = 2;
     }
 
-    if (nextIndex !== currentIndex) {
+    if (nextIndex !== -1 && nextIndex !== currentIndex) {
       isAnimating.current = true;
 
       if (Platform.OS !== 'web') {
@@ -106,7 +112,10 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
         const currentIndex = getCurrentTabIndex();
         const { dx } = gestureState;
 
-        if ((currentIndex === 0 && dx > 0) || (currentIndex === TAB_ORDER.length - 1 && dx < 0)) {
+        const canSwipeLeft = (currentIndex === 0) || (currentIndex === 1) || (currentIndex === 2);
+        const canSwipeRight = (currentIndex === 1) || (currentIndex === 2) || (currentIndex === 3);
+
+        if ((dx < 0 && !canSwipeLeft) || (dx > 0 && !canSwipeRight)) {
           translateX.setValue(dx * 0.2);
         } else {
           translateX.setValue(dx);
@@ -122,11 +131,21 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
         const shouldSwipe = Math.abs(dx) > SWIPE_THRESHOLD || Math.abs(vx) > SWIPE_VELOCITY_THRESHOLD;
 
         if (shouldSwipe) {
-          if (dx < 0 && currentIndex < TAB_ORDER.length - 1) {
-            navigateToTab('left');
-          } else if (dx > 0 && currentIndex > 0) {
-            navigateToTab('right');
-          } else {
+          let canNavigate = false;
+          
+          if (dx < 0) {
+            if (currentIndex === 0 || currentIndex === 1 || currentIndex === 2) {
+              canNavigate = true;
+              navigateToTab('left');
+            }
+          } else if (dx > 0) {
+            if (currentIndex === 1 || currentIndex === 2 || currentIndex === 3) {
+              canNavigate = true;
+              navigateToTab('right');
+            }
+          }
+          
+          if (!canNavigate) {
             Animated.spring(translateX, {
               toValue: 0,
               useNativeDriver: true,
