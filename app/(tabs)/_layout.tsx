@@ -1,11 +1,12 @@
 import { Tabs } from "expo-router";
-import { Home, Compass, Plus, MessageCircle, User } from "lucide-react-native";
+import { Home, Compass, Plus, MessageCircle, User, Leaf } from "lucide-react-native";
 import React, { useCallback, useMemo, useRef } from "react";
 import { Platform, Animated, View } from "react-native";
 import { PlantTheme } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import createContextHook from '@nkzw/create-context-hook';
+import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 
 // Create a context for tab bar animation
 const [TabBarProvider, useTabBar] = createContextHook(() => {
@@ -67,53 +68,45 @@ function TabLayoutContent() {
       if (isCreateButton) {
         return (
           <View style={{
-            width: 70,
-            height: 70,
-            borderRadius: 35,
+            width: 64,
+            height: 64,
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: 0,
-            overflow: 'hidden',
-            ...Platform.select({
-              ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.05,
-                shadowRadius: 12,
-              },
-              android: {
-                elevation: 4,
-              },
-              web: {
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-              },
-            }),
+            marginTop: -32,
+            overflow: 'visible',
           }}>
-            {Platform.OS === 'web' ? (
-              <View style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(135deg, rgba(128, 255, 0, 0.6), rgba(0, 255, 128, 0.6))',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-              }} />
-            ) : (
-              <BlurView
-                intensity={80}
-                tint="light"
-                style={{
+            <View style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              overflow: 'hidden',
+              ...Platform.select({
+                ios: {
+                  shadowColor: PlantTheme.colors.primary,
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 16,
+                },
+                android: {
+                  elevation: 8,
+                },
+                web: {
+                  boxShadow: `0 8px 24px ${PlantTheme.colors.primary}40`,
+                },
+              }),
+            }}>
+              {Platform.OS === 'web' ? (
+                <View style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   right: 0,
                   bottom: 0,
-                }}
-              >
+                  background: `linear-gradient(135deg, ${PlantTheme.colors.primary}, ${PlantTheme.colors.secondary})`,
+                }} />
+              ) : (
                 <LinearGradient
-                  colors={['rgba(128, 255, 0, 0.6)', 'rgba(0, 255, 128, 0.6)']}
+                  colors={[PlantTheme.colors.primary, PlantTheme.colors.secondary]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={{
@@ -124,37 +117,67 @@ function TabLayoutContent() {
                     bottom: 0,
                   }}
                 />
-              </BlurView>
-            )}
+              )}
+              <View style={{
+                width: '100%',
+                height: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <IconComponent 
+                  color="#FFFFFF" 
+                  size={32} 
+                />
+              </View>
+            </View>
             <View style={{
-              borderWidth: 1,
-              borderColor: 'rgba(255, 255, 255, 0.4)',
-              borderRadius: 35,
-              width: '100%',
-              height: '100%',
               position: 'absolute',
-            }} />
-            <IconComponent 
-              color="#000000" 
-              size={36} 
-            />
+              top: -4,
+              right: -4,
+              width: 20,
+              height: 20,
+              borderRadius: 10,
+              backgroundColor: PlantTheme.colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 2,
+              borderColor: '#FFFFFF',
+            }}>
+              <Leaf color="#FFFFFF" size={12} />
+            </View>
           </View>
         );
       }
       
       return (
         <View style={{
-          width: 48,
-          height: 48,
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 24,
-          backgroundColor: focused ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
+          paddingVertical: 8,
         }}>
-          <IconComponent 
-            color={focused ? '#222222' : '#555555'} 
-            size={28} 
-          />
+          <View style={{
+            width: 56,
+            height: 56,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 28,
+            backgroundColor: focused ? `${PlantTheme.colors.primary}15` : 'transparent',
+            transform: [{ scale: focused ? 1 : 0.9 }],
+          }}>
+            <IconComponent 
+              color={focused ? PlantTheme.colors.primary : PlantTheme.colors.textSecondary} 
+              size={focused ? 28 : 24} 
+            />
+          </View>
+          {focused && (
+            <View style={{
+              width: 32,
+              height: 4,
+              borderRadius: 2,
+              backgroundColor: PlantTheme.colors.primary,
+              marginTop: 4,
+            }} />
+          )}
         </View>
       );
     };
@@ -180,29 +203,29 @@ function TabLayoutContent() {
   const tabBarStyle = useMemo(() => {
     return {
       position: 'absolute' as const,
-      bottom: Platform.OS === 'ios' ? 20 : 16,
-      left: 16,
-      right: 16,
-      height: 72,
-      borderRadius: 50,
+      bottom: Platform.OS === 'ios' ? 24 : 20,
+      left: 20,
+      right: 20,
+      height: 80,
+      borderRadius: 40,
       paddingBottom: 0,
       paddingTop: 0,
-      paddingHorizontal: 12,
+      paddingHorizontal: 8,
       transform: [{ translateY: tabBarAnimation }],
       backgroundColor: 'transparent',
       borderWidth: 0,
       ...Platform.select({
         ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 12,
+          shadowColor: PlantTheme.colors.primary,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 24,
         },
         android: {
-          elevation: 4,
+          elevation: 8,
         },
         web: {
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+          boxShadow: `0 8px 32px ${PlantTheme.colors.primary}20`,
         },
       }),
     };
@@ -210,6 +233,97 @@ function TabLayoutContent() {
   
   // Tab bar animation is now controlled by the context
   
+  const OrganicTabBarBackground = useCallback(() => (
+    <View style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      overflow: 'hidden',
+      borderRadius: 40,
+    }}>
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 400 80"
+        preserveAspectRatio="none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+      >
+        <Defs>
+          <SvgLinearGradient id="tabBarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor={PlantTheme.colors.primary} stopOpacity="0.08" />
+            <Stop offset="50%" stopColor={PlantTheme.colors.secondary} stopOpacity="0.05" />
+            <Stop offset="100%" stopColor={PlantTheme.colors.tertiary} stopOpacity="0.08" />
+          </SvgLinearGradient>
+        </Defs>
+        <Path
+          d="M0,20 Q50,10 100,15 T200,20 Q250,25 300,15 T400,20 L400,80 L0,80 Z"
+          fill="url(#tabBarGradient)"
+        />
+      </Svg>
+      {Platform.OS === 'web' ? (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
+            borderWidth: 1.5,
+            borderColor: `${PlantTheme.colors.primary}30`,
+            borderRadius: 40,
+          }}
+        />
+      ) : (
+        <BlurView
+          intensity={100}
+          tint="light"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            borderWidth: 1.5,
+            borderColor: `${PlantTheme.colors.primary}30`,
+            borderRadius: 40,
+          }}
+        />
+      )}
+      <View style={{
+        position: 'absolute',
+        top: 8,
+        left: 20,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: `${PlantTheme.colors.primary}10`,
+        opacity: 0.5,
+      }} />
+      <View style={{
+        position: 'absolute',
+        bottom: 12,
+        right: 30,
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: `${PlantTheme.colors.secondary}10`,
+        opacity: 0.5,
+      }} />
+    </View>
+  ), []);
+
   const screenOptions = useMemo(() => ({
     headerShown: false,
     tabBarStyle,
@@ -219,50 +333,15 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 12,
-      paddingHorizontal: 4,
+      paddingVertical: 0,
+      paddingHorizontal: 0,
       justifyContent: 'center',
       alignItems: 'center',
-      height: 72,
+      height: 80,
+      flex: 1,
     },
-    tabBarBackground: () => (
-      Platform.OS === 'web' ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 90,
-            bottom: 0,
-            borderRadius: 50,
-            overflow: 'hidden',
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.3)',
-          }}
-        />
-      ) : (
-        <BlurView
-          intensity={80}
-          tint="light"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 90,
-            bottom: 0,
-            borderRadius: 50,
-            overflow: 'hidden',
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.3)',
-          }}
-        />
-      )
-    ),
-  }), [tabBarStyle]);
+    tabBarBackground: OrganicTabBarBackground,
+  }), [tabBarStyle, OrganicTabBarBackground]);
 
   return (
     <Tabs screenOptions={screenOptions}>
