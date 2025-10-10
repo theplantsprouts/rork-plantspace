@@ -27,7 +27,7 @@ const [TabBarProvider, useTabBar] = createContextHook(() => {
         
         Animated.timing(tabBarAnimation, {
           toValue: newDirection === 'down' ? 100 : 0,
-          duration: 300,
+          duration: 200,
           useNativeDriver: true,
         }).start();
       }
@@ -35,7 +35,7 @@ const [TabBarProvider, useTabBar] = createContextHook(() => {
       // Always show tab bar when near the top
       Animated.timing(tabBarAnimation, {
         toValue: 0,
-        duration: 300,
+        duration: 200,
         useNativeDriver: true,
       }).start();
     }
@@ -73,12 +73,12 @@ function TabLayoutContent() {
           Animated.spring(scaleAnim, {
             toValue: focused ? 1 : 0.9,
             useNativeDriver: true,
-            tension: 50,
-            friction: 7,
+            tension: 80,
+            friction: 8,
           }),
           Animated.timing(rotateAnim, {
             toValue: focused ? 1 : 0,
-            duration: 400,
+            duration: 250,
             useNativeDriver: true,
           }),
         ]).start();
@@ -278,24 +278,6 @@ function TabLayoutContent() {
   // Tab bar animation is now controlled by the context
   
   const OrganicTabBarBackground = React.memo(() => {
-    const pulseAnim = useRef(new Animated.Value(0)).current;
-    
-    React.useEffect(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 3000,
-            useNativeDriver: false,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 0,
-            duration: 3000,
-            useNativeDriver: false,
-          }),
-        ])
-      ).start();
-    }, [pulseAnim]);
     
     return (
       <View style={{

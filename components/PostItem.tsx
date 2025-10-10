@@ -163,8 +163,8 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
               style={styles.avatarImage}
               contentFit="cover"
               cachePolicy="memory-disk"
-              transition={100}
-              priority="high"
+              transition={0}
+              priority="low"
               recyclingKey={post.user.avatar}
             />
           ) : (
@@ -211,11 +211,10 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
           source={{ uri: post.image }}
           style={styles.image}
           contentFit="cover"
-          transition={Platform.OS === 'web' ? 0 : 200}
+          transition={0}
           cachePolicy="memory-disk"
-          priority="high"
+          priority="normal"
           recyclingKey={post.image}
-          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
         />
       )}
 

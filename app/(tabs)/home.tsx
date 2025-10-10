@@ -46,7 +46,7 @@ export default function HomeScreen() {
   }, [toggleLike]);
 
   const memoizedPosts = useMemo(() => {
-    return Platform.OS === 'web' ? posts : posts.slice(0, 50);
+    return posts;
   }, [posts]);
 
   return (
@@ -170,51 +170,18 @@ interface PostCardProps {
 }
 
 const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, onComment, onShare }) => {
-  const { isDark } = useTheme();
-  
   return (
-    <View style={styles.postCard}>
-      {Platform.OS === 'web' ? (
-        <View style={[
-          StyleSheet.absoluteFill,
-          { 
-            backgroundColor: colors.glassBackground,
-            backdropFilter: 'blur(24px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-            borderRadius: 24,
-            borderWidth: 1,
-            borderColor: colors.glassBorder,
-          } as any
-        ]} />
-      ) : (
-        <>
-          <BlurView
-            intensity={isDark ? 70 : 50}
-            tint={isDark ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={[
-            StyleSheet.absoluteFill,
-            { 
-              backgroundColor: colors.glassBackground,
-              borderRadius: 24,
-              borderWidth: 1,
-              borderColor: colors.glassBorder,
-            }
-          ]} />
-        </>
-      )}
+    <View style={[styles.postCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
       <View style={styles.postCardContent}>
       {post.image && (
         <Image
           source={{ uri: post.image }}
           style={styles.postImage}
           contentFit="cover"
-          transition={200}
+          transition={100}
           cachePolicy="memory-disk"
-          priority="high"
+          priority="normal"
           recyclingKey={post.image}
-          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
         />
       )}
       <View style={styles.postContent}>
@@ -226,7 +193,7 @@ const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, 
                 style={styles.avatar}
                 contentFit="cover"
                 cachePolicy="memory-disk"
-                priority="high"
+                priority="low"
                 recyclingKey={post.user.avatar}
               />
             ) : (
@@ -323,7 +290,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginBottom: 16,
     overflow: 'hidden',
-    position: 'relative',
+    borderWidth: 1,
     ...shadows.sm,
   },
   postCardContent: {

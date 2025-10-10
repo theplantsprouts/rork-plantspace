@@ -48,11 +48,11 @@ function VirtualizedList<T>({
   );
   
   const initialNumToRender = useMemo(() => {
-    return Math.min(Math.ceil(screenHeight / estimatedItemSize) + 2, 10);
+    return Math.min(Math.ceil(screenHeight / estimatedItemSize) + 1, 8);
   }, [screenHeight, estimatedItemSize]);
   
-  const maxToRenderPerBatch = Platform.OS === 'web' ? 5 : 10;
-  const windowSize = Platform.OS === 'web' ? 3 : 5;
+  const maxToRenderPerBatch = Platform.OS === 'web' ? 3 : 5;
+  const windowSize = Platform.OS === 'web' ? 2 : 3;
 
   // Custom pull-to-refresh implementation would go here
   // For now, we'll handle refresh through onEndReached or external controls
@@ -77,12 +77,12 @@ function VirtualizedList<T>({
       ListFooterComponent={ListFooterComponent}
       ListEmptyComponent={ListEmptyComponent}
       getItemLayout={getItemLayout}
-      removeClippedSubviews={true}
+      removeClippedSubviews={Platform.OS !== 'web'}
       maxToRenderPerBatch={maxToRenderPerBatch}
-      updateCellsBatchingPeriod={Platform.OS === 'web' ? 100 : 50}
+      updateCellsBatchingPeriod={50}
       initialNumToRender={initialNumToRender}
       windowSize={windowSize}
-      disableVirtualization={Platform.OS === 'web' && data.length < 20}
+      disableVirtualization={false}
       showsVerticalScrollIndicator={false}
       testID={testID}
       style={styles.container}
