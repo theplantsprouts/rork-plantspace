@@ -14,7 +14,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
-export function FloatingCapsule() {
+interface FloatingCapsuleProps {
+  hideNotifications?: boolean;
+}
+
+export function FloatingCapsule({ hideNotifications = false }: FloatingCapsuleProps) {
   const { colors, isDark } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuAnim = useRef(new Animated.Value(0)).current;
@@ -77,7 +81,7 @@ export function FloatingCapsule() {
     outputRange: ['0deg', '135deg'],
   });
 
-  const menuItems = [
+  const allMenuItems = [
     {
       icon: Bell,
       label: 'Notifications',
@@ -97,6 +101,10 @@ export function FloatingCapsule() {
       translateY: -60,
     },
   ];
+
+  const menuItems = hideNotifications
+    ? allMenuItems.filter((item) => item.label !== 'Notifications')
+    : allMenuItems;
 
   return (
     <>

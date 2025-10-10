@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Alert,
   Platform,
-  useColorScheme,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -17,13 +17,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePosts } from "@/hooks/use-posts";
 import { router } from "expo-router";
 import { PlantTheme } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { FloatingCapsule } from "@/components/FloatingCapsule";
 
 export default function CreatePostScreen() {
   const [content, setContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors } = useTheme();
   
   const { user } = useAuth();
   const { addPost } = usePosts();
@@ -96,26 +97,26 @@ export default function CreatePostScreen() {
     router.back();
   }, []);
 
-  const bgColor = isDark ? '#112111' : '#f6f8f6';
-  const textColor = isDark ? '#ffffff' : '#000000';
-  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)';
-  const borderColor = isDark ? 'rgba(23, 207, 23, 0.5)' : 'rgba(23, 207, 23, 0.3)';
-
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.topBar}>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={handleClose}
+            testID="close-button"
+          >
+            <X size={24} color={colors.onSurface} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.primary }]}>Plant Seed</Text>
+          <View style={{ width: 48 }} />
+        </View>
 
-        <View style={styles.content}>
-          <View style={styles.topBar}>
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={handleClose}
-              testID="close-button"
-            >
-              <X size={24} color={textColor} />
-            </TouchableOpacity>
-            <View style={{ width: 24 }} />
-          </View>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.postContainer}>
             <Image 
               source={{ uri: user?.avatar || 'https://via.placeholder.com/48' }} 
@@ -126,15 +127,15 @@ export default function CreatePostScreen() {
                 style={[
                   styles.textInput,
                   { 
-                    backgroundColor: bgColor,
-                    borderColor: borderColor,
-                    color: textColor,
+                    backgroundColor: colors.surfaceContainer,
+                    borderColor: colors.glassBorder,
+                    color: colors.onSurface,
                   }
                 ]}
                 value={content}
                 onChangeText={setContent}
                 placeholder="What's growing?"
-                placeholderTextColor={placeholderColor}
+                placeholderTextColor={colors.onSurfaceVariant}
                 multiline
                 textAlignVertical="top"
                 testID="content-input"
@@ -157,11 +158,11 @@ export default function CreatePostScreen() {
 
           <View style={styles.actionsContainer}>
             <TouchableOpacity
-              style={styles.addPhotoButton}
+              style={[styles.addPhotoButton, { backgroundColor: `${colors.primary}20` }]}
               onPress={pickImage}
               testID="pick-image-button"
             >
-              <ImageIcon size={28} color={PlantTheme.colors.primary} />
+              <ImageIcon size={28} color={colors.primary} />
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -175,8 +176,9 @@ export default function CreatePostScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
+      <FloatingCapsule hideNotifications />
     </View>
   );
 }
@@ -193,15 +195,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(23, 207, 23, 0.1)',
   },
   closeButton: {
-    padding: 8,
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  content: {
+  title: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    letterSpacing: 0.5,
+  },
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 24,
+    paddingBottom: 100,
   },
   postContainer: {
     flexDirection: 'row',
@@ -254,9 +269,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   addPhotoButton: {
-    padding: 8,
+    padding: 12,
     borderRadius: 9999,
-    backgroundColor: 'rgba(23, 207, 23, 0.2)',
   },
   submitButton: {
     backgroundColor: PlantTheme.colors.primary,
