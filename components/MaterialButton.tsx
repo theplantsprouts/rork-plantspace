@@ -81,9 +81,13 @@ const styles = StyleSheet.create({
     ...PlantTheme.shadows.md,
   },
   outlined: {
-    backgroundColor: 'transparent',
+    backgroundColor: PlantTheme.colors.glassBackground,
     borderWidth: 1,
     borderColor: PlantTheme.colors.primary,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(16px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+    } as any),
   },
   text: {
     backgroundColor: 'transparent',

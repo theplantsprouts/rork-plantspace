@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, StyleSheet, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '@/hooks/use-theme';
 import { borderRadius, elevation, spacing } from '@/constants/theme';
 
@@ -14,10 +15,47 @@ export function GlassContainer({
   style, 
   testID 
 }: CardContainerProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  
+  if (Platform.OS === 'web') {
+    return (
+      <View 
+        testID={testID} 
+        style={[
+          styles.cardContainer, 
+          { 
+            backgroundColor: colors.glassBackground, 
+            borderColor: colors.glassBorder,
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          } as any, 
+          style
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+  
   return (
-    <View testID={testID} style={[styles.cardContainer, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }, style]}>
-      {children}
+    <View testID={testID} style={[styles.cardContainer, style]}>
+      <BlurView
+        intensity={isDark ? 60 : 40}
+        tint={isDark ? 'dark' : 'light'}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[
+        StyleSheet.absoluteFill,
+        { 
+          backgroundColor: colors.glassBackground,
+          borderRadius: borderRadius.lg,
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+        }
+      ]} />
+      <View style={styles.content}>
+        {children}
+      </View>
     </View>
   );
 }
@@ -35,17 +73,48 @@ export function GlassCard({
   padding = 'md',
   testID 
 }: CardProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        testID={testID}
+        style={[
+          styles.card,
+          { 
+            padding: spacing[padding as keyof typeof spacing], 
+            backgroundColor: colors.glassBackground, 
+            borderColor: colors.glassBorder,
+            backdropFilter: 'blur(24px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          } as any,
+          style
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+  
   return (
-    <View
-      testID={testID}
-      style={[
-        styles.card,
-        { padding: spacing[padding as keyof typeof spacing], backgroundColor: colors.surface, borderColor: colors.outlineVariant },
-        style
-      ]}
-    >
-      {children}
+    <View testID={testID} style={[styles.card, style]}>
+      <BlurView
+        intensity={isDark ? 70 : 50}
+        tint={isDark ? 'dark' : 'light'}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[
+        StyleSheet.absoluteFill,
+        { 
+          backgroundColor: colors.glassBackground,
+          borderRadius: borderRadius.lg,
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+        }
+      ]} />
+      <View style={[styles.content, { padding: spacing[padding as keyof typeof spacing] }]}>
+        {children}
+      </View>
     </View>
   );
 }
@@ -57,20 +126,16 @@ export const Card = GlassCard;
 const styles = StyleSheet.create({
   cardContainer: {
     borderRadius: borderRadius.lg,
-    borderWidth: 1,
+    overflow: 'hidden',
     ...elevation.level1,
-    ...(Platform.OS === 'android' && {
-      elevation: 2,
-      shadowColor: 'transparent',
-    }),
   },
   card: {
     borderRadius: borderRadius.lg,
-    borderWidth: 1,
+    overflow: 'hidden',
     ...elevation.level2,
-    ...(Platform.OS === 'android' && {
-      elevation: 3,
-      shadowColor: 'transparent',
-    }),
+  },
+  content: {
+    position: 'relative',
+    zIndex: 1,
   },
 });

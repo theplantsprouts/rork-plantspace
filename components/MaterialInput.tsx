@@ -135,13 +135,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Platform.OS === 'android' ? PlantTheme.colors.primary : PlantTheme.colors.glassBorder,
+    borderColor: PlantTheme.colors.glassBorder,
     borderRadius: PlantTheme.borderRadius.md,
-    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
+    backgroundColor: PlantTheme.colors.glassBackground,
     paddingHorizontal: 16,
     minHeight: 56,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(10px)',
+      backdropFilter: 'blur(16px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(16px) saturate(180%)',
     }),
   },
   
@@ -150,17 +151,16 @@ const styles = StyleSheet.create({
     elevation: 2,
     shadowColor: PlantTheme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    borderColor: PlantTheme.colors.primary,
   },
   
   focused: {
     borderColor: PlantTheme.colors.primary,
     borderWidth: 2,
+    backgroundColor: PlantTheme.colors.surfaceContainer,
     ...(Platform.OS === 'android' && {
-      elevation: 2,
+      elevation: 3,
     }),
   },
   
@@ -170,8 +170,7 @@ const styles = StyleSheet.create({
   },
   
   disabled: {
-    opacity: 0.6,
-    backgroundColor: 'transparent',
+    opacity: 0.5,
   },
   
   input: {

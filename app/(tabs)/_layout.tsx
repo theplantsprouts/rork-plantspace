@@ -315,30 +315,39 @@ function TabLayoutContent() {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: PlantTheme.colors.surfaceContainer,
-              backdropFilter: 'blur(40px)',
-              WebkitBackdropFilter: 'blur(40px)',
+              backgroundColor: PlantTheme.colors.glassBackground,
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
               borderWidth: 1,
-              borderColor: PlantTheme.colors.outlineVariant,
+              borderColor: PlantTheme.colors.glassBorder,
               borderRadius: 28,
             }}
           />
         ) : (
-          <BlurView
-            intensity={80}
-            tint="light"
-            style={{
+          <>
+            <BlurView
+              intensity={90}
+              tint="light"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+            <View style={{
               position: 'absolute',
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: PlantTheme.colors.surfaceContainer,
+              backgroundColor: PlantTheme.colors.glassBackground,
               borderWidth: 1,
-              borderColor: PlantTheme.colors.outlineVariant,
+              borderColor: PlantTheme.colors.glassBorder,
               borderRadius: 28,
-            }}
-          />
+            }} />
+          </>
         )}
         <Svg
           width="100%"

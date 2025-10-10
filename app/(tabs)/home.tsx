@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
 import { Sprout, Leaf, Heading, Bookmark, Bell } from 'lucide-react-native';
 import { usePosts, type Post } from '@/hooks/use-posts';
 import { useTheme } from '@/hooks/use-theme';
@@ -25,7 +26,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { posts, toggleLike, togglePostBookmark, toggleShare, addComment, isLoading, error, refresh } = usePosts();
   const { handleScroll } = useTabBar();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   
   const onScroll = useCallback((event: any) => {
     if (event?.nativeEvent?.contentOffset?.y !== undefined) {
@@ -50,15 +51,45 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundStart }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: `${colors.background}CC`, borderBottomColor: `${colors.outline}33` }]}>
-        <View style={styles.headerSpacer} />
-        <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Garden</Text>
-        <TouchableOpacity 
-          style={styles.notificationButton}
-          onPress={() => router.push('/notifications')}
-        >
-          <Bell color={colors.onSurface} size={24} />
-        </TouchableOpacity>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        {Platform.OS === 'web' ? (
+          <View style={[
+            StyleSheet.absoluteFill,
+            { 
+              backgroundColor: colors.glassBackground,
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              borderBottomWidth: 1,
+              borderBottomColor: colors.glassBorder,
+            } as any
+          ]} />
+        ) : (
+          <>
+            <BlurView
+              intensity={isDark ? 60 : 40}
+              tint={isDark ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={[
+              StyleSheet.absoluteFill,
+              { 
+                backgroundColor: colors.glassBackground,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.glassBorder,
+              }
+            ]} />
+          </>
+        )}
+        <View style={styles.headerContent}>
+          <View style={styles.headerSpacer} />
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Garden</Text>
+          <TouchableOpacity 
+            style={styles.notificationButton}
+            onPress={() => router.push('/notifications')}
+          >
+            <Bell color={colors.onSurface} size={24} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -139,8 +170,41 @@ interface PostCardProps {
 }
 
 const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, onComment, onShare }) => {
+  const { isDark } = useTheme();
+  
   return (
-    <View style={[styles.postCard, { backgroundColor: colors.surface }]}>
+    <View style={styles.postCard}>
+      {Platform.OS === 'web' ? (
+        <View style={[
+          StyleSheet.absoluteFill,
+          { 
+            backgroundColor: colors.glassBackground,
+            backdropFilter: 'blur(24px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            borderRadius: 24,
+            borderWidth: 1,
+            borderColor: colors.glassBorder,
+          } as any
+        ]} />
+      ) : (
+        <>
+          <BlurView
+            intensity={isDark ? 70 : 50}
+            tint={isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={[
+            StyleSheet.absoluteFill,
+            { 
+              backgroundColor: colors.glassBackground,
+              borderRadius: 24,
+              borderWidth: 1,
+              borderColor: colors.glassBorder,
+            }
+          ]} />
+        </>
+      )}
+      <View style={styles.postCardContent}>
       {post.image && (
         <Image
           source={{ uri: post.image }}
@@ -211,6 +275,7 @@ const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, 
           <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.shares || 0}</Text>
         </TouchableOpacity>
       </View>
+      </View>
     </View>
   );
 });
@@ -222,12 +287,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    position: 'relative',
+    paddingBottom: 12,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
+    position: 'relative',
+    zIndex: 1,
   },
   headerSpacer: {
     width: 40,
@@ -254,7 +323,12 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginBottom: 16,
     overflow: 'hidden',
+    position: 'relative',
     ...shadows.sm,
+  },
+  postCardContent: {
+    position: 'relative',
+    zIndex: 1,
   },
   postImage: {
     width: '100%',
