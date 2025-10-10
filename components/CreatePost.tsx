@@ -94,75 +94,82 @@ export default function CreatePostScreen() {
   }, [content, selectedImage, user, addPost]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.postContainer}>
-            <Image 
-              source={{ uri: user?.avatar || 'https://via.placeholder.com/48' }} 
-              style={styles.avatar}
-            />
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  { 
-                    backgroundColor: colors.surfaceContainer,
-                    borderColor: colors.glassBorder,
-                    color: colors.onSurface,
-                  }
-                ]}
-                value={content}
-                onChangeText={setContent}
-                placeholder="What's growing?"
-                placeholderTextColor={colors.onSurfaceVariant}
-                multiline
-                textAlignVertical="top"
-                testID="content-input"
+    <View style={[styles.container, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
+      <TouchableOpacity 
+        style={styles.backdrop} 
+        activeOpacity={1} 
+        onPress={() => router.back()}
+      />
+      <View style={[styles.floatingContainer, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.postContainer}>
+              <Image 
+                source={{ uri: user?.avatar || 'https://via.placeholder.com/48' }} 
+                style={styles.avatar}
               />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[
+                    styles.textInput,
+                    { 
+                      backgroundColor: colors.surfaceContainer,
+                      borderColor: colors.glassBorder,
+                      color: colors.onSurface,
+                    }
+                  ]}
+                  value={content}
+                  onChangeText={setContent}
+                  placeholder="What's growing?"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  multiline
+                  textAlignVertical="top"
+                  testID="content-input"
+                />
+              </View>
             </View>
-          </View>
 
-          {selectedImage && (
-            <View style={styles.imagePreviewContainer}>
-              <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+            {selectedImage && (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={removeImage}
+                  testID="remove-image-button"
+                >
+                  <X size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <View style={styles.actionsContainer}>
               <TouchableOpacity
-                style={styles.removeImageButton}
-                onPress={removeImage}
-                testID="remove-image-button"
+                style={[styles.addPhotoButton, { backgroundColor: `${colors.primary}20` }]}
+                onPress={pickImage}
+                testID="pick-image-button"
               >
-                <X size={20} color="#fff" />
+                <ImageIcon size={28} color={colors.primary} />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+                onPress={handleSubmit}
+                disabled={loading}
+                testID="submit-button"
+              >
+                <Text style={styles.submitButtonText}>
+                  {loading ? "Planting..." : "Plant Seed"}
+                </Text>
               </TouchableOpacity>
             </View>
-          )}
-
-          <View style={styles.actionsContainer}>
-            <TouchableOpacity
-              style={[styles.addPhotoButton, { backgroundColor: `${colors.primary}20` }]}
-              onPress={pickImage}
-              testID="pick-image-button"
-            >
-              <ImageIcon size={28} color={colors.primary} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={loading}
-              testID="submit-button"
-            >
-              <Text style={styles.submitButtonText}>
-                {loading ? "Planting..." : "Plant Seed"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-      <FloatingCapsule hideNotifications />
+          </ScrollView>
+        </SafeAreaView>
+        <FloatingCapsule hideNotifications />
+      </View>
     </View>
   );
 }
@@ -170,6 +177,26 @@ export default function CreatePostScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  floatingContainer: {
+    width: '90%',
+    height: '80%',
+    borderRadius: 32,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 12,
   },
   safeArea: {
     flex: 1,
