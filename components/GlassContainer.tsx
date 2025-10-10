@@ -37,6 +37,25 @@ export function GlassContainer({
     );
   }
   
+  if (Platform.OS === 'android') {
+    return (
+      <View 
+        testID={testID} 
+        style={[
+          styles.cardContainer, 
+          { 
+            backgroundColor: colors.glassBackground, 
+            borderColor: colors.glassBorder,
+            borderWidth: 1,
+          }, 
+          style
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+  
   return (
     <View testID={testID} style={[styles.cardContainer, style]}>
       <BlurView
@@ -92,6 +111,27 @@ export function GlassCard({
         ]}
       >
         {children}
+      </View>
+    );
+  }
+  
+  if (Platform.OS === 'android') {
+    return (
+      <View
+        testID={testID}
+        style={[
+          styles.card,
+          { 
+            backgroundColor: colors.glassBackground, 
+            borderColor: colors.glassBorder,
+            borderWidth: 1,
+          },
+          style
+        ]}
+      >
+        <View style={{ padding: spacing[padding as keyof typeof spacing] }}>
+          {children}
+        </View>
       </View>
     );
   }
