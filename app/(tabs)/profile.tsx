@@ -8,12 +8,10 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Bookmark, Settings, Camera } from 'lucide-react-native';
+import { Camera } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { useTabBar } from './_layout';
 import { useAppContext } from '@/hooks/use-app-context';
 import { usePosts } from '@/hooks/use-posts';
 import { useTheme } from '@/hooks/use-theme';
@@ -27,16 +25,7 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<'seeds' | 'gardeners' | 'tending'>('seeds');
 
-  const { handleScroll } = useTabBar();
-  
-  const onScroll = useCallback((event: any) => {
-    if (event?.nativeEvent?.contentOffset?.y !== undefined) {
-      handleScroll(event);
-      console.log('Profile screen scrolling:', event.nativeEvent.contentOffset.y);
-    }
-  }, [handleScroll]);
 
-  const insets = useSafeAreaInsets();
   
   const userPosts = posts.filter(post => post.user.id === currentUser?.id);
 
@@ -258,38 +247,12 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: colors.background }]}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft color={colors.onSurface} size={24} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Profile</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity 
-              onPress={() => router.push('/saved-content')}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={styles.headerIconButton}
-            >
-              <Bookmark color={colors.onSurface} size={24} />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={() => router.push('/settings')}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={styles.headerIconButton}
-            >
-              <Settings color={colors.onSurface} size={24} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
+      <View style={styles.safeArea}>
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           removeClippedSubviews={true}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
         >
           {/* Cover Image */}
           <TouchableOpacity 
@@ -446,17 +409,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold' as const,
-  },
+
   scrollView: {
     flex: 1,
   },
@@ -606,15 +559,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerIconButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
 });

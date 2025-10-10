@@ -8,9 +8,8 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, Bell } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { trpc } from '@/lib/trpc';
@@ -40,7 +39,6 @@ type SearchUser = {
 type TabType = 'previous' | 'new';
 
 export default function LeavesScreen() {
-  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('previous');
@@ -72,18 +70,8 @@ export default function LeavesScreen() {
         style={StyleSheet.absoluteFillObject}
       />
       
-      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <View style={styles.safeArea}>
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Leaves</Text>
-            <TouchableOpacity 
-              style={styles.notificationButton}
-              onPress={() => router.push('/notifications')}
-            >
-              <Bell size={24} color={colors.onSurface} />
-            </TouchableOpacity>
-          </View>
-          
           <View style={[styles.searchContainer, { backgroundColor: colors.surfaceVariant }]}>
             <Search size={20} color={colors.primary} style={styles.searchIcon} />
             <TextInput
@@ -272,21 +260,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
+    paddingTop: 16,
     paddingBottom: 16,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  notificationButton: {
-    padding: 8,
-    borderRadius: 20,
   },
   searchContainer: {
     flexDirection: 'row',
