@@ -93,6 +93,7 @@ function TabLayoutContent() {
         return (
           <Animated.View style={{
             width: 64,
+            height: '100%',
             alignItems: 'center',
             justifyContent: 'center',
             transform: [{ scale: scaleAnim }],
@@ -196,6 +197,7 @@ function TabLayoutContent() {
         <Animated.View style={{
           alignItems: 'center',
           justifyContent: 'center',
+          height: '100%',
           transform: [{ scale: scaleAnim }],
         }}>
           <View style={{
@@ -387,7 +389,7 @@ function TabLayoutContent() {
     lazy: true,
     tabBarHideOnKeyboard: Platform.OS !== 'web',
     tabBarItemStyle: {
-      paddingVertical: 8,
+      paddingVertical: 0,
       paddingHorizontal: 0,
       margin: 0,
       justifyContent: 'center',
