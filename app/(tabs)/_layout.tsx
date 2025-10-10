@@ -4,6 +4,7 @@ import { View, StyleSheet } from "react-native";
 import createContextHook from '@nkzw/create-context-hook';
 import { GlowingTopBar } from "@/components/GlowingTopBar";
 import { FloatingCapsule } from "@/components/FloatingCapsule";
+import { SwipeableTabContainer } from "@/components/SwipeableTabContainer";
 
 const [TabBarProvider, useTabBar] = createContextHook(() => {
   const handleScroll = useCallback(() => {}, []);
@@ -39,44 +40,46 @@ function TabLayoutContent() {
     <View style={styles.container}>
       <GlowingTopBar activeTab={activeTab} />
       
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'fade',
-          animationDuration: 200,
-        }}
-      >
-        <Stack.Screen
-          name="home"
-          options={{
-            title: 'Garden',
+      <SwipeableTabContainer>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'none',
+            animationDuration: 0,
           }}
-        />
-        <Stack.Screen
-          name="discover"
-          options={{
-            title: 'Explore Garden',
-          }}
-        />
-        <Stack.Screen
-          name="leaves"
-          options={{
-            title: 'Leaves',
-          }}
-        />
-        <Stack.Screen
-          name="profile"
-          options={{
-            title: 'My Grove',
-          }}
-        />
-        <Stack.Screen
-          name="create"
-          options={{
-            title: 'Plant Seed',
-          }}
-        />
-      </Stack>
+        >
+          <Stack.Screen
+            name="home"
+            options={{
+              title: 'Garden',
+            }}
+          />
+          <Stack.Screen
+            name="discover"
+            options={{
+              title: 'Explore Garden',
+            }}
+          />
+          <Stack.Screen
+            name="leaves"
+            options={{
+              title: 'Leaves',
+            }}
+          />
+          <Stack.Screen
+            name="profile"
+            options={{
+              title: 'My Grove',
+            }}
+          />
+          <Stack.Screen
+            name="create"
+            options={{
+              title: 'Plant Seed',
+            }}
+          />
+        </Stack>
+      </SwipeableTabContainer>
       
       <FloatingCapsule />
     </View>

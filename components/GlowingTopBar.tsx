@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Home, Compass, MessageCircle, User } from 'lucide-react-native';
@@ -17,6 +17,14 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
   const pathname = usePathname();
   const glowAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const textOpacity = useRef(new Animated.Value(1)).current;
+  const [displayedTab, setDisplayedTab] = useState(activeTab);
+  const iconScales = useRef({
+    home: new Animated.Value(1),
+    discover: new Animated.Value(1),
+    leaves: new Animated.Value(1),
+    profile: new Animated.Value(1),
+  }).current;
 
   useEffect(() => {
     Animated.loop(
@@ -36,19 +44,39 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
   }, [glowAnim]);
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.timing(pulseAnim, {
-        toValue: 1.08,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(pulseAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.08,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(textOpacity, {
+          toValue: 0,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(textOpacity, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start();
-  }, [activeTab, pulseAnim]);
+
+    const timer = setTimeout(() => {
+      setDisplayedTab(activeTab);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [activeTab, pulseAnim, textOpacity]);
 
   const glowColor = glowAnim.interpolate({
     inputRange: [0, 1],
@@ -113,10 +141,12 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
             ]}
             onPress={() => router.push('/(tabs)/home')}
           >
-            <Home
-              size={24}
-              color={isActive('/home') ? colors.primary : colors.onSurfaceVariant}
-            />
+            <Animated.View style={{ transform: [{ scale: iconScales.home }] }}>
+              <Home
+                size={24}
+                color={isActive('/home') ? colors.primary : colors.onSurfaceVariant}
+              />
+            </Animated.View>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -125,10 +155,12 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
             ]}
             onPress={() => router.push('/(tabs)/discover')}
           >
-            <Compass
-              size={24}
-              color={isActive('/discover') ? colors.primary : colors.onSurfaceVariant}
-            />
+            <Animated.View style={{ transform: [{ scale: iconScales.discover }] }}>
+              <Compass
+                size={24}
+                color={isActive('/discover') ? colors.primary : colors.onSurfaceVariant}
+              />
+            </Animated.View>
           </TouchableOpacity>
         </View>
 
@@ -169,9 +201,9 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
               },
             ]}
           />
-          <Text style={[styles.tabName, { color: colors.primary }]}>
-            {getTabName(activeTab)}
-          </Text>
+          <Animated.Text style={[styles.tabName, { color: colors.primary, opacity: textOpacity }]}>
+            {getTabName(displayedTab)}
+          </Animated.Text>
         </Animated.View>
 
         <View style={styles.rightIcons}>
@@ -182,10 +214,12 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
             ]}
             onPress={() => router.push('/(tabs)/leaves')}
           >
-            <MessageCircle
-              size={24}
-              color={isActive('/leaves') ? colors.primary : colors.onSurfaceVariant}
-            />
+            <Animated.View style={{ transform: [{ scale: iconScales.leaves }] }}>
+              <MessageCircle
+                size={24}
+                color={isActive('/leaves') ? colors.primary : colors.onSurfaceVariant}
+              />
+            </Animated.View>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -194,10 +228,12 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
             ]}
             onPress={() => router.push('/(tabs)/profile')}
           >
-            <User
-              size={24}
-              color={isActive('/profile') ? colors.primary : colors.onSurfaceVariant}
-            />
+            <Animated.View style={{ transform: [{ scale: iconScales.profile }] }}>
+              <User
+                size={24}
+                color={isActive('/profile') ? colors.primary : colors.onSurfaceVariant}
+              />
+            </Animated.View>
           </TouchableOpacity>
         </View>
       </View>
