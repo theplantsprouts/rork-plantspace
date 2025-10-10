@@ -9,30 +9,18 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
-import { Sprout, Leaf, Heading, Bookmark, Bell } from 'lucide-react-native';
+import { Sprout, Leaf, Heading, Bookmark } from 'lucide-react-native';
 import { usePosts, type Post } from '@/hooks/use-posts';
 import { useTheme } from '@/hooks/use-theme';
 import { borderRadius, shadows } from '@/constants/theme';
 
 import * as Haptics from 'expo-haptics';
-import { useTabBar } from './_layout';
-import { router } from 'expo-router';
 
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const { posts, toggleLike, togglePostBookmark, toggleShare, addComment, isLoading, error, refresh } = usePosts();
-  const { handleScroll } = useTabBar();
-  const { colors, isDark } = useTheme();
-  
-  const onScroll = useCallback((event: any) => {
-    if (event?.nativeEvent?.contentOffset?.y !== undefined) {
-      handleScroll(event);
-    }
-  }, [handleScroll]);
+  const { colors } = useTheme();
 
   const handleLike = useCallback(async (postId: string) => {
     if (Platform.OS !== 'web') {
@@ -51,52 +39,9 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundStart }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        {Platform.OS === 'web' ? (
-          <View style={[
-            StyleSheet.absoluteFill,
-            { 
-              backgroundColor: colors.glassBackground,
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-              borderBottomWidth: 1,
-              borderBottomColor: colors.glassBorder,
-            } as any
-          ]} />
-        ) : (
-          <>
-            <BlurView
-              intensity={isDark ? 60 : 40}
-              tint={isDark ? 'dark' : 'light'}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={[
-              StyleSheet.absoluteFill,
-              { 
-                backgroundColor: colors.glassBackground,
-                borderBottomWidth: 1,
-                borderBottomColor: colors.glassBorder,
-              }
-            ]} />
-          </>
-        )}
-        <View style={styles.headerContent}>
-          <View style={styles.headerSpacer} />
-          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Garden</Text>
-          <TouchableOpacity 
-            style={styles.notificationButton}
-            onPress={() => router.push('/notifications')}
-          >
-            <Bell color={colors.onSurface} size={24} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
         {isLoading ? (
@@ -265,31 +210,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    position: 'relative',
-    paddingBottom: 12,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    position: 'relative',
-    zIndex: 1,
-  },
-  headerSpacer: {
-    width: 40,
-  },
-  notificationButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-  },
+
   scrollView: {
     flex: 1,
   },
