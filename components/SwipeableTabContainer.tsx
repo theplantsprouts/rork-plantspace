@@ -120,10 +120,10 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
         const canSwipeLeft = (currentIndex === 0) || (currentIndex === 1) || (currentIndex === 2);
         const canSwipeRight = (currentIndex === 1) || (currentIndex === 2) || (currentIndex === 3);
 
-        if ((dx < 0 && !canSwipeLeft) || (dx > 0 && !canSwipeRight)) {
-          translateX.setValue(dx * 0.15);
-        } else {
+        if ((dx < 0 && canSwipeLeft) || (dx > 0 && canSwipeRight)) {
           translateX.setValue(dx * 0.8);
+        } else {
+          translateX.setValue(dx * 0.15);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
