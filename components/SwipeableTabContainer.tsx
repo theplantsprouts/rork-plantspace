@@ -97,10 +97,15 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponder: () => !isAnimating.current,
       onMoveShouldSetPanResponder: (_, gestureState) => {
         const { dx, dy } = gestureState;
-        return Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10 && !isAnimating.current;
+        return Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5 && !isAnimating.current;
+      },
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+        const { dx, dy } = gestureState;
+        return Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 15 && !isAnimating.current;
       },
       onPanResponderGrant: () => {
         translateX.setOffset(lastTranslateX.current);
