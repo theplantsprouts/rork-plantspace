@@ -35,22 +35,22 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
     return 0;
   };
 
-  const navigateToTab = (direction: 'left' | 'right') => {
+  const navigateToTab = (swipeDirection: 'left' | 'right') => {
     if (isAnimating.current) return;
 
     const currentIndex = getCurrentTabIndex();
     let nextIndex = -1;
 
     if (currentIndex === 0) {
-      if (direction === 'left') nextIndex = 1;
+      if (swipeDirection === 'left') nextIndex = 1;
     } else if (currentIndex === 1) {
-      if (direction === 'right') nextIndex = 0;
-      else if (direction === 'left') nextIndex = 2;
+      if (swipeDirection === 'right') nextIndex = 0;
+      else if (swipeDirection === 'left') nextIndex = 2;
     } else if (currentIndex === 2) {
-      if (direction === 'right') nextIndex = 1;
-      else if (direction === 'left') nextIndex = 3;
+      if (swipeDirection === 'right') nextIndex = 1;
+      else if (swipeDirection === 'left') nextIndex = 3;
     } else if (currentIndex === 3) {
-      if (direction === 'right') nextIndex = 2;
+      if (swipeDirection === 'right') nextIndex = 2;
     }
 
     if (nextIndex !== -1 && nextIndex !== currentIndex) {
@@ -63,7 +63,7 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
       const targetTab = TAB_ORDER[nextIndex];
       onTabChange?.(targetTab);
 
-      const animationDirection = direction === 'left' ? -SCREEN_WIDTH : SCREEN_WIDTH;
+      const animationDirection = swipeDirection === 'left' ? -SCREEN_WIDTH : SCREEN_WIDTH;
       
       Animated.timing(translateX, {
         toValue: animationDirection,
@@ -121,9 +121,9 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
         const canSwipeRight = (currentIndex === 1) || (currentIndex === 2) || (currentIndex === 3);
 
         if ((dx < 0 && !canSwipeLeft) || (dx > 0 && !canSwipeRight)) {
-          translateX.setValue(dx * 0.2);
+          translateX.setValue(dx * 0.15);
         } else {
-          translateX.setValue(dx);
+          translateX.setValue(dx * 0.8);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
@@ -154,8 +154,8 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
             Animated.spring(translateX, {
               toValue: 0,
               useNativeDriver: true,
-              tension: 80,
-              friction: 10,
+              tension: 100,
+              friction: 12,
             }).start(() => {
               lastTranslateX.current = 0;
             });
@@ -164,8 +164,8 @@ export function SwipeableTabContainer({ children, onTabChange }: SwipeableTabCon
           Animated.spring(translateX, {
             toValue: 0,
             useNativeDriver: true,
-            tension: 80,
-            friction: 10,
+            tension: 100,
+            friction: 12,
           }).start(() => {
             lastTranslateX.current = 0;
           });
