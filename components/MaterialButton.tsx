@@ -70,16 +70,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: PlantTheme.borderRadius.lg,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    minHeight: 48,
+    borderRadius: PlantTheme.borderRadius.xl,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    minHeight: 52,
   },
   
   // Variants
   filled: {
     backgroundColor: PlantTheme.colors.primary,
-    ...PlantTheme.shadows.md,
+    ...PlantTheme.shadows.lg,
   },
   outlined: {
     backgroundColor: PlantTheme.colors.glassBackground,
@@ -96,29 +96,31 @@ const styles = StyleSheet.create({
   
   // Sizes
   small: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 36,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    minHeight: 40,
+    borderRadius: PlantTheme.borderRadius.lg,
   },
   medium: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    minHeight: 48,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    minHeight: 52,
+    borderRadius: PlantTheme.borderRadius.xl,
   },
   large: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    minHeight: 56,
+    paddingHorizontal: 36,
+    paddingVertical: 18,
+    minHeight: 60,
+    borderRadius: PlantTheme.borderRadius.xxl,
   },
   
   // Android specific - solid style
   materialAndroid: {
-    borderRadius: PlantTheme.borderRadius.lg,
-    elevation: 4,
+    elevation: 8,
     shadowColor: PlantTheme.colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
   },
   
   // States

@@ -236,7 +236,7 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
                   style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
                 />
               )}
-              <Plus size={32} color="#FFFFFF" strokeWidth={3} />
+              <Plus size={36} color="#FFFFFF" strokeWidth={3} />
           </AnimatedButton>
         </View>
       </View>
@@ -266,46 +266,46 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-      web: {
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-      },
-    }),
-  },
-  createButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
+        shadowColor: '#17cf17',
         shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.28,
         shadowRadius: 16,
       },
       android: {
         elevation: 12,
       },
       web: {
-        boxShadow: '0 6px 24px rgba(0, 0, 0, 0.2)',
+        boxShadow: '0 6px 28px rgba(23, 207, 23, 0.25)',
+      },
+    }),
+  },
+  createButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#17cf17',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.35,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 16,
+      },
+      web: {
+        boxShadow: '0 8px 32px rgba(23, 207, 23, 0.3)',
       },
     }),
   },
@@ -316,30 +316,30 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   menuItem: {
-    borderRadius: 28,
+    borderRadius: 32,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: 14,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
+        shadowColor: '#17cf17',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.22,
+        shadowRadius: 16,
       },
       android: {
-        elevation: 6,
+        elevation: 8,
       },
       web: {
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 5px 20px rgba(23, 207, 23, 0.18)',
       },
     }),
   },
   menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    gap: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
   menuItemLabel: {
     fontSize: 16,

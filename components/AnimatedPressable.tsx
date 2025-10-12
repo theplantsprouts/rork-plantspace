@@ -31,9 +31,9 @@ export function AnimatedPressable({
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const bounceConfig = {
-    subtle: { down: 0.97, up: 1.02, duration: 100 },
-    medium: { down: 0.94, up: 1.05, duration: 120 },
-    strong: { down: 0.90, up: 1.08, duration: 140 },
+    subtle: { down: 0.96, up: 1.03, duration: 120 },
+    medium: { down: 0.92, up: 1.08, duration: 150 },
+    strong: { down: 0.88, up: 1.12, duration: 180 },
   };
 
   const config = bounceConfig[bounceEffect];
@@ -55,8 +55,9 @@ export function AnimatedPressable({
     Animated.spring(scaleAnim, {
       toValue: finalScaleDown,
       useNativeDriver: true,
-      tension: 300,
-      friction: 20,
+      tension: 400,
+      friction: 15,
+      velocity: 2,
     }).start();
   }, [disabled, scaleAnim, finalScaleDown, hapticFeedback]);
 
@@ -67,14 +68,16 @@ export function AnimatedPressable({
       Animated.spring(scaleAnim, {
         toValue: config.up,
         useNativeDriver: true,
-        tension: 200,
-        friction: 10,
+        tension: 250,
+        friction: 8,
+        velocity: 3,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
         useNativeDriver: true,
-        tension: 150,
-        friction: 12,
+        tension: 180,
+        friction: 10,
+        velocity: 1,
       }),
     ]).start();
   }, [disabled, scaleAnim, config.up]);

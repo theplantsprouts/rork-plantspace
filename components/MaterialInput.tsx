@@ -134,33 +134,32 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: PlantTheme.colors.glassBorder,
-    borderRadius: PlantTheme.borderRadius.md,
+    borderRadius: PlantTheme.borderRadius.lg,
     backgroundColor: PlantTheme.colors.glassBackground,
-    paddingHorizontal: 16,
-    minHeight: 56,
+    paddingHorizontal: 18,
+    minHeight: 60,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(16px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
     }),
   },
   
   materialAndroid: {
-    borderRadius: PlantTheme.borderRadius.md,
-    elevation: 2,
+    elevation: 4,
     shadowColor: PlantTheme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
   },
   
   focused: {
     borderColor: PlantTheme.colors.primary,
-    borderWidth: 2,
+    borderWidth: 2.5,
     backgroundColor: PlantTheme.colors.surfaceContainer,
     ...(Platform.OS === 'android' && {
-      elevation: 3,
+      elevation: 6,
     }),
   },
   

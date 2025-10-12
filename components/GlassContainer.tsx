@@ -26,8 +26,9 @@ export function GlassContainer({
           { 
             backgroundColor: colors.glassBackground, 
             borderColor: colors.glassBorder,
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderWidth: 1.5,
+            backdropFilter: 'blur(24px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(200%)',
           } as any, 
           style
         ]}
@@ -46,7 +47,7 @@ export function GlassContainer({
           { 
             backgroundColor: colors.glassBackground, 
             borderColor: colors.glassBorder,
-            borderWidth: 1,
+            borderWidth: 1.5,
           }, 
           style
         ]}
@@ -59,7 +60,7 @@ export function GlassContainer({
   return (
     <View testID={testID} style={[styles.cardContainer, style]}>
       <BlurView
-        intensity={isDark ? 60 : 40}
+        intensity={isDark ? 70 : 50}
         tint={isDark ? 'dark' : 'light'}
         style={StyleSheet.absoluteFill}
       />
@@ -68,7 +69,7 @@ export function GlassContainer({
         { 
           backgroundColor: colors.glassBackground,
           borderRadius: borderRadius.lg,
-          borderWidth: 1,
+          borderWidth: 1.5,
           borderColor: colors.glassBorder,
         }
       ]} />
@@ -104,8 +105,9 @@ export function GlassCard({
             padding: spacing[padding as keyof typeof spacing], 
             backgroundColor: colors.glassBackground, 
             borderColor: colors.glassBorder,
-            backdropFilter: 'blur(24px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            borderWidth: 1.5,
+            backdropFilter: 'blur(28px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(200%)',
           } as any,
           style
         ]}
@@ -124,7 +126,7 @@ export function GlassCard({
           { 
             backgroundColor: colors.glassBackground, 
             borderColor: colors.glassBorder,
-            borderWidth: 1,
+            borderWidth: 1.5,
           },
           style
         ]}
@@ -139,7 +141,7 @@ export function GlassCard({
   return (
     <View testID={testID} style={[styles.card, style]}>
       <BlurView
-        intensity={isDark ? 70 : 50}
+        intensity={isDark ? 80 : 60}
         tint={isDark ? 'dark' : 'light'}
         style={StyleSheet.absoluteFill}
       />
@@ -148,7 +150,7 @@ export function GlassCard({
         { 
           backgroundColor: colors.glassBackground,
           borderRadius: borderRadius.lg,
-          borderWidth: 1,
+          borderWidth: 1.5,
           borderColor: colors.glassBorder,
         }
       ]} />
@@ -159,7 +161,6 @@ export function GlassCard({
   );
 }
 
-// Backwards compatibility aliases
 export const CardContainer = GlassContainer;
 export const Card = GlassCard;
 
@@ -167,12 +168,12 @@ const styles = StyleSheet.create({
   cardContainer: {
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    ...elevation.level1,
+    ...elevation.level2,
   },
   card: {
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    ...elevation.level2,
+    ...elevation.level3,
   },
   content: {
     position: 'relative',

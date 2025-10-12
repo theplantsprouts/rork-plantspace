@@ -8,42 +8,52 @@ export const spacing = {
 };
 
 export const borderRadius = {
-  sm: 8,
-  md: 14,
-  lg: 20,
-  xl: 28,
+  sm: 12,
+  md: 20,
+  lg: 28,
+  xl: 36,
+  xxl: 44,
   full: 9999,
+  organic: 24,
 };
 
 export const elevation = {
   level0: { shadowColor: '#000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
-  level1: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 2, elevation: 1 },
-  level2: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-  level3: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
-  level4: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 12, elevation: 6 },
+  level1: { shadowColor: '#17cf17', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 2 },
+  level2: { shadowColor: '#17cf17', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  level3: { shadowColor: '#17cf17', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 6 },
+  level4: { shadowColor: '#17cf17', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: 8 },
+  level5: { shadowColor: '#17cf17', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.28, shadowRadius: 24, elevation: 12 },
 };
 
 export const shadows = {
   sm: {
-    shadowColor: '#000',
+    shadowColor: '#17cf17',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
   md: {
-    shadowColor: '#000',
+    shadowColor: '#17cf17',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 6,
   },
   lg: {
-    shadowColor: '#000',
+    shadowColor: '#17cf17',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  xl: {
+    shadowColor: '#17cf17',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.28,
+    shadowRadius: 28,
+    elevation: 14,
   },
 };
 
@@ -66,10 +76,11 @@ export const LightTheme = {
     accentLight: '#FFB199',
     accentDark: '#D84315',
 
-    surface: 'rgba(255, 255, 255, 0.75)',
-    surfaceVariant: 'rgba(227, 242, 230, 0.65)',
-    surfaceContainer: 'rgba(246, 248, 246, 0.85)',
-    surfaceContainerHigh: 'rgba(233, 236, 233, 0.90)',
+    surface: 'rgba(255, 255, 255, 0.82)',
+    surfaceVariant: 'rgba(227, 242, 230, 0.75)',
+    surfaceContainer: 'rgba(246, 248, 246, 0.92)',
+    surfaceContainerHigh: 'rgba(233, 236, 233, 0.95)',
+    surfaceContainerHighest: 'rgba(220, 230, 220, 0.98)',
     onSurface: '#1a1c1a',
     onSurfaceVariant: '#424942',
 
@@ -84,8 +95,9 @@ export const LightTheme = {
     cardBorder: 'rgba(23, 207, 23, 0.15)',
     cardShadow: 'rgba(0, 0, 0, 0.05)',
 
-    glassBorder: 'rgba(23, 207, 23, 0.20)',
-    glassBackground: 'rgba(255, 255, 255, 0.45)',
+    glassBorder: 'rgba(23, 207, 23, 0.25)',
+    glassBackground: 'rgba(255, 255, 255, 0.55)',
+    glassBackgroundStrong: 'rgba(255, 255, 255, 0.75)',
 
     textPrimary: '#2E7D32',
     textSecondary: '#5C6F57',
@@ -128,10 +140,11 @@ export const DarkTheme = {
     accentLight: '#FFB199',
     accentDark: '#FF7043',
 
-    surface: 'rgba(26, 28, 26, 0.70)',
-    surfaceVariant: 'rgba(45, 58, 45, 0.60)',
-    surfaceContainer: 'rgba(31, 43, 31, 0.75)',
-    surfaceContainerHigh: 'rgba(42, 54, 42, 0.85)',
+    surface: 'rgba(26, 28, 26, 0.78)',
+    surfaceVariant: 'rgba(45, 58, 45, 0.70)',
+    surfaceContainer: 'rgba(31, 43, 31, 0.85)',
+    surfaceContainerHigh: 'rgba(42, 54, 42, 0.92)',
+    surfaceContainerHighest: 'rgba(52, 64, 52, 0.96)',
     onSurface: '#e2e3e2',
     onSurfaceVariant: '#c2c9c2',
 
@@ -146,8 +159,9 @@ export const DarkTheme = {
     cardBorder: 'rgba(123, 211, 137, 0.18)',
     cardShadow: 'rgba(0, 0, 0, 0.3)',
 
-    glassBorder: 'rgba(123, 211, 137, 0.25)',
-    glassBackground: 'rgba(26, 61, 31, 0.40)',
+    glassBorder: 'rgba(123, 211, 137, 0.30)',
+    glassBackground: 'rgba(26, 61, 31, 0.50)',
+    glassBackgroundStrong: 'rgba(26, 61, 31, 0.70)',
 
     textPrimary: '#7BD389',
     textSecondary: '#A5D6A7',
