@@ -12,7 +12,7 @@ import { Plus, Menu, Bell, Bookmark, Settings } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/hooks/use-theme';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { AnimatedIconButton, AnimatedButton } from './AnimatedPressable';
 
 interface FloatingCapsuleProps {
   hideNotifications?: boolean;
@@ -23,7 +23,6 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
   const [menuOpen, setMenuOpen] = useState(false);
   const menuAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -42,38 +41,16 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
   }, [menuOpen, menuAnim, rotateAnim]);
 
   const toggleMenu = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
     setMenuOpen(!menuOpen);
   };
 
   const handleMenuAction = (action: () => void) => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
     setMenuOpen(false);
     setTimeout(action, 200);
   };
 
   const handleCreatePress = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      router.push('/(tabs)/create');
-    });
+    router.push('/(tabs)/create');
   };
 
   const menuRotation = rotateAnim.interpolate({
@@ -165,13 +142,13 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
               ]}
               pointerEvents={menuOpen ? 'auto' : 'none'}
             >
-              <TouchableOpacity
+              <AnimatedIconButton
                 style={[
                   styles.menuItem,
                   { backgroundColor: colors.surfaceContainer },
                 ]}
                 onPress={item.onPress}
-                activeOpacity={0.8}
+                bounceEffect="subtle"
               >
                 {Platform.OS === 'web' ? (
                   <View
@@ -197,16 +174,16 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
                     {item.label}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </AnimatedIconButton>
             </Animated.View>
           );
         })}
 
         <View style={styles.capsule}>
-          <TouchableOpacity
+          <AnimatedIconButton
             style={[styles.menuButton, { backgroundColor: colors.surfaceContainer }]}
             onPress={toggleMenu}
-            activeOpacity={0.8}
+            bounceEffect="medium"
           >
             {Platform.OS === 'web' ? (
               <View
@@ -233,14 +210,14 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
             >
               <Menu size={24} color={colors.onSurface} />
             </Animated.View>
-          </TouchableOpacity>
+          </AnimatedIconButton>
 
-          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={handleCreatePress}
-              activeOpacity={0.9}
-            >
+          <AnimatedButton
+            style={styles.createButton}
+            onPress={handleCreatePress}
+            bounceEffect="strong"
+            hapticFeedback="medium"
+          >
               {Platform.OS === 'web' ? (
                 <View
                   style={[
@@ -260,8 +237,7 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
                 />
               )}
               <Plus size={32} color="#FFFFFF" strokeWidth={3} />
-            </TouchableOpacity>
-          </Animated.View>
+          </AnimatedButton>
         </View>
       </View>
     </>

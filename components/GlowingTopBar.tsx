@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
+import { View, StyleSheet, Animated, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Home, Compass, MessageCircle, User } from 'lucide-react-native';
 import { router, usePathname } from 'expo-router';
 import { useTheme } from '@/hooks/use-theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AnimatedIconButton } from './AnimatedPressable';
 
 interface GlowingTopBarProps {
   activeTab: string;
@@ -134,12 +135,13 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
 
       <View style={styles.content}>
         <View style={styles.leftIcons}>
-          <TouchableOpacity
+          <AnimatedIconButton
             style={[
               styles.iconButton,
               isActive('/home') && { backgroundColor: `${colors.primary}15` },
             ]}
             onPress={() => router.push('/(tabs)/home')}
+            bounceEffect="subtle"
           >
             <Animated.View style={{ transform: [{ scale: iconScales.home }] }}>
               <Home
@@ -147,13 +149,14 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
                 color={isActive('/home') ? colors.primary : colors.onSurfaceVariant}
               />
             </Animated.View>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </AnimatedIconButton>
+          <AnimatedIconButton
             style={[
               styles.iconButton,
               isActive('/discover') && { backgroundColor: `${colors.primary}15` },
             ]}
             onPress={() => router.push('/(tabs)/discover')}
+            bounceEffect="subtle"
           >
             <Animated.View style={{ transform: [{ scale: iconScales.discover }] }}>
               <Compass
@@ -161,7 +164,7 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
                 color={isActive('/discover') ? colors.primary : colors.onSurfaceVariant}
               />
             </Animated.View>
-          </TouchableOpacity>
+          </AnimatedIconButton>
         </View>
 
         <Animated.View
@@ -207,12 +210,13 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
         </Animated.View>
 
         <View style={styles.rightIcons}>
-          <TouchableOpacity
+          <AnimatedIconButton
             style={[
               styles.iconButton,
               isActive('/leaves') && { backgroundColor: `${colors.primary}15` },
             ]}
             onPress={() => router.push('/(tabs)/leaves')}
+            bounceEffect="subtle"
           >
             <Animated.View style={{ transform: [{ scale: iconScales.leaves }] }}>
               <MessageCircle
@@ -220,13 +224,14 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
                 color={isActive('/leaves') ? colors.primary : colors.onSurfaceVariant}
               />
             </Animated.View>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </AnimatedIconButton>
+          <AnimatedIconButton
             style={[
               styles.iconButton,
               isActive('/profile') && { backgroundColor: `${colors.primary}15` },
             ]}
             onPress={() => router.push('/(tabs)/profile')}
+            bounceEffect="subtle"
           >
             <Animated.View style={{ transform: [{ scale: iconScales.profile }] }}>
               <User
@@ -234,7 +239,7 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
                 color={isActive('/profile') ? colors.primary : colors.onSurfaceVariant}
               />
             </Animated.View>
-          </TouchableOpacity>
+          </AnimatedIconButton>
         </View>
       </View>
     </View>

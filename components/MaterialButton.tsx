@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  TouchableOpacity,
   Text,
   StyleSheet,
   Platform,
@@ -9,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { PlantTheme } from '@/constants/theme';
+import { AnimatedButton } from './AnimatedPressable';
 
 interface MaterialButtonProps {
   title: string;
@@ -51,16 +51,17 @@ export function MaterialButton({
   ];
 
   return (
-    <TouchableOpacity
+    <AnimatedButton
       style={buttonStyle}
       onPress={onPress}
       disabled={disabled}
       testID={testID}
-      activeOpacity={0.8}
+      bounceEffect="medium"
+      hapticFeedback="medium"
     >
       {icon && <View style={styles.iconContainer}>{icon}</View>}
       <Text style={textStyleCombined}>{title}</Text>
-    </TouchableOpacity>
+    </AnimatedButton>
   );
 }
 

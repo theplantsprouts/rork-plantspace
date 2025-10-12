@@ -3,8 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  Platform,
   ActivityIndicator,
   ScrollView,
   Alert,
@@ -14,8 +12,7 @@ import { Sprout, Leaf, Heading, Bookmark } from 'lucide-react-native';
 import { usePosts, type Post } from '@/hooks/use-posts';
 import { useTheme } from '@/hooks/use-theme';
 import { borderRadius, shadows } from '@/constants/theme';
-
-import * as Haptics from 'expo-haptics';
+import { AnimatedIconButton, AnimatedButton } from '@/components/AnimatedPressable';
 
 
 export default function HomeScreen() {
@@ -23,13 +20,6 @@ export default function HomeScreen() {
   const { colors } = useTheme();
 
   const handleLike = useCallback(async (postId: string) => {
-    if (Platform.OS !== 'web') {
-      try {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (error) {
-        console.log('Haptics not available:', error);
-      }
-    }
     toggleLike(postId);
   }, [toggleLike]);
 
@@ -53,11 +43,11 @@ export default function HomeScreen() {
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>🌱 Connection Issue</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{error}</Text>
-            <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={() => {
+            <AnimatedButton style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={() => {
               refresh();
             }}>
               <Text style={[styles.retryButtonText, { color: colors.white }]}>Try Again</Text>
-            </TouchableOpacity>
+            </AnimatedButton>
           </View>
         ) : memoizedPosts.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -95,7 +85,7 @@ export default function HomeScreen() {
                     'Your seed has been shared with the community.',
                     [{ text: 'OK' }]
                   );
-                } catch (error) {
+                } catch {
                   Alert.alert(
                     '❌ Share Failed',
                     'Unable to share this seed. Please try again.',
@@ -159,21 +149,21 @@ const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, 
             <Text style={[styles.username, { color: colors.onSurface }]}>{post.user.name}</Text>
             <Text style={[styles.timestamp, { color: colors.onSurfaceVariant }]}>{post.timestamp}</Text>
           </View>
-          <TouchableOpacity style={styles.bookmarkButton} onPress={onBookmark}>
+          <AnimatedIconButton style={styles.bookmarkButton} onPress={onBookmark}>
             <Bookmark 
               size={20} 
               color={post.isBookmarked ? colors.primary : colors.onSurfaceVariant}
               fill={post.isBookmarked ? colors.primary : 'none'}
             />
-          </TouchableOpacity>
+          </AnimatedIconButton>
         </View>
         <Text style={[styles.postText, { color: colors.onSurfaceVariant }]}>{post.content}</Text>
       </View>
       <View style={[styles.postActions, { borderTopColor: `${colors.outline}33` }]}>
-        <TouchableOpacity 
+        <AnimatedIconButton 
           style={[styles.actionButton, { backgroundColor: `${colors.surfaceVariant}80` }]} 
           onPress={onLike}
-          activeOpacity={0.7}
+          bounceEffect="medium"
         >
           <View style={styles.actionIconContainer}>
             <Sprout 
@@ -183,27 +173,27 @@ const PostCard = React.memo<PostCardProps>(({ post, colors, onLike, onBookmark, 
             />
           </View>
           <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.likes}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
+        </AnimatedIconButton>
+        <AnimatedIconButton 
           style={[styles.actionButton, { backgroundColor: `${colors.surfaceVariant}80` }]} 
           onPress={onComment}
-          activeOpacity={0.7}
+          bounceEffect="medium"
         >
           <View style={styles.actionIconContainer}>
             <Leaf size={20} color={colors.onSurfaceVariant} />
           </View>
           <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.comments}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
+        </AnimatedIconButton>
+        <AnimatedIconButton 
           style={[styles.actionButton, { backgroundColor: `${colors.surfaceVariant}80` }]} 
           onPress={onShare}
-          activeOpacity={0.7}
+          bounceEffect="medium"
         >
           <View style={styles.actionIconContainer}>
             <Heading size={20} color={colors.onSurfaceVariant} />
           </View>
           <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>{post.shares || 0}</Text>
-        </TouchableOpacity>
+        </AnimatedIconButton>
       </View>
       </View>
     </View>

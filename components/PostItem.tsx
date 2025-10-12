@@ -1,13 +1,13 @@
 import React, { memo, useCallback, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Modal, Pressable } from "react-native";
+import { View, Text, StyleSheet, Alert, Modal, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Sprout, Leaf, Heading, Bookmark, MoreVertical, Trash2, Flag } from "lucide-react-native";
 import { PlantTheme } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { type Post } from "@/hooks/use-posts";
-import * as Haptics from 'expo-haptics';
 import { useAuth } from "@/hooks/use-auth";
 import { deletePost, reportPost } from "@/lib/firebase";
+import { AnimatedIconButton } from "@/components/AnimatedPressable";
 
 interface PostItemProps {
   post: Post;
@@ -27,16 +27,6 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
   const isOwnPost = user?.id === post.user.id;
   const handleLike = useCallback(async () => {
     console.log('Sunshine pressed for post:', post.id);
-    
-    // Haptic feedback for better UX
-    if (Platform.OS !== 'web') {
-      try {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (error) {
-        console.log('Haptics not available:', error);
-      }
-    }
-    
     onLike?.();
   }, [onLike, post.id]);
   
@@ -52,15 +42,6 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
   
   const handleBookmark = useCallback(async () => {
     console.log('Harvest pressed for post:', post.id);
-    
-    if (Platform.OS !== 'web') {
-      try {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (error) {
-        console.log('Haptics not available:', error);
-      }
-    }
-    
     setIsBookmarked(!isBookmarked);
     onBookmark?.();
   }, [isBookmarked, onBookmark, post.id]);
@@ -178,29 +159,27 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
           <Text style={styles.timestamp}>{post.timestamp}</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity
+          <AnimatedIconButton
             style={styles.bookmarkButton}
             onPress={handleBookmark}
             testID={`bookmark-button-${post.id}`}
-            activeOpacity={0.7}
           >
             <Bookmark 
               size={20} 
               color={isBookmarked ? PlantTheme.colors.primary : PlantTheme.colors.onSurfaceVariant}
               fill={isBookmarked ? PlantTheme.colors.primary : 'none'}
             />
-          </TouchableOpacity>
-          <TouchableOpacity
+          </AnimatedIconButton>
+          <AnimatedIconButton
             style={styles.menuButton}
             onPress={handleMenuPress}
             testID={`menu-button-${post.id}`}
-            activeOpacity={0.7}
           >
             <MoreVertical 
               size={24} 
               color={PlantTheme.colors.textPrimary}
             />
-          </TouchableOpacity>
+          </AnimatedIconButton>
         </View>
       </View>
 
@@ -219,11 +198,11 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
       )}
 
       <View style={styles.actions}>
-        <TouchableOpacity
+        <AnimatedIconButton
           style={styles.actionButton}
           onPress={handleLike}
           testID={`like-button-${post.id}`}
-          activeOpacity={0.7}
+          bounceEffect="medium"
         >
           <Sprout 
             size={20} 
@@ -231,27 +210,27 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
             fill={post.isLiked ? PlantTheme.colors.primary : 'none'}
           />
           <Text style={styles.actionText}>{post.likes}</Text>
-        </TouchableOpacity>
+        </AnimatedIconButton>
 
-        <TouchableOpacity
+        <AnimatedIconButton
           style={styles.actionButton}
           onPress={handleComment}
           testID={`comment-button-${post.id}`}
-          activeOpacity={0.7}
+          bounceEffect="medium"
         >
           <Leaf size={20} color={PlantTheme.colors.onSurfaceVariant} />
           <Text style={styles.actionText}>{post.comments}</Text>
-        </TouchableOpacity>
+        </AnimatedIconButton>
 
-        <TouchableOpacity
+        <AnimatedIconButton
           style={styles.actionButton}
           onPress={handleShare}
           testID={`share-button-${post.id}`}
-          activeOpacity={0.7}
+          bounceEffect="medium"
         >
           <Heading size={20} color={PlantTheme.colors.onSurfaceVariant} />
           <Text style={styles.actionText}>{post.shares || 0}</Text>
-        </TouchableOpacity>
+        </AnimatedIconButton>
       </View>
       
       <Modal
@@ -266,23 +245,23 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
         >
           <View style={styles.menuContainer}>
             {isOwnPost ? (
-              <TouchableOpacity
+              <AnimatedIconButton
                 style={styles.menuItem}
                 onPress={handleDeletePost}
-                activeOpacity={0.7}
+                bounceEffect="subtle"
               >
                 <Trash2 size={20} color={PlantTheme.colors.error} />
                 <Text style={[styles.menuText, styles.deleteText]}>Delete Post</Text>
-              </TouchableOpacity>
+              </AnimatedIconButton>
             ) : (
-              <TouchableOpacity
+              <AnimatedIconButton
                 style={styles.menuItem}
                 onPress={handleReportPost}
-                activeOpacity={0.7}
+                bounceEffect="subtle"
               >
                 <Flag size={20} color={PlantTheme.colors.onSurfaceVariant} />
                 <Text style={styles.menuText}>Report Post</Text>
-              </TouchableOpacity>
+              </AnimatedIconButton>
             )}
           </View>
         </Pressable>
