@@ -87,15 +87,21 @@ export default function HomeScreen() {
                   ]
                 );
               }}
-              onShare={() => {
-                Alert.alert(
-                  '🌱 Spread Seeds',
-                  'How would you like to share this seed?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Share', onPress: () => toggleShare(post.id) },
-                  ]
-                );
+              onShare={async () => {
+                try {
+                  await toggleShare(post.id);
+                  Alert.alert(
+                    '✨ Seeds Spread!',
+                    'Your seed has been shared with the community.',
+                    [{ text: 'OK' }]
+                  );
+                } catch (error) {
+                  Alert.alert(
+                    '❌ Share Failed',
+                    'Unable to share this seed. Please try again.',
+                    [{ text: 'OK' }]
+                  );
+                }
               }}
             />
           ))
