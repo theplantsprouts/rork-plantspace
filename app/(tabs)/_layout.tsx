@@ -1,4 +1,4 @@
-import { Stack, usePathname } from "expo-router";
+import { Stack, usePathname, useSegments } from "expo-router";
 import React, { useMemo, useCallback } from "react";
 import { View, StyleSheet } from "react-native";
 import createContextHook from '@nkzw/create-context-hook';
@@ -25,6 +25,7 @@ export default function TabLayout() {
 
 function TabLayoutContent() {
   const pathname = usePathname();
+  const segments = useSegments();
   
   const activeTab = useMemo(() => {
     if (pathname.includes('/home')) return 'home';
@@ -35,7 +36,9 @@ function TabLayoutContent() {
     return 'home';
   }, [pathname]);
 
-  const isCreatePage = pathname.includes('/create');
+  const isCreatePage = useMemo(() => {
+    return segments[segments.length - 1] === 'create';
+  }, [segments]);
 
   return (
     <View style={styles.container}>
