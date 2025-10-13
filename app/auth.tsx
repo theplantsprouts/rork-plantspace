@@ -49,8 +49,8 @@ export default function LoginScreen() {
       return;
     }
 
-    if (!isLogin && password.length < 6) {
-      setErrorMessage("Password must be at least 6 characters long");
+    if (!isLogin && password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters with uppercase, lowercase, number, and special character");
       return;
     }
 
@@ -156,6 +156,17 @@ export default function LoginScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
+
+              {!isLogin && (
+                <View style={styles.passwordRequirements}>
+                  <Text style={styles.requirementsTitle}>Password must contain:</Text>
+                  <Text style={styles.requirementText}>• At least 8 characters</Text>
+                  <Text style={styles.requirementText}>• One uppercase letter (A-Z)</Text>
+                  <Text style={styles.requirementText}>• One lowercase letter (a-z)</Text>
+                  <Text style={styles.requirementText}>• One number (0-9)</Text>
+                  <Text style={styles.requirementText}>• One special character (!@#$%^&*)</Text>
+                </View>
+              )}
 
               {errorMessage ? (
                 <View style={styles.errorContainer}>
@@ -330,5 +341,25 @@ const styles = StyleSheet.create({
     color: PlantTheme.colors.primary,
     fontSize: 14,
     fontWeight: '600' as const,
+  },
+  passwordRequirements: {
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.3)',
+  },
+  requirementsTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: PlantTheme.colors.textDark,
+    marginBottom: 8,
+  },
+  requirementText: {
+    fontSize: 13,
+    color: PlantTheme.colors.textSecondary,
+    marginBottom: 4,
+    lineHeight: 18,
   },
 });

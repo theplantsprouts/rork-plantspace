@@ -2,6 +2,7 @@ import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { auth, getProfile } from "@/lib/firebase";
+import { checkRateLimit, RateLimitType } from "@/lib/rate-limit";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
@@ -73,6 +74,28 @@ const isAuthed = t.middleware(({ next, ctx }) => {
   });
 });
 
+// Rate limit middleware factory
+const withRateLimit = (type: RateLimitType) => t.middleware(({ next, ctx }) => {
+  const identifier = ctx.user?.id || ctx.req.headers.get('x-forwarded-for') || 'anonymous';
+  const result = checkRateLimit(identifier, type);
+  
+  if (!result.allowed) {
+    throw new TRPCError({
+      code: "TOO_MANY_REQUESTS",
+      message: `Rate limit exceeded. Please try again in ${result.retryAfter} seconds.`,
+    });
+  }
+  
+  return next({ ctx });
+});
+
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(isAuthed);
+
+// Rate-limited procedures
+export const authProcedure = publicProcedure.use(withRateLimit('auth'));
+export const postProcedure = t.procedure.use(isAuthed).use(withRateLimit('post'));
+export const commentProcedure = t.procedure.use(isAuthed).use(withRateLimit('comment'));
+export const likeProcedure = t.procedure.use(isAuthed).use(withRateLimit('like'));
+export const messageProcedure = t.procedure.use(isAuthed).use(withRateLimit('message'));

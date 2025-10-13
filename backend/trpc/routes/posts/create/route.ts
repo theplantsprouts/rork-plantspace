@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { protectedProcedure } from "@/backend/trpc/create-context";
+import { postProcedure } from "@/backend/trpc/create-context";
 import { createPost } from "@/lib/firebase";
+import { sanitizeInput, validatePostContent } from "@/lib/validation";
 
-export const createPostProcedure = protectedProcedure
+export const createPostProcedure = postProcedure
   .input(
     z.object({
       content: z.string().min(1),
@@ -13,8 +14,15 @@ export const createPostProcedure = protectedProcedure
     try {
       const { content, image } = input;
       
+      const validation = validatePostContent(content);
+      if (!validation.valid) {
+        throw new Error(validation.message);
+      }
+      
+      const sanitizedContent = sanitizeInput(content);
+      
       // Create post in Firebase
-      const post = await createPost(content, image);
+      const post = await createPost(sanitizedContent, image);
       
       if (!post) {
         throw new Error('Failed to create post');

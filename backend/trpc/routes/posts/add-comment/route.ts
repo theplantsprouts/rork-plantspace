@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { protectedProcedure } from "../../../create-context";
+import { commentProcedure } from "../../../create-context";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, doc, updateDoc, increment } from "firebase/firestore";
+import { sanitizeInput } from "@/lib/validation";
 
-export const addCommentProcedure = protectedProcedure
+export const addCommentProcedure = commentProcedure
   .input(
     z.object({
       postId: z.string(),
@@ -15,10 +16,16 @@ export const addCommentProcedure = protectedProcedure
     const userId = ctx.user.id;
 
     try {
+      const sanitizedContent = sanitizeInput(content);
+      
+      if (!sanitizedContent || sanitizedContent.length < 1) {
+        throw new Error('Comment content cannot be empty');
+      }
+      
       const commentData = {
         postId,
         userId,
-        content,
+        content: sanitizedContent,
         created_at: new Date().toISOString(),
         likes: 0,
       };

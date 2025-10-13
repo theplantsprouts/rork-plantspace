@@ -15,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { User, Sprout, Camera, Leaf, UserCheck, AtSign, FileText } from "lucide-react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
+import { validateName, validateUsername, validateBio, sanitizeInput } from "@/lib/validation";
 
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
@@ -58,27 +59,30 @@ export default function ProfileSetupScreen() {
       return;
     }
 
-    if (bio.length < 10) {
-      setErrorMessage("Bio must be at least 10 characters long");
+    const nameValidation = validateName(name);
+    if (!nameValidation.valid) {
+      setErrorMessage(nameValidation.message || "Invalid name");
       return;
     }
 
-    if (username.length < 3) {
-      setErrorMessage("Username must be at least 3 characters long");
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.valid) {
+      setErrorMessage(usernameValidation.message || "Invalid username");
       return;
     }
 
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setErrorMessage("Username can only contain letters, numbers, and underscores");
+    const bioValidation = validateBio(bio);
+    if (!bioValidation.valid) {
+      setErrorMessage(bioValidation.message || "Invalid bio");
       return;
     }
 
     setLoading(true);
     try {
       const profileData: { name: string; username: string; bio: string; avatar?: string } = {
-        name: name.trim(),
-        username: username.trim(),
-        bio: bio.trim(),
+        name: sanitizeInput(name),
+        username: sanitizeInput(username),
+        bio: sanitizeInput(bio),
       };
       
       // Only include avatar if it has a value

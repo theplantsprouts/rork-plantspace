@@ -9,6 +9,7 @@ import {
   sendEmailVerification,
   User as FirebaseUser
 } from 'firebase/auth';
+import { validateEmail, validatePassword, sanitizeEmail } from '@/lib/validation';
 import { 
   doc, 
   getDoc, 
@@ -235,16 +236,21 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       throw new Error("Please enter both email and password");
     }
     
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
+    if (!validateEmail(email)) {
       throw new Error("Please enter a valid email address");
     }
     
+    const sanitizedEmail = sanitizeEmail(email);
+    
     try {
-      console.log('Attempting login with Firebase for:', email.trim());
+      console.log('Attempting login with Firebase for:', sanitizedEmail);
       
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const userCredential = await signInWithEmailAndPassword(auth, sanitizedEmail, password);
+      
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
+        throw new Error('Please verify your email before logging in. Check your inbox for the verification link.');
+      }
       
       console.log('Login successful with Firebase');
       
@@ -296,20 +302,21 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       throw new Error("Please enter both email and password");
     }
     
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
+    if (!validateEmail(email)) {
       throw new Error("Please enter a valid email address");
     }
     
-    if (password.length < 6) {
-      throw new Error("Password must be at least 6 characters long");
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      throw new Error(passwordValidation.message || "Invalid password");
     }
     
+    const sanitizedEmail = sanitizeEmail(email);
+    
     try {
-      console.log('Attempting registration with Firebase for:', email);
+      console.log('Attempting registration with Firebase for:', sanitizedEmail);
       
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const userCredential = await createUserWithEmailAndPassword(auth, sanitizedEmail, password);
       
       console.log('Registration successful with Firebase');
       console.log('User created:', userCredential.user.uid);

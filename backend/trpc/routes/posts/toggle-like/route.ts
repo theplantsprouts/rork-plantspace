@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { protectedProcedure } from "../../../create-context";
+import { likeProcedure } from "../../../create-context";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, deleteDoc, getDoc, updateDoc, increment } from "firebase/firestore";
 
-export const toggleLikeProcedure = protectedProcedure
+export const toggleLikeProcedure = likeProcedure
   .input(
     z.object({
       postId: z.string(),
