@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: PlantTheme.borderRadius.xl,
+    borderRadius: PlantTheme.borderRadius.button,
     paddingHorizontal: 28,
     paddingVertical: 14,
     minHeight: 52,
@@ -105,13 +105,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 14,
     minHeight: 52,
-    borderRadius: PlantTheme.borderRadius.xl,
+    borderRadius: PlantTheme.borderRadius.button,
   },
   large: {
     paddingHorizontal: 36,
     paddingVertical: 18,
     minHeight: 60,
-    borderRadius: PlantTheme.borderRadius.xxl,
+    borderRadius: PlantTheme.borderRadius.button,
   },
   
   // Android specific - solid style

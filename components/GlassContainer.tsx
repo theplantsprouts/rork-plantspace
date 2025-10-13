@@ -68,7 +68,7 @@ export function GlassContainer({
         StyleSheet.absoluteFill,
         { 
           backgroundColor: colors.glassBackground,
-          borderRadius: borderRadius.lg,
+          borderRadius: borderRadius.card,
           borderWidth: 1.5,
           borderColor: colors.glassBorder,
         }
@@ -149,7 +149,7 @@ export function GlassCard({
         StyleSheet.absoluteFill,
         { 
           backgroundColor: colors.glassBackground,
-          borderRadius: borderRadius.lg,
+          borderRadius: borderRadius.card,
           borderWidth: 1.5,
           borderColor: colors.glassBorder,
         }
@@ -166,12 +166,12 @@ export const Card = GlassCard;
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.card,
     overflow: 'hidden',
     ...elevation.level2,
   },
   card: {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.card,
     overflow: 'hidden',
     ...elevation.level3,
   },

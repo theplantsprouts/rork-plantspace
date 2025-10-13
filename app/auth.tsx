@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +13,7 @@ import { Sprout, Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { PlantTheme } from "@/constants/theme";
 import { router } from "expo-router";
+import { AnimatedButton, AnimatedIconButton } from "@/components/AnimatedPressable";
 
 
 
@@ -144,16 +144,17 @@ export default function LoginScreen() {
                     secureTextEntry={!showPassword}
                     testID="password-input"
                   />
-                  <TouchableOpacity
+                  <AnimatedIconButton
                     onPress={() => setShowPassword(!showPassword)}
                     style={styles.eyeIcon}
+                    bounceEffect="subtle"
                   >
                     {showPassword ? (
                       <EyeOff color={PlantTheme.colors.textSecondary} size={20} />
                     ) : (
                       <Eye color={PlantTheme.colors.textSecondary} size={20} />
                     )}
-                  </TouchableOpacity>
+                  </AnimatedIconButton>
                 </View>
               </View>
 
@@ -175,41 +176,43 @@ export default function LoginScreen() {
               ) : null}
 
               {isLogin && (
-                <TouchableOpacity
+                <AnimatedButton
                   style={styles.forgotPasswordButton}
                   onPress={() => router.push("/forgot-password" as any)}
                   testID="forgot-password-button"
+                  bounceEffect="subtle"
                 >
                   <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                </TouchableOpacity>
+                </AnimatedButton>
               )}
 
-              <TouchableOpacity
+              <AnimatedButton
                 style={[styles.submitButton, loading && styles.submitButtonDisabled]}
                 onPress={handleSubmit}
                 disabled={loading}
-                activeOpacity={0.8}
                 testID="submit-button"
+                bounceEffect="medium"
               >
                 <Text style={styles.submitButtonText}>
                   {loading ? "Loading..." : isLogin ? "Log In" : "Sign Up"}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedButton>
 
-              <TouchableOpacity
+              <AnimatedButton
                 style={styles.switchButton}
                 onPress={() => {
                   setIsLogin(!isLogin);
                   setErrorMessage('');
                 }}
                 testID="switch-mode-button"
+                bounceEffect="subtle"
               >
                 <Text style={styles.switchText}>
                   {isLogin
                     ? "Don't have an account? Sign Up"
                     : "Already have an account? Log In"}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedButton>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -270,10 +273,10 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PlantTheme.colors.white,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
+    borderColor: PlantTheme.colors.outline,
+    borderRadius: PlantTheme.borderRadius.input,
     paddingHorizontal: 16,
     height: 56,
   },
@@ -291,13 +294,13 @@ const styles = StyleSheet.create({
   errorContainer: {
     marginBottom: 16,
     padding: 12,
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-    borderRadius: 12,
+    backgroundColor: `${PlantTheme.colors.error}1A`,
+    borderRadius: PlantTheme.borderRadius.input,
     borderWidth: 1,
-    borderColor: 'rgba(244, 67, 54, 0.3)',
+    borderColor: `${PlantTheme.colors.error}4D`,
   },
   errorText: {
-    color: '#F44336',
+    color: PlantTheme.colors.error,
     fontSize: 14,
     textAlign: 'center',
     fontWeight: '500' as const,
@@ -305,20 +308,16 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: PlantTheme.colors.primary,
     paddingVertical: 16,
-    borderRadius: 9999,
+    borderRadius: PlantTheme.borderRadius.button,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: PlantTheme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    ...PlantTheme.shadows.md,
   },
   submitButtonDisabled: {
     opacity: 0.6,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: PlantTheme.colors.white,
     fontSize: 18,
     fontWeight: 'bold' as const,
   },
@@ -345,10 +344,10 @@ const styles = StyleSheet.create({
   passwordRequirements: {
     marginBottom: 16,
     padding: 12,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderRadius: 12,
+    backgroundColor: `${PlantTheme.colors.success}1A`,
+    borderRadius: PlantTheme.borderRadius.input,
     borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
+    borderColor: `${PlantTheme.colors.success}4D`,
   },
   requirementsTitle: {
     fontSize: 14,

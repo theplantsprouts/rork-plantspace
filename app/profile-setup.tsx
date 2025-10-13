@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +20,7 @@ import { PlantTheme, PlantTerminology } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
 import { MaterialInput } from "@/components/MaterialInput";
 import { MaterialButton } from "@/components/MaterialButton";
+import { AnimatedIconButton } from "@/components/AnimatedPressable";
 
 export default function ProfileSetupScreen() {
   const [name, setName] = useState("");
@@ -162,13 +162,14 @@ export default function ProfileSetupScreen() {
                       <User color={PlantTheme.colors.textSecondary} size={40} />
                     </View>
                   )}
-                  <TouchableOpacity
+                  <AnimatedIconButton
                     style={styles.avatarButton}
                     onPress={generateAvatar}
                     testID="generate-avatar-button"
+                    bounceEffect="medium"
                   >
                     <Camera color={PlantTheme.colors.primary} size={20} />
-                  </TouchableOpacity>
+                  </AnimatedIconButton>
                 </View>
                 <Text style={styles.avatarHint}>
                   Tap the camera to generate an avatar
@@ -262,14 +263,11 @@ const styles = StyleSheet.create({
   logoContainer: {
     marginBottom: 20,
     padding: 16,
-    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
+    backgroundColor: PlantTheme.colors.glassBackground,
     borderRadius: PlantTheme.borderRadius.full,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
-    ...(Platform.OS === 'android' && {
-      elevation: 2,
-      shadowColor: 'transparent',
-    }),
+    borderColor: PlantTheme.colors.glassBorder,
+    ...PlantTheme.shadows.sm,
   },
   title: {
     fontSize: 28,
@@ -286,7 +284,6 @@ const styles = StyleSheet.create({
   },
   formCard: {
     padding: 24,
-    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
   },
   avatarSection: {
     alignItems: "center",
@@ -299,16 +296,15 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: 'transparent',
+    borderRadius: PlantTheme.borderRadius.avatar,
   },
   avatarPlaceholder: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
+    borderRadius: PlantTheme.borderRadius.avatar,
+    backgroundColor: PlantTheme.colors.glassBackground,
     borderWidth: 2,
-    borderColor: PlantTheme.colors.cardBorder,
+    borderColor: PlantTheme.colors.glassBorder,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -317,18 +313,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: PlantTheme.colors.white,
-    borderRadius: 20,
+    borderRadius: PlantTheme.borderRadius.avatar,
     width: 40,
     height: 40,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
     borderColor: PlantTheme.colors.primary,
-    ...PlantTheme.shadows.sm,
-    ...(Platform.OS === 'android' && {
-      elevation: 3,
-      shadowColor: 'transparent',
-    }),
+    ...PlantTheme.shadows.md,
   },
   avatarHint: {
     fontSize: 12,
@@ -426,23 +418,19 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   glassInput: {
-    backgroundColor: Platform.OS === 'android' ? PlantTheme.colors.cardBackground : 'transparent',
+    backgroundColor: PlantTheme.colors.glassBackground,
     borderWidth: 1,
-    borderColor: PlantTheme.colors.cardBorder,
+    borderColor: PlantTheme.colors.glassBorder,
+    borderRadius: PlantTheme.borderRadius.input,
     ...PlantTheme.shadows.sm,
-    ...(Platform.OS === 'android' && {
-      elevation: 0,
-      shadowColor: 'transparent',
-      borderRadius: PlantTheme.borderRadius.md,
-    }),
   },
   errorContainer: {
     marginBottom: 16,
     padding: 12,
-    backgroundColor: Platform.OS === 'android' ? 'transparent' : 'rgba(244, 67, 54, 0.1)',
-    borderRadius: PlantTheme.borderRadius.md,
+    backgroundColor: `${PlantTheme.colors.error}1A`,
+    borderRadius: PlantTheme.borderRadius.input,
     borderWidth: 1,
-    borderColor: 'rgba(244, 67, 54, 0.3)',
+    borderColor: `${PlantTheme.colors.error}4D`,
   },
   errorText: {
     color: PlantTheme.colors.error,

@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: PlantTheme.borderRadius.avatar,
     backgroundColor: PlantTheme.colors.cardBackground,
     borderWidth: 2.5,
     borderColor: PlantTheme.colors.primary,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: 220,
-    borderRadius: PlantTheme.borderRadius.lg,
+    borderRadius: PlantTheme.borderRadius.card,
     marginBottom: 16,
   },
   actions: {
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     backgroundColor: PlantTheme.colors.cardBackground,
-    borderRadius: PlantTheme.borderRadius.xl,
+    borderRadius: PlantTheme.borderRadius.card,
     padding: 12,
     minWidth: 220,
     ...PlantTheme.shadows.xl,
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 18,
     gap: 14,
-    borderRadius: PlantTheme.borderRadius.md,
+    borderRadius: PlantTheme.borderRadius.input,
   },
   menuText: {
     fontSize: 16,
