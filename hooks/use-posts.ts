@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAIContent } from './use-ai-content';
 import { useAuth } from './use-auth';
 import { useRealTimePosts } from './use-realtime';
-import { createPost, uploadImage, Post as FirebasePost, toggleBookmark, isPostBookmarked, toggleLike as firebaseToggleLike, isPostLiked, addComment as firebaseAddComment, toggleShare as firebaseToggleShare } from '@/lib/firebase';
+import { createPost, uploadImage, Post as FirebasePost, toggleBookmark, subscribeToBookmarks, toggleLike as firebaseToggleLike, isPostLiked, addComment as firebaseAddComment, toggleShare as firebaseToggleShare } from '@/lib/firebase';
 import { trackPostCreated, trackPostViewed, trackPostLiked, trackPostShared } from '@/lib/analytics';
 
 export interface User {
@@ -69,27 +69,22 @@ export function usePosts() {
   // Use real-time posts hook
   const { posts: realTimePosts, loading: isLoading, error, refresh } = useRealTimePosts();
 
-  // Load bookmarked and liked status for all posts
+  // Subscribe to real-time bookmark updates
   useEffect(() => {
-    const loadPostStatuses = async () => {
-      if (!user?.id || realTimePosts.length === 0) return;
+    if (!user?.id) return;
 
-      const bookmarkedIds = new Set<string>();
-      for (const post of realTimePosts) {
-        try {
-          const isBookmarked = await isPostBookmarked(user.id, post.id);
-          if (isBookmarked) {
-            bookmarkedIds.add(post.id);
-          }
-        } catch (error) {
-          // Silently fail for individual bookmark checks
-        }
+    const unsubscribe = subscribeToBookmarks(
+      user.id,
+      (bookmarkedIds) => {
+        setBookmarkedPostIds(new Set(bookmarkedIds));
+      },
+      (error) => {
+        console.error('Error subscribing to bookmarks:', error);
       }
-      setBookmarkedPostIds(bookmarkedIds);
-    };
+    );
 
-    loadPostStatuses();
-  }, [user?.id, realTimePosts.length]);
+    return () => unsubscribe();
+  }, [user?.id]);
   
   // Convert Firebase posts to our Post interface
   const firebasePosts = realTimePosts.map((firebasePost: FirebasePost): Post => ({
@@ -207,17 +202,7 @@ export function usePosts() {
     if (!user?.id) return;
 
     try {
-      const isBookmarked = await toggleBookmark(user.id, postId);
-      
-      setBookmarkedPostIds(prev => {
-        const newSet = new Set(prev);
-        if (isBookmarked) {
-          newSet.add(postId);
-        } else {
-          newSet.delete(postId);
-        }
-        return newSet;
-      });
+      await toggleBookmark(user.id, postId);
     } catch (error) {
       console.error('Error toggling bookmark:', error);
     }

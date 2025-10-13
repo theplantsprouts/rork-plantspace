@@ -20,6 +20,7 @@ import { PlantTheme } from '@/constants/theme';
 import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/hooks/use-auth';
+import { subscribeToMessages, Message as FirebaseMessage } from '@/lib/firebase';
 
 type Message = {
   id: string;
@@ -44,10 +45,28 @@ export default function ChatScreen() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const messagesQuery = trpc.messages.getMessages.useQuery(
-    { otherUserId: params.userId || '' },
-    { enabled: !!params.userId, refetchInterval: 3000 }
-  );
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  
+  useEffect(() => {
+    if (!params.userId || !user?.id) return;
+    
+    setIsLoadingMessages(true);
+    const unsubscribe = subscribeToMessages(
+      user.id,
+      params.userId,
+      (fetchedMessages) => {
+        setMessages(fetchedMessages as Message[]);
+        setIsLoadingMessages(false);
+      },
+      (error) => {
+        console.error('Error loading messages:', error);
+        setIsLoadingMessages(false);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, [params.userId, user?.id]);
 
   const uploadImageMutation = trpc.posts.uploadImage.useMutation();
 
@@ -56,7 +75,6 @@ export default function ChatScreen() {
       setMessageText('');
       setSelectedImage(null);
       setSelectedImageBase64(null);
-      messagesQuery.refetch();
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -64,12 +82,12 @@ export default function ChatScreen() {
   });
 
   useEffect(() => {
-    if (messagesQuery.data?.messages.length) {
+    if (messages.length) {
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: false });
       }, 100);
     }
-  }, [messagesQuery.data?.messages.length]);
+  }, [messages.length]);
 
   const handlePickImage = async () => {
     try {
@@ -118,7 +136,7 @@ export default function ChatScreen() {
     }
   };
 
-  const messages: Message[] = (messagesQuery.data?.messages || []) as Message[];
+
 
   const backgroundColor = isDark ? '#112111' : '#f6f8f6';
   const textColor = '#000000';
@@ -165,7 +183,7 @@ export default function ChatScreen() {
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
           showsVerticalScrollIndicator={false}
         >
-          {messagesQuery.isLoading ? (
+          {isLoadingMessages ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={primaryColor} />
             </View>

@@ -727,4 +727,115 @@ export const reportPost = async (userId: string, postId: string, reason: string)
   }
 };
 
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  text?: string;
+  imageUrl?: string;
+  createdAt: string;
+  read: boolean;
+}
+
+export const subscribeToBookmarks = (
+  userId: string,
+  callback: (bookmarkedPostIds: string[]) => void,
+  errorCallback?: (error: any) => void
+) => {
+  const bookmarksRef = collection(db, 'bookmarks');
+  const q = query(bookmarksRef, where('userId', '==', userId));
+  
+  return onSnapshot(q, (snapshot) => {
+    try {
+      const bookmarkedIds = snapshot.docs.map(doc => doc.data().postId);
+      callback(bookmarkedIds);
+    } catch (error) {
+      console.error('Error processing bookmarks snapshot:', error);
+      if (errorCallback) {
+        errorCallback(error);
+      } else {
+        callback([]);
+      }
+    }
+  }, (error) => {
+    console.error('Firestore bookmarks subscription error:', error);
+    if (errorCallback) {
+      errorCallback(error);
+    } else {
+      callback([]);
+    }
+  });
+};
+
+export const subscribeToMessages = (
+  userId: string,
+  otherUserId: string,
+  callback: (messages: Message[]) => void,
+  errorCallback?: (error: any) => void
+) => {
+  const messagesRef = collection(db, 'messages');
+  
+  const sentQuery = query(
+    messagesRef,
+    where('senderId', '==', userId),
+    where('receiverId', '==', otherUserId),
+    orderBy('createdAt', 'asc')
+  );
+  
+  const receivedQuery = query(
+    messagesRef,
+    where('senderId', '==', otherUserId),
+    where('receiverId', '==', userId),
+    orderBy('createdAt', 'asc')
+  );
+  
+  let sentMessages: Message[] = [];
+  let receivedMessages: Message[] = [];
+  
+  const updateMessages = () => {
+    const allMessages = [...sentMessages, ...receivedMessages]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    callback(allMessages);
+  };
+  
+  const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
+    try {
+      sentMessages = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      } as Message));
+      updateMessages();
+    } catch (error) {
+      console.error('Error processing sent messages:', error);
+      if (errorCallback) errorCallback(error);
+    }
+  }, (error) => {
+    console.error('Sent messages subscription error:', error);
+    if (errorCallback) errorCallback(error);
+  });
+  
+  const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
+    try {
+      receivedMessages = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      } as Message));
+      updateMessages();
+    } catch (error) {
+      console.error('Error processing received messages:', error);
+      if (errorCallback) errorCallback(error);
+    }
+  }, (error) => {
+    console.error('Received messages subscription error:', error);
+    if (errorCallback) errorCallback(error);
+  });
+  
+  return () => {
+    unsubscribeSent();
+    unsubscribeReceived();
+  };
+};
+
 export default app;
