@@ -550,6 +550,16 @@ export const isPostLiked = async (userId: string, postId: string): Promise<boole
   }
 };
 
+export interface Comment {
+  id: string;
+  postId: string;
+  userId: string;
+  content: string;
+  created_at: string;
+  likes: number;
+  author?: Profile;
+}
+
 export const addComment = async (userId: string, postId: string, content: string): Promise<string | null> => {
   try {
     const commentData = {
@@ -573,6 +583,78 @@ export const addComment = async (userId: string, postId: string, content: string
     console.error('Error adding comment:', error);
     throw new Error('Failed to add comment');
   }
+};
+
+export const getComments = async (postId: string): Promise<Comment[]> => {
+  try {
+    const commentsRef = collection(db, 'comments');
+    const q = query(commentsRef, where('postId', '==', postId), orderBy('created_at', 'desc'));
+    const querySnapshot = await getDocs(q);
+
+    const comments: Comment[] = [];
+
+    for (const docSnap of querySnapshot.docs) {
+      const commentData = { id: docSnap.id, ...docSnap.data() } as Comment;
+      
+      if (commentData.userId) {
+        const authorProfile = await getProfile(commentData.userId);
+        if (authorProfile) {
+          commentData.author = authorProfile;
+        }
+      }
+      
+      comments.push(commentData);
+    }
+
+    return comments;
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    return [];
+  }
+};
+
+export const subscribeToComments = (
+  postId: string,
+  callback: (comments: Comment[]) => void,
+  errorCallback?: (error: any) => void
+) => {
+  const commentsRef = collection(db, 'comments');
+  const q = query(commentsRef, where('postId', '==', postId), orderBy('created_at', 'desc'));
+  
+  return onSnapshot(q, async (snapshot) => {
+    try {
+      const comments: Comment[] = [];
+      
+      for (const docSnap of snapshot.docs) {
+        const commentData = { id: docSnap.id, ...docSnap.data() } as Comment;
+        
+        if (commentData.userId) {
+          const authorProfile = await getProfile(commentData.userId);
+          if (authorProfile) {
+            commentData.author = authorProfile;
+          }
+        }
+        
+        comments.push(commentData);
+      }
+      
+      callback(comments);
+    } catch (error) {
+      console.error('Error processing comments snapshot:', error);
+      if (errorCallback) {
+        errorCallback(error);
+      } else {
+        callback([]);
+      }
+    }
+  }, (error) => {
+    console.error('Firestore comments subscription error:', error);
+    if (errorCallback) {
+      errorCallback(error);
+    } else {
+      callback([]);
+    }
+  });
 };
 
 export const toggleShare = async (userId: string, postId: string): Promise<boolean> => {

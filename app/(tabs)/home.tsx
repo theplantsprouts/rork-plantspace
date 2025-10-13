@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
+  Share,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Sprout, Leaf, Heading, Bookmark } from 'lucide-react-native';
@@ -79,18 +81,32 @@ export default function HomeScreen() {
               }}
               onShare={async () => {
                 try {
+                  const shareMessage = `Check out this post from ${post.user.name}:\n\n${post.content}`;
+                  const shareUrl = `plantspace://post/${post.id}`;
+                  
+                  if (Platform.OS === 'web') {
+                    if (navigator.share) {
+                      await navigator.share({
+                        title: `Post by ${post.user.name}`,
+                        text: shareMessage,
+                        url: shareUrl,
+                      });
+                    } else {
+                      await navigator.clipboard.writeText(`${shareMessage}\n${shareUrl}`);
+                      Alert.alert('✨ Copied!', 'Post link copied to clipboard.');
+                    }
+                  } else {
+                    await Share.share({
+                      message: `${shareMessage}\n${shareUrl}`,
+                      title: `Post by ${post.user.name}`,
+                    });
+                  }
+                  
                   await toggleShare(post.id);
-                  Alert.alert(
-                    '✨ Seeds Spread!',
-                    'Your seed has been shared with the community.',
-                    [{ text: 'OK' }]
-                  );
-                } catch {
-                  Alert.alert(
-                    '❌ Share Failed',
-                    'Unable to share this seed. Please try again.',
-                    [{ text: 'OK' }]
-                  );
+                } catch (error: any) {
+                  if (error.message !== 'User did not share') {
+                    console.error('Share error:', error);
+                  }
                 }
               }}
             />

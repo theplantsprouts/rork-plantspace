@@ -1,5 +1,5 @@
 import { Stack, usePathname, useSegments } from "expo-router";
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import createContextHook from '@nkzw/create-context-hook';
 import { GlowingTopBar } from "@/components/GlowingTopBar";
@@ -26,6 +26,7 @@ export default function TabLayout() {
 function TabLayoutContent() {
   const pathname = usePathname();
   const segments = useSegments();
+  const [showTopBar, setShowTopBar] = useState(true);
   
   const activeTab = useMemo(() => {
     if (pathname.includes('/home')) return 'home';
@@ -39,10 +40,14 @@ function TabLayoutContent() {
   const isCreatePage = useMemo(() => {
     return segments[segments.length - 1] === 'create';
   }, [segments]);
+  
+  useEffect(() => {
+    setShowTopBar(!isCreatePage);
+  }, [isCreatePage]);
 
   return (
     <View style={styles.container}>
-      {!isCreatePage && <GlowingTopBar activeTab={activeTab} />}
+      {showTopBar && <GlowingTopBar activeTab={activeTab} />}
       
       <Stack
         screenOptions={{
@@ -83,7 +88,7 @@ function TabLayoutContent() {
         />
       </Stack>
       
-      {!isCreatePage && <FloatingCapsule />}
+      {showTopBar && <FloatingCapsule />}
     </View>
   );
 }

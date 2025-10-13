@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Alert,
+  ActivityIndicator,
+  Share,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +22,7 @@ import { GlassCard } from '@/components/GlassContainer';
 import { usePosts } from '@/hooks/use-posts';
 import { AnimatedIconButton } from '@/components/AnimatedPressable';
 import * as Haptics from 'expo-haptics';
+import { subscribeToComments, type Comment } from '@/lib/firebase';
 
 export default function PostDetailScreen() {
   const { postId } = useLocalSearchParams<{ postId: string }>();
@@ -27,8 +30,29 @@ export default function PostDetailScreen() {
   const insets = useSafeAreaInsets();
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(true);
   
   const post = posts.find(p => p.id === postId);
+  
+  useEffect(() => {
+    if (!postId) return;
+    
+    setLoadingComments(true);
+    const unsubscribe = subscribeToComments(
+      postId,
+      (fetchedComments) => {
+        setComments(fetchedComments);
+        setLoadingComments(false);
+      },
+      (error) => {
+        console.error('Error loading comments:', error);
+        setLoadingComments(false);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, [postId]);
   
   if (isLoading) {
     return (
@@ -90,7 +114,6 @@ export default function PostDetailScreen() {
     try {
       await addComment(post.id, commentText.trim());
       setCommentText('');
-      Alert.alert('Success', 'Your roots have been added! 🌱');
     } catch (error) {
       console.error('Error adding comment:', error);
       Alert.alert('Error', 'Failed to add comment. Please try again.');
@@ -99,9 +122,35 @@ export default function PostDetailScreen() {
     }
   };
   
-  const handleShare = () => {
-    console.log('Spreading seeds (sharing) for post:', post.id);
-    toggleShare(post.id);
+  const handleShare = async () => {
+    try {
+      const shareMessage = `Check out this post from ${post.user.name}:\n\n${post.content}`;
+      const shareUrl = `plantspace://post/${post.id}`;
+      
+      if (Platform.OS === 'web') {
+        if (navigator.share) {
+          await navigator.share({
+            title: `Post by ${post.user.name}`,
+            text: shareMessage,
+            url: shareUrl,
+          });
+        } else {
+          await navigator.clipboard.writeText(`${shareMessage}\n${shareUrl}`);
+          Alert.alert('✨ Copied!', 'Post link copied to clipboard.');
+        }
+      } else {
+        await Share.share({
+          message: `${shareMessage}\n${shareUrl}`,
+          title: `Post by ${post.user.name}`,
+        });
+      }
+      
+      await toggleShare(post.id);
+    } catch (error: any) {
+      if (error.message !== 'User did not share') {
+        console.error('Share error:', error);
+      }
+    }
   };
   
   return (
@@ -212,10 +261,48 @@ export default function PostDetailScreen() {
           
           {/* Comments Section */}
           <GlassCard style={styles.commentsCard}>
-            <Text style={styles.commentsTitle}>🌿 {PlantTerminology.comments}</Text>
-            <Text style={styles.commentsPlaceholder}>
-              Share your thoughts and grow the conversation!
-            </Text>
+            <Text style={styles.commentsTitle}>🌿 {PlantTerminology.comments} ({comments.length})</Text>
+            {loadingComments ? (
+              <View style={styles.commentsLoading}>
+                <ActivityIndicator size="small" color={PlantTheme.colors.primary} />
+                <Text style={styles.commentsLoadingText}>Loading roots...</Text>
+              </View>
+            ) : comments.length === 0 ? (
+              <Text style={styles.commentsPlaceholder}>
+                Be the first to share your thoughts and grow the conversation!
+              </Text>
+            ) : (
+              <View style={styles.commentsList}>
+                {comments.map((comment) => (
+                  <View key={comment.id} style={styles.commentItem}>
+                    <View style={styles.commentHeader}>
+                      <View style={styles.commentAvatar}>
+                        {comment.author?.avatar ? (
+                          <Image
+                            source={{ uri: comment.author.avatar }}
+                            style={styles.commentAvatarImage}
+                            contentFit="cover"
+                            cachePolicy="memory-disk"
+                            transition={100}
+                          />
+                        ) : (
+                          <Text style={styles.commentAvatarText}>
+                            {(comment.author?.name || 'U').charAt(0).toUpperCase()}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={styles.commentInfo}>
+                        <Text style={styles.commentAuthor}>{comment.author?.name || 'Unknown'}</Text>
+                        <Text style={styles.commentTime}>
+                          {new Date(comment.created_at).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.commentContent}>{comment.content}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </GlassCard>
         </ScrollView>
 
@@ -450,5 +537,71 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: PlantTheme.colors.surfaceVariant,
     opacity: 0.5,
+  },
+  commentsLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 12,
+  },
+  commentsLoadingText: {
+    fontSize: 14,
+    color: PlantTheme.colors.textSecondary,
+  },
+  commentsList: {
+    marginTop: 12,
+    gap: 16,
+  },
+  commentItem: {
+    padding: 16,
+    backgroundColor: PlantTheme.colors.surfaceVariant,
+    borderRadius: PlantTheme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.glassBorder,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  commentAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: PlantTheme.colors.cardBackground,
+    borderWidth: 2,
+    borderColor: PlantTheme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    overflow: 'hidden',
+  },
+  commentAvatarImage: {
+    width: 36,
+    height: 36,
+  },
+  commentAvatarText: {
+    color: PlantTheme.colors.primary,
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  commentInfo: {
+    flex: 1,
+  },
+  commentAuthor: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: PlantTheme.colors.textPrimary,
+  },
+  commentTime: {
+    fontSize: 12,
+    color: PlantTheme.colors.textSecondary,
+    marginTop: 2,
+  },
+  commentContent: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: PlantTheme.colors.textPrimary,
   },
 });
