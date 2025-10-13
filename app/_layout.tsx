@@ -83,6 +83,34 @@ function RootLayoutNav() {
       <Stack.Screen name="create-post" options={{ headerShown: false }} />
       <Stack.Screen name="post-detail" options={{ title: "Seed Details", headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" options={{ title: "Settings" }} />
+      <Stack.Screen name="notifications" options={{ title: "Notifications", headerShown: false }} />
+      <Stack.Screen name="saved-content" options={{ title: "Saved Content" }} />
+      
+      {/* Password Reset Flow */}
+      <Stack.Screen name="forgot-password" options={{ title: "Forgot Password" }} />
+      <Stack.Screen name="reset-email-sent" options={{ title: "Check Your Email", headerShown: false }} />
+      <Stack.Screen name="set-new-password" options={{ title: "Set New Password" }} />
+      <Stack.Screen name="password-reset-success" options={{ title: "Success", headerShown: false }} />
+      
+      {/* Account Settings */}
+      <Stack.Screen name="account-settings" options={{ title: "Account Settings" }} />
+      <Stack.Screen name="change-username" options={{ title: "Change Username" }} />
+      <Stack.Screen name="change-email" options={{ title: "Change Email" }} />
+      <Stack.Screen name="change-password" options={{ title: "Change Password" }} />
+      <Stack.Screen name="delete-account" options={{ title: "Delete Account" }} />
+      
+      {/* Privacy & Data Settings */}
+      <Stack.Screen name="privacy-settings" options={{ title: "Privacy Settings" }} />
+      <Stack.Screen name="ad-preferences" options={{ title: "Ad Preferences" }} />
+      <Stack.Screen name="download-data" options={{ title: "Download Your Data" }} />
+      <Stack.Screen name="blocked-accounts" options={{ title: "Blocked Accounts" }} />
+      <Stack.Screen name="notification-preferences" options={{ title: "Notification Preferences" }} />
+      
+      {/* Help & Support */}
+      <Stack.Screen name="help-support" options={{ title: "Help & Support" }} />
+      <Stack.Screen name="report-problem" options={{ title: "Report a Problem" }} />
+      <Stack.Screen name="about" options={{ title: "About" }} />
     </Stack>
   );
 }
