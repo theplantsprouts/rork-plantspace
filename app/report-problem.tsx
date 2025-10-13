@@ -3,284 +3,280 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import { X } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
+import { ArrowLeft, Flag, AlertCircle } from 'lucide-react-native';
+import { AnimatedButton } from '@/components/AnimatedPressable';
+import { MaterialInput } from '@/components/MaterialInput';
+import { MaterialButton } from '@/components/MaterialButton';
+import { useAuth } from '@/hooks/use-auth';
+import { useTheme } from '@/hooks/use-theme';
 
-type ReportReason =
-  | 'spam'
-  | 'inappropriate'
-  | 'harassment'
-  | 'misinformation'
-  | 'copyright'
-  | 'other';
-
-interface ReportOption {
-  id: ReportReason;
-  title: string;
-}
+const PROBLEM_CATEGORIES = [
+  'Bug or Technical Issue',
+  'Account Problem',
+  'Content Issue',
+  'Privacy Concern',
+  'Feature Request',
+  'Other',
+];
 
 export default function ReportProblemScreen() {
-  const insets = useSafeAreaInsets();
-  const [selectedReason, setSelectedReason] = useState<ReportReason>('spam');
-  const [details, setDetails] = useState('');
+  const { user } = useAuth();
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { colors } = useTheme();
 
-  const reportOptions: ReportOption[] = [
-    { id: 'spam', title: 'It\'s spam' },
-    { id: 'inappropriate', title: 'Inappropriate content' },
-    { id: 'harassment', title: 'Harassment or bullying' },
-    { id: 'misinformation', title: 'False or misleading information' },
-    { id: 'copyright', title: 'Copyright violation' },
-    { id: 'other', title: 'Something else' },
-  ];
+  const handleSubmit = async () => {
+    setError('');
 
-  const handleSubmit = () => {
-    if (!details.trim()) {
-      Alert.alert('Additional Details Required', 'Please provide more information about the issue.');
+    if (!category) {
+      setError('Please select a category');
       return;
     }
 
-    Alert.alert(
-      'Report Submitted',
-      'Thank you for your report. Our team will review it shortly.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
-  };
+    if (!description.trim()) {
+      setError('Please describe the problem');
+      return;
+    }
 
-  const renderReportOption = (option: ReportOption) => {
-    const isSelected = selectedReason === option.id;
+    if (description.trim().length < 10) {
+      setError('Please provide more details (at least 10 characters)');
+      return;
+    }
 
-    return (
-      <TouchableOpacity
-        key={option.id}
-        style={[
-          styles.reportOption,
-          isSelected && styles.reportOptionSelected,
-        ]}
-        onPress={() => setSelectedReason(option.id)}
-        activeOpacity={0.7}
-      >
-        <Text
-          style={[
-            styles.reportOptionText,
-            isSelected && styles.reportOptionTextSelected,
-          ]}
-        >
-          {option.title}
-        </Text>
-        <View
-          style={[
-            styles.radioButton,
-            isSelected && styles.radioButtonSelected,
-          ]}
-        >
-          {isSelected && <View style={styles.radioButtonInner} />}
-        </View>
-      </TouchableOpacity>
-    );
+    setLoading(true);
+    
+    setTimeout(() => {
+      setLoading(false);
+      Alert.alert(
+        'Report Submitted',
+        'Thank you for your report. Our team will review it and get back to you soon.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    }, 1500);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
-
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-          <X color="#374151" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Report</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 20 },
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.mainTitle}>Why are you reporting this?</Text>
-        <Text style={styles.description}>
-          Your report is anonymous. If someone is in immediate danger, call local
-          emergency services - do not wait.
-        </Text>
-
-        <View style={styles.optionsContainer}>
-          {reportOptions.map((option) => renderReportOption(option))}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Report a Problem</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        <View style={styles.detailsSection}>
-          <Text style={styles.detailsLabel}>Additional details</Text>
-          <TextInput
-            style={styles.detailsInput}
-            placeholder="Help us understand what is happening."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-            value={details}
-            onChangeText={setDetails}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleSubmit}
-          activeOpacity={0.8}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
         >
-          <Text style={styles.submitButtonText}>Submit Report</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+              <Flag color={colors.primary} size={48} />
+            </View>
+
+            <Text style={[styles.title, { color: colors.onSurface }]}>
+              Report an Issue
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
+              Help us improve PlantSpace by reporting problems
+            </Text>
+
+            <View style={styles.form}>
+              <View style={styles.categorySection}>
+                <Text style={[styles.label, { color: colors.onSurface }]}>
+                  Problem Category
+                </Text>
+                <View style={styles.categoryGrid}>
+                  {PROBLEM_CATEGORIES.map((cat) => (
+                    <AnimatedButton
+                      key={cat}
+                      onPress={() => setCategory(cat)}
+                      style={[
+                        styles.categoryButton,
+                        {
+                          backgroundColor: category === cat
+                            ? colors.primary
+                            : colors.surfaceContainer,
+                          borderColor: category === cat
+                            ? colors.primary
+                            : colors.outlineVariant,
+                        },
+                      ]}
+                      bounceEffect="subtle"
+                      hapticFeedback="light"
+                    >
+                      <Text
+                        style={[
+                          styles.categoryText,
+                          {
+                            color: category === cat
+                              ? '#FFFFFF'
+                              : colors.onSurface,
+                          },
+                        ]}
+                      >
+                        {cat}
+                      </Text>
+                    </AnimatedButton>
+                  ))}
+                </View>
+              </View>
+
+              <MaterialInput
+                label="Problem Description"
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Please describe the problem in detail..."
+                multiline
+                numberOfLines={6}
+                maxLength={500}
+                leftIcon={<AlertCircle color={colors.primary} size={20} />}
+                error={error}
+                hint={`${description.length}/500 characters`}
+                testID="description-input"
+              />
+
+              <View style={[styles.infoBox, { backgroundColor: colors.surfaceContainer }]}>
+                <Text style={[styles.infoText, { color: colors.onSurfaceVariant }]}>
+                  📧 We&apos;ll send updates to {user?.email}
+                </Text>
+              </View>
+
+              <MaterialButton
+                title={loading ? 'Submitting...' : 'Submit Report'}
+                onPress={handleSubmit}
+                disabled={loading}
+                variant="filled"
+                size="large"
+                testID="submit-report-button"
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: 'rgba(246, 248, 246, 0.8)',
-    backdropFilter: 'blur(10px)',
+    paddingVertical: 16,
   },
-  closeButton: {
-    width: 40,
-    height: 40,
+  backButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
   },
   headerTitle: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700' as const,
-    color: '#111827',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
   },
-  scrollView: {
+  keyboardView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 100,
   },
-  mainTitle: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: '#111827',
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  optionsContainer: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  reportOption: {
-    flexDirection: 'row',
+  iconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  reportOptionSelected: {
-    borderColor: PlantTheme.colors.primary,
-    backgroundColor: 'rgba(23, 207, 23, 0.05)',
-  },
-  reportOptionText: {
-    fontSize: 16,
-    fontWeight: '500' as const,
-    color: '#111827',
-    flex: 1,
-  },
-  reportOptionTextSelected: {
-    color: '#111827',
-  },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
     justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 24,
+    alignSelf: 'center',
   },
-  radioButtonSelected: {
-    borderColor: PlantTheme.colors.primary,
+  title: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  radioButtonInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: PlantTheme.colors.primary,
+  subtitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 32,
   },
-  detailsSection: {
+  form: {
+    width: '100%',
+  },
+  categorySection: {
     marginBottom: 24,
   },
-  detailsLabel: {
+  label: {
     fontSize: 16,
-    fontWeight: '500' as const,
-    color: '#111827',
-    marginBottom: 8,
+    fontWeight: '600' as const,
+    marginBottom: 12,
   },
-  detailsInput: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  infoBox: {
     padding: 16,
-    fontSize: 16,
-    color: '#111827',
-    minHeight: 120,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    marginBottom: 24,
   },
-  submitButton: {
-    backgroundColor: PlantTheme.colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
+  infoText: {
+    fontSize: 14,
+    lineHeight: 22,
   },
 });

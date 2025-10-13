@@ -3,205 +3,182 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { ArrowLeft, Mail, Lock } from 'lucide-react-native';
-import { useAuth } from '@/hooks/use-auth';
-import { PlantTheme } from '@/constants/theme';
 import { updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { useAuth } from '@/hooks/use-auth';
+import { MaterialInput } from '@/components/MaterialInput';
+import { MaterialButton } from '@/components/MaterialButton';
+import { AnimatedButton } from '@/components/AnimatedPressable';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function ChangeEmailScreen() {
-  const insets = useSafeAreaInsets();
   const { user, firebaseUser } = useAuth();
-  const [email, setEmail] = useState(user?.email || '');
+  const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { colors } = useTheme();
 
-  const validateEmail = (value: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!value.trim()) {
-      setEmailError('Email is required');
-      return false;
-    }
-    if (!emailRegex.test(value)) {
-      setEmailError('Please enter a valid email address');
-      return false;
-    }
-    setEmailError('');
-    return true;
-  };
+  const handleUpdateEmail = async () => {
+    setError('');
 
-  const handleSave = async () => {
-    if (!validateEmail(email)) {
+    if (!newEmail.trim() || !password.trim()) {
+      setError('Please fill in all fields');
       return;
     }
 
-    if (!password.trim()) {
-      setPasswordError('Password is required to confirm changes');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail.trim())) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (newEmail.trim() === user?.email) {
+      setError('New email must be different from current email');
       return;
     }
 
     if (!firebaseUser || !user?.email) {
-      Alert.alert('Error', 'You must be logged in to change your email');
+      setError('You must be logged in to change your email');
       return;
     }
 
-    if (email === user.email) {
-      Alert.alert('No Changes', 'Email is the same as before');
-      return;
-    }
-
-    setIsLoading(true);
+    setLoading(true);
     try {
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(firebaseUser, credential);
-
-      await updateEmail(firebaseUser, email.trim());
-
+      
+      await updateEmail(firebaseUser, newEmail.trim());
+      
       Alert.alert(
         'Success',
         'Email updated successfully. Please verify your new email address.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
+        [{ text: 'OK', onPress: () => router.back() }]
       );
-    } catch (err: any) {
-      console.error('Error updating email:', err);
-      if (err.code === 'auth/wrong-password') {
-        setPasswordError('Incorrect password');
-      } else if (err.code === 'auth/email-already-in-use') {
-        setEmailError('This email is already in use');
-      } else if (err.code === 'auth/requires-recent-login') {
-        Alert.alert('Error', 'Please log out and log back in before changing your email');
+    } catch (error: any) {
+      console.error('Update email error:', error);
+      
+      if (error.code === 'auth/wrong-password') {
+        setError('Incorrect password');
+      } else if (error.code === 'auth/email-already-in-use') {
+        setError('This email is already in use');
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Invalid email address');
+      } else if (error.code === 'auth/requires-recent-login') {
+        setError('Please log out and log back in before changing your email');
       } else {
-        Alert.alert('Error', 'Failed to update email. Please try again.');
+        setError(error.message || 'Failed to update email');
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ArrowLeft color="#1a1c1a" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Change Email</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-      
-      <View style={styles.content}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>New Email</Text>
-          <View style={[styles.inputWrapper, emailError ? styles.inputWrapperError : null]}>
-            <Mail
-              color={emailError ? '#EF4444' : '#424842'}
-              size={20}
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (emailError) validateEmail(text);
-              }}
-              placeholder="Enter new email"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
-          {emailError && <Text style={styles.errorText}>{emailError}</Text>}
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Change Email</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Confirm with Password</Text>
-          <View style={[styles.inputWrapper, passwordError ? styles.inputWrapperError : null]}>
-            <Lock
-              color={passwordError ? '#EF4444' : '#424842'}
-              size={20}
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (passwordError) setPasswordError('');
-              }}
-              placeholder="Enter your password"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
-          {passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
-        </View>
-      </View>
-
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={isLoading}
-          activeOpacity={0.8}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.saveButtonText}>Save Changes</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                <Mail color={colors.primary} size={48} />
+              </View>
+
+              <Text style={[styles.title, { color: colors.onSurface }]}>
+                Update Your Email
+              </Text>
+              <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
+                Current email: {user?.email}
+              </Text>
+
+              <View style={styles.form}>
+                <MaterialInput
+                  label="New Email Address"
+                  value={newEmail}
+                  onChangeText={setNewEmail}
+                  placeholder="Enter new email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  leftIcon={<Mail color={colors.primary} size={20} />}
+                  testID="new-email-input"
+                />
+
+                <MaterialInput
+                  label="Current Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter your password"
+                  secureTextEntry
+                  leftIcon={<Lock color={colors.primary} size={20} />}
+                  error={error}
+                  hint="Required for security verification"
+                  testID="password-input"
+                />
+
+                <MaterialButton
+                  title={loading ? 'Updating...' : 'Update Email'}
+                  onPress={handleUpdateEmail}
+                  disabled={loading}
+                  variant="filled"
+                  size="large"
+                  testID="update-email-button"
+                />
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
+    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -209,75 +186,47 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1a1c1a',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 24,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    alignItems: 'center',
   },
-  inputContainer: {
+  iconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-    color: '#424842',
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E1E3E0',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  inputWrapperError: {
-    borderWidth: 2,
-    borderColor: '#EF4444',
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#191c19',
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#EF4444',
-    marginTop: 8,
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    backgroundColor: '#F6F8F6',
-  },
-  saveButton: {
-    backgroundColor: PlantTheme.colors.primary,
-    borderRadius: 28,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: PlantTheme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    fontSize: 16,
+  title: {
+    fontSize: 28,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 40,
+    paddingHorizontal: 16,
+  },
+  form: {
+    width: '100%',
   },
 });

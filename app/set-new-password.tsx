@@ -1,108 +1,82 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TextInput,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react-native";
-import { PlantTheme } from "@/constants/theme";
-import { router } from "expo-router";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Lock, Eye, EyeOff } from 'lucide-react-native';
+import { confirmPasswordReset } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { MaterialInput } from '@/components/MaterialInput';
+import { MaterialButton } from '@/components/MaterialButton';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function SetNewPasswordScreen() {
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
+  const { oobCode } = useLocalSearchParams<{ oobCode: string }>();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [passwordStrength, setPasswordStrength] = useState<
-    "weak" | "medium" | "strong"
-  >("weak");
+  const [error, setError] = useState('');
+  const { colors } = useTheme();
 
-  useEffect(() => {
-    if (newPassword.length === 0) {
-      setPasswordStrength("weak");
+  const handleResetPassword = async () => {
+    setError('');
+
+    if (!password.trim() || !confirmPassword.trim()) {
+      setError('Please fill in all fields');
       return;
     }
 
-    let strength = 0;
-    if (newPassword.length >= 8) strength++;
-    if (/[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword)) strength++;
-    if (/[0-9]/.test(newPassword)) strength++;
-    if (/[^a-zA-Z0-9]/.test(newPassword)) strength++;
-
-    if (strength <= 1) {
-      setPasswordStrength("weak");
-    } else if (strength <= 2) {
-      setPasswordStrength("medium");
-    } else {
-      setPasswordStrength("strong");
-    }
-  }, [newPassword]);
-
-  const handleSetNewPassword = async () => {
-    setErrorMessage("");
-
-    if (!newPassword.trim() || !confirmPassword.trim()) {
-      setErrorMessage("Please fill in all fields");
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
       return;
     }
 
-    if (newPassword.length < 6) {
-      setErrorMessage("Password must be at least 6 characters long");
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      setErrorMessage("Passwords do not match");
+    if (!oobCode) {
+      setError('Invalid reset link. Please request a new one');
       return;
     }
 
     setLoading(true);
     try {
-      console.log("Password updated successfully");
-      router.push("/password-reset-success" as any);
+      await confirmPasswordReset(auth, oobCode as string, password);
+      router.replace('/password-reset-success');
     } catch (error: any) {
-      console.error("Password reset error:", error);
-      setErrorMessage("Failed to update password. Please try again.");
+      console.error('Password reset error:', error);
+      
+      if (error.code === 'auth/expired-action-code') {
+        setError('Reset link has expired. Please request a new one');
+      } else if (error.code === 'auth/invalid-action-code') {
+        setError('Invalid reset link. Please request a new one');
+      } else if (error.code === 'auth/weak-password') {
+        setError('Password is too weak. Please use a stronger password');
+      } else {
+        setError('Failed to reset password. Please try again');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const getStrengthColor = () => {
-    switch (passwordStrength) {
-      case "weak":
-        return PlantTheme.colors.error;
-      case "medium":
-        return PlantTheme.colors.warning;
-      case "strong":
-        return PlantTheme.colors.success;
-    }
-  };
-
-  const getStrengthWidth = () => {
-    switch (passwordStrength) {
-      case "weak":
-        return "33%";
-      case "medium":
-        return "66%";
-      case "strong":
-        return "100%";
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardView}
         >
           <ScrollView
@@ -110,131 +84,66 @@ export default function SetNewPasswordScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.header}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => router.back()}
-                activeOpacity={0.7}
-              >
-                <ArrowLeft color={PlantTheme.colors.textDark} size={24} />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Set a new password</Text>
-              <View style={styles.headerSpacer} />
-            </View>
-
             <View style={styles.content}>
-              <View style={styles.formContainer}>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>New Password</Text>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      style={styles.input}
-                      value={newPassword}
-                      onChangeText={setNewPassword}
-                      placeholder="Enter new password"
-                      placeholderTextColor={PlantTheme.colors.textSecondary}
-                      secureTextEntry={!showNewPassword}
-                      testID="new-password-input"
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowNewPassword(!showNewPassword)}
-                      style={styles.eyeIcon}
-                    >
-                      {showNewPassword ? (
-                        <EyeOff
-                          color={PlantTheme.colors.textSecondary}
-                          size={20}
-                        />
-                      ) : (
-                        <Eye
-                          color={PlantTheme.colors.textSecondary}
-                          size={20}
-                        />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Confirm New Password</Text>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      style={styles.input}
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      placeholder="Confirm new password"
-                      placeholderTextColor={PlantTheme.colors.textSecondary}
-                      secureTextEntry={!showConfirmPassword}
-                      testID="confirm-password-input"
-                    />
-                    <TouchableOpacity
-                      onPress={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      style={styles.eyeIcon}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff
-                          color={PlantTheme.colors.textSecondary}
-                          size={20}
-                        />
-                      ) : (
-                        <Eye
-                          color={PlantTheme.colors.textSecondary}
-                          size={20}
-                        />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                <View style={styles.strengthContainer}>
-                  <Text style={styles.strengthLabel}>Password Strength</Text>
-                  <View style={styles.strengthBarContainer}>
-                    <View
-                      style={[
-                        styles.strengthBar,
-                        {
-                          width: getStrengthWidth(),
-                          backgroundColor: getStrengthColor(),
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.strengthText,
-                      { color: getStrengthColor() },
-                    ]}
-                  >
-                    {passwordStrength.charAt(0).toUpperCase() +
-                      passwordStrength.slice(1)}
-                  </Text>
-                </View>
-
-                {errorMessage ? (
-                  <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>{errorMessage}</Text>
-                  </View>
-                ) : null}
+              <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                <Lock color={colors.primary} size={48} />
               </View>
-            </View>
 
-            <View style={styles.footer}>
-              <TouchableOpacity
-                style={[
-                  styles.submitButton,
-                  loading && styles.submitButtonDisabled,
-                ]}
-                onPress={handleSetNewPassword}
-                disabled={loading}
-                activeOpacity={0.8}
-                testID="set-password-button"
-              >
-                <Text style={styles.submitButtonText}>
-                  {loading ? "Updating..." : "Set New Password"}
-                </Text>
-              </TouchableOpacity>
+              <Text style={[styles.title, { color: colors.onSurface }]}>
+                Set New Password
+              </Text>
+              <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
+                Create a strong password for your account
+              </Text>
+
+              <View style={styles.form}>
+                <MaterialInput
+                  label="New Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter new password"
+                  secureTextEntry={!showPassword}
+                  leftIcon={<Lock color={colors.primary} size={20} />}
+                  rightIcon={
+                    showPassword ? (
+                      <EyeOff color={colors.onSurfaceVariant} size={20} />
+                    ) : (
+                      <Eye color={colors.onSurfaceVariant} size={20} />
+                    )
+                  }
+                  onRightIconPress={() => setShowPassword(!showPassword)}
+                  hint="At least 6 characters"
+                  testID="password-input"
+                />
+
+                <MaterialInput
+                  label="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm new password"
+                  secureTextEntry={!showConfirmPassword}
+                  leftIcon={<Lock color={colors.primary} size={20} />}
+                  rightIcon={
+                    showConfirmPassword ? (
+                      <EyeOff color={colors.onSurfaceVariant} size={20} />
+                    ) : (
+                      <Eye color={colors.onSurfaceVariant} size={20} />
+                    )
+                  }
+                  onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  error={error}
+                  testID="confirm-password-input"
+                />
+
+                <MaterialButton
+                  title={loading ? 'Resetting...' : 'Reset Password'}
+                  onPress={handleResetPassword}
+                  disabled={loading}
+                  variant="filled"
+                  size="large"
+                  testID="reset-password-button"
+                />
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -246,7 +155,6 @@ export default function SetNewPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PlantTheme.colors.backgroundStart,
   },
   safeArea: {
     flex: 1,
@@ -257,119 +165,35 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: PlantTheme.borderRadius.full,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold" as const,
-    color: PlantTheme.colors.textDark,
-  },
-  headerSpacer: {
-    width: 40,
+    paddingTop: 40,
+    paddingBottom: 24,
   },
   content: {
     flex: 1,
-    paddingVertical: 40,
+    alignItems: 'center',
   },
-  formContainer: {
-    width: "100%",
-  },
-  inputContainer: {
+  iconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: PlantTheme.colors.textSecondary,
-    marginBottom: 8,
-    paddingHorizontal: 4,
+  title: {
+    fontSize: 32,
+    fontWeight: '700' as const,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: PlantTheme.colors.surfaceVariant,
-    borderWidth: 1,
-    borderColor: PlantTheme.colors.outline,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  input: {
-    flex: 1,
+  subtitle: {
     fontSize: 16,
-    color: PlantTheme.colors.textDark,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 40,
+    paddingHorizontal: 16,
   },
-  eyeIcon: {
-    padding: 4,
-  },
-  strengthContainer: {
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  strengthLabel: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: PlantTheme.colors.textSecondary,
-    marginBottom: 8,
-  },
-  strengthBarContainer: {
-    height: 4,
-    backgroundColor: PlantTheme.colors.surfaceVariant,
-    borderRadius: PlantTheme.borderRadius.full,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
-  strengthBar: {
-    height: "100%",
-    borderRadius: PlantTheme.borderRadius.full,
-  },
-  strengthText: {
-    fontSize: 12,
-    fontWeight: "600" as const,
-  },
-  errorContainer: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: "rgba(244, 67, 54, 0.1)",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(244, 67, 54, 0.3)",
-  },
-  errorText: {
-    color: "#F44336",
-    fontSize: 14,
-    textAlign: "center",
-    fontWeight: "500" as const,
-  },
-  footer: {
-    paddingVertical: 24,
-  },
-  submitButton: {
-    backgroundColor: PlantTheme.colors.primary,
-    paddingVertical: 16,
-    borderRadius: PlantTheme.borderRadius.full,
-    alignItems: "center",
-    shadowColor: PlantTheme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold" as const,
+  form: {
+    width: '100%',
   },
 });

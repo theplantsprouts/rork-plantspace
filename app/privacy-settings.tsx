@@ -4,168 +4,122 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Switch,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import {
-  ArrowLeft,
-  Eye,
-  Database,
-  Download,
-  Ban,
-} from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
+import { ArrowLeft, Lock, Eye, Users, MapPin } from 'lucide-react-native';
+import { AnimatedButton } from '@/components/AnimatedPressable';
 import { useSettings } from '@/hooks/use-settings';
-
-type MessagePrivacy = 'everyone' | 'following' | 'none';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function PrivacySettingsScreen() {
-  const insets = useSafeAreaInsets();
   const { settings, updatePrivacySetting } = useSettings();
-  
-  const privateProfile = settings.privacy.privateProfile;
-  const personalizedAds = settings.privacy.personalizedAds;
-  const messagePrivacy = settings.privacy.messagePrivacy;
+  const { colors } = useTheme();
 
-  const renderRadioOption = (
-    value: MessagePrivacy,
-    label: string,
-    selected: boolean
-  ) => (
-    <TouchableOpacity
-      key={value}
-      style={styles.radioOption}
-      onPress={() => updatePrivacySetting('messagePrivacy', value)}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.radioCircle, selected && styles.radioCircleSelected]}>
-        {selected && <View style={styles.radioInner} />}
-      </View>
-      <Text style={styles.radioLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
+  const privacyOptions = [
+    {
+      id: 'privateAccount',
+      title: 'Private Account',
+      subtitle: 'Only approved followers can see your posts',
+      icon: Lock,
+      value: settings.privacy.privateAccount,
+    },
+    {
+      id: 'showOnlineStatus',
+      title: 'Show Online Status',
+      subtitle: 'Let others see when you&apos;re active',
+      icon: Eye,
+      value: settings.privacy.showOnlineStatus,
+    },
+    {
+      id: 'allowTagging',
+      title: 'Allow Tagging',
+      subtitle: 'Let others tag you in their posts',
+      icon: Users,
+      value: settings.privacy.allowTagging,
+    },
+    {
+      id: 'shareLocation',
+      title: 'Share Location',
+      subtitle: 'Add location to your posts',
+      icon: MapPin,
+      value: settings.privacy.shareLocation,
+    },
+  ];
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Privacy</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <ArrowLeft color="#1a1c1a" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-      
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.settingCard}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingItemLeft}>
-              <Eye color="#424842" size={24} />
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Private Profile</Text>
-                <Text style={styles.settingSubtitle}>
-                  Only followers can see your posts
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={privateProfile}
-              onValueChange={(value) => updatePrivacySetting('privateProfile', value)}
-              trackColor={{
-                false: '#E8EAE6',
-                true: 'rgba(23, 207, 23, 0.3)',
-              }}
-              thumbColor={privateProfile ? PlantTheme.colors.primary : '#C1C8C0'}
-              ios_backgroundColor="#E8EAE6"
-            />
-          </View>
-        </View>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Privacy Controls
+          </Text>
 
-        <View style={styles.settingCard}>
-          <Text style={styles.cardTitle}>Who can send you sprouts (messages)?</Text>
-          <View style={styles.radioGroup}>
-            {renderRadioOption('everyone', 'Everyone', messagePrivacy === 'everyone')}
-            {renderRadioOption('following', 'People you follow', messagePrivacy === 'following')}
-            {renderRadioOption('none', 'No one', messagePrivacy === 'none')}
-          </View>
-        </View>
+          {privacyOptions.map((option, index) => {
+            const IconComponent = option.icon;
+            return (
+              <View
+                key={option.id}
+                style={[
+                  styles.settingCard,
+                  { backgroundColor: colors.surfaceContainer },
+                  index === privacyOptions.length - 1 && styles.lastCard,
+                ]}
+              >
+                <View style={styles.settingItemLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                    <IconComponent color={colors.primary} size={24} />
+                  </View>
+                  <View style={styles.textContainer}>
+                    <Text style={[styles.settingTitle, { color: colors.onSurface }]}>
+                      {option.title}
+                    </Text>
+                    <Text style={[styles.settingSubtitle, { color: colors.onSurfaceVariant }]}>
+                      {option.subtitle}
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={option.value}
+                  onValueChange={(value) => updatePrivacySetting(option.id as any, value)}
+                  trackColor={{
+                    false: colors.outlineVariant,
+                    true: `${colors.primary}4D`,
+                  }}
+                  thumbColor={option.value ? colors.primary : colors.outline}
+                  ios_backgroundColor={colors.outlineVariant}
+                />
+              </View>
+            );
+          })}
 
-        <View style={styles.settingCard}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingItemLeft}>
-              <Database color="#424842" size={24} />
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Personalized Ads</Text>
-                <Text style={styles.settingSubtitle}>
-                  Allow using your data for ads
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={personalizedAds}
-              onValueChange={(value) => updatePrivacySetting('personalizedAds', value)}
-              trackColor={{
-                false: '#E8EAE6',
-                true: 'rgba(23, 207, 23, 0.3)',
-              }}
-              thumbColor={personalizedAds ? PlantTheme.colors.primary : '#C1C8C0'}
-              ios_backgroundColor="#E8EAE6"
-            />
+          <View style={[styles.infoBox, { backgroundColor: colors.surfaceContainer }]}>
+            <Text style={[styles.infoText, { color: colors.onSurfaceVariant }]}>
+              💡 These settings help you control who can see and interact with your content. You can change them anytime.
+            </Text>
           </View>
-          
-          <View style={styles.divider} />
-          
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => router.push('/download-data' as any)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.settingItemLeft}>
-              <Download color="#424842" size={24} />
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Download Your Data</Text>
-              </View>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.settingCard}>
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => router.push('/blocked-accounts' as any)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.settingItemLeft}>
-              <Ban color="#424842" size={24} />
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Blocked Accounts</Text>
-                <Text style={styles.settingSubtitle}>
-                  Manage accounts you&apos;ve blocked
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -173,18 +127,20 @@ export default function PrivacySettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
+    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -192,12 +148,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1a1c1a',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
   },
   scrollView: {
     flex: 1,
@@ -205,85 +160,60 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
+    paddingBottom: 100,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    textTransform: 'uppercase',
   },
   settingCard: {
-    backgroundColor: '#F0F4F0',
-    borderRadius: 16,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  lastCard: {
+    marginBottom: 24,
   },
   settingItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 16,
+    marginRight: 16,
   },
-  settingTextContainer: {
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  textContainer: {
     flex: 1,
   },
   settingTitle: {
     fontSize: 16,
-    fontWeight: '500' as const,
-    color: '#1C1C1C',
-    marginBottom: 2,
+    fontWeight: '600' as const,
+    marginBottom: 4,
   },
   settingSubtitle: {
     fontSize: 14,
-    color: '#444844',
+    lineHeight: 20,
   },
-  chevron: {
-    fontSize: 24,
-    color: '#424842',
-    fontWeight: '300' as const,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E8EAE6',
-    marginLeft: 56,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-    color: PlantTheme.colors.primary,
+  infoBox: {
     padding: 16,
-    paddingBottom: 8,
+    borderRadius: 16,
+    marginTop: 8,
   },
-  radioGroup: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 16,
-  },
-  radioOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#79747E',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioCircleSelected: {
-    borderColor: PlantTheme.colors.primary,
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: PlantTheme.colors.primary,
-  },
-  radioLabel: {
-    fontSize: 16,
-    color: '#1C1C1C',
+  infoText: {
+    fontSize: 14,
+    lineHeight: 22,
   },
 });

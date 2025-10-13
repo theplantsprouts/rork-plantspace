@@ -3,178 +3,158 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft, Sprout } from 'lucide-react-native';
+import { ArrowLeft, AtSign } from 'lucide-react-native';
+import { updateProfile } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import { PlantTheme } from '@/constants/theme';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { MaterialInput } from '@/components/MaterialInput';
+import { MaterialButton } from '@/components/MaterialButton';
+import { AnimatedButton } from '@/components/AnimatedPressable';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function ChangeUsernameScreen() {
-  const insets = useSafeAreaInsets();
   const { user, firebaseUser } = useAuth();
   const [username, setUsername] = useState(user?.username || '');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { colors } = useTheme();
 
-  const validateUsername = (value: string): boolean => {
-    const usernameRegex = /^[a-zA-Z0-9_.]+$/;
-    if (!value.trim()) {
-      setError('Username is required');
-      return false;
-    }
-    if (value.length < 3) {
-      setError('Username must be at least 3 characters');
-      return false;
-    }
-    if (value.length > 30) {
-      setError('Username must be less than 30 characters');
-      return false;
-    }
-    if (!usernameRegex.test(value)) {
-      setError('Username can only contain letters, numbers, underscores, and periods');
-      return false;
-    }
+  const handleUpdateUsername = async () => {
     setError('');
-    return true;
-  };
 
-  const handleSave = async () => {
-    if (!validateUsername(username)) {
+    if (!username.trim()) {
+      setError('Username cannot be empty');
+      return;
+    }
+
+    if (username.length < 3) {
+      setError('Username must be at least 3 characters');
+      return;
+    }
+
+    if (username.length > 20) {
+      setError('Username must be less than 20 characters');
+      return;
+    }
+
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(username)) {
+      setError('Username can only contain letters, numbers, and underscores');
       return;
     }
 
     if (!firebaseUser) {
-      Alert.alert('Error', 'You must be logged in to change your username');
+      setError('You must be logged in to change your username');
       return;
     }
 
-    if (username === user?.username) {
-      Alert.alert('No Changes', 'Username is the same as before');
-      return;
-    }
-
-    setIsLoading(true);
+    setLoading(true);
     try {
-      const profileRef = doc(db, 'profiles', firebaseUser.uid);
-      await updateDoc(profileRef, {
-        username: username.trim(),
-      });
-
+      await updateProfile(firebaseUser.uid, { username: username.trim() });
       Alert.alert('Success', 'Username updated successfully', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
+        { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (err: any) {
-      console.error('Error updating username:', err);
-      if (err.code === 'permission-denied') {
-        Alert.alert('Error', 'You do not have permission to update your username');
-      } else {
-        Alert.alert('Error', 'Failed to update username. Please try again.');
-      }
+    } catch (error: any) {
+      console.error('Update username error:', error);
+      setError(error.message || 'Failed to update username');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ArrowLeft color="#1a1c1a" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Change Username</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-      
-      <View style={styles.content}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>New Username</Text>
-          <View style={[styles.inputWrapper, error ? styles.inputWrapperError : null]}>
-            <Sprout
-              color={error ? '#EF4444' : '#424842'}
-              size={20}
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              value={username}
-              onChangeText={(text) => {
-                setUsername(text);
-                if (error) validateUsername(text);
-              }}
-              placeholder="Enter new username"
-              placeholderTextColor="#9CA3AF"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : (
-            <Text style={styles.helperText}>
-              Your username must be unique and can only contain letters, numbers, underscores, and periods.
-            </Text>
-          )}
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Change Username</Text>
+          <View style={styles.headerSpacer} />
         </View>
-      </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={isLoading}
-          activeOpacity={0.8}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.saveButtonText}>Save Changes</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                <AtSign color={colors.primary} size={48} />
+              </View>
+
+              <Text style={[styles.title, { color: colors.onSurface }]}>
+                Update Your Username
+              </Text>
+              <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
+                Choose a unique username that represents you
+              </Text>
+
+              <View style={styles.form}>
+                <MaterialInput
+                  label="Username"
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Enter new username"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  leftIcon={<AtSign color={colors.primary} size={20} />}
+                  error={error}
+                  hint="3-20 characters, letters, numbers, and underscores only"
+                  testID="username-input"
+                />
+
+                <MaterialButton
+                  title={loading ? 'Updating...' : 'Update Username'}
+                  onPress={handleUpdateUsername}
+                  disabled={loading || username === user?.username}
+                  variant="filled"
+                  size="large"
+                  testID="update-username-button"
+                />
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
+    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -182,80 +162,47 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1a1c1a',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 24,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    alignItems: 'center',
   },
-  inputContainer: {
+  iconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-    color: '#424842',
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E1E3E0',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  inputWrapperError: {
-    borderWidth: 2,
-    borderColor: '#EF4444',
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#191c19',
-  },
-  helperText: {
-    fontSize: 12,
-    color: '#737973',
-    marginTop: 8,
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#EF4444',
-    marginTop: 8,
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    backgroundColor: '#F6F8F6',
-  },
-  saveButton: {
-    backgroundColor: PlantTheme.colors.primary,
-    borderRadius: 28,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: PlantTheme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    fontSize: 16,
+  title: {
+    fontSize: 28,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 40,
+    paddingHorizontal: 16,
+  },
+  form: {
+    width: '100%',
   },
 });

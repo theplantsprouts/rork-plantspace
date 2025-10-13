@@ -4,108 +4,126 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Image,
   Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, UserX, Unlock } from 'lucide-react-native';
+import { AnimatedButton } from '@/components/AnimatedPressable';
+import { MaterialButton } from '@/components/MaterialButton';
+import { useTheme } from '@/hooks/use-theme';
 
 interface BlockedUser {
   id: string;
-  name: string;
   username: string;
-  avatar: string;
-  isBlocked: boolean;
+  name: string;
+  avatar?: string;
+  blockedAt: string;
 }
 
 export default function BlockedAccountsScreen() {
-  const insets = useSafeAreaInsets();
-  const [users, setUsers] = useState<BlockedUser[]>([]);
+  const { colors } = useTheme();
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
 
-  const handleToggleBlock = (userId: string, currentStatus: boolean) => {
-    const action = currentStatus ? 'Unblock' : 'Unmute';
-    const user = users.find(u => u.id === userId);
-    
+  const handleUnblock = (user: BlockedUser) => {
     Alert.alert(
-      `${action} User`,
-      `Are you sure you want to ${action.toLowerCase()} ${user?.name}?`,
+      'Unblock User',
+      `Are you sure you want to unblock @${user.username}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: action,
+          text: 'Unblock',
           onPress: () => {
-            setUsers(prevUsers =>
-              prevUsers.map(u =>
-                u.id === userId ? { ...u, isBlocked: !u.isBlocked } : u
-              )
-            );
+            setBlockedUsers(blockedUsers.filter((u) => u.id !== user.id));
+            Alert.alert('Success', `@${user.username} has been unblocked`);
           },
         },
       ]
     );
   };
 
-  const renderUser = (user: BlockedUser) => (
-    <View key={user.id} style={styles.userItem}>
-      <View style={styles.userInfo}>
-        <Image source={{ uri: user.avatar }} style={styles.avatar} />
-        <View style={styles.userTextContainer}>
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userUsername}>{user.username}</Text>
-        </View>
-      </View>
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => handleToggleBlock(user.id, user.isBlocked)}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.actionButtonText}>
-          {user.isBlocked ? 'Unblock' : 'Unmute'}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Blocked Accounts</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <ArrowLeft color="#1a1c1a" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Blocked &amp; Muted</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-      
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        {users.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No blocked or muted accounts</Text>
-            <Text style={styles.emptySubtext}>
-              Accounts you block or mute will appear here
+          {blockedUsers.length === 0 ? (
+            <View style={styles.emptyState}>
+              <View style={[styles.emptyIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                <UserX color={colors.primary} size={48} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.onSurface }]}>
+                No Blocked Accounts
+              </Text>
+              <Text style={[styles.emptySubtitle, { color: colors.onSurfaceVariant }]}>
+                You haven&apos;t blocked anyone yet. Blocked users won&apos;t be able to see your profile or contact you.
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+                Blocked Users ({blockedUsers.length})
+              </Text>
+              {blockedUsers.map((user) => (
+                <View
+                  key={user.id}
+                  style={[styles.userCard, { backgroundColor: colors.surfaceContainer }]}
+                >
+                  <View style={styles.userInfo}>
+                    <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                      <Text style={styles.avatarText}>
+                        {user.name.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.userDetails}>
+                      <Text style={[styles.userName, { color: colors.onSurface }]}>
+                        {user.name}
+                      </Text>
+                      <Text style={[styles.userUsername, { color: colors.onSurfaceVariant }]}>
+                        @{user.username}
+                      </Text>
+                    </View>
+                  </View>
+                  <MaterialButton
+                    title="Unblock"
+                    onPress={() => handleUnblock(user)}
+                    variant="outlined"
+                    size="small"
+                    icon={<Unlock color={colors.primary} size={16} />}
+                  />
+                </View>
+              ))}
+            </>
+          )}
+
+          <View style={[styles.infoBox, { backgroundColor: colors.surfaceContainer }]}>
+            <Text style={[styles.infoText, { color: colors.onSurfaceVariant }]}>
+              🔒 When you block someone:{'\n'}
+              • They can&apos;t see your profile or posts{'\n'}
+              • They can&apos;t message or tag you{'\n'}
+              • They won&apos;t be notified that you blocked them
             </Text>
           </View>
-        ) : (
-          users.map(renderUser)
-        )}
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -113,18 +131,20 @@ export default function BlockedAccountsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
+    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -132,83 +152,97 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1a1c1a',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
+    paddingHorizontal: 16,
     paddingTop: 8,
+    paddingBottom: 100,
   },
-  userItem: {
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    textTransform: 'uppercase',
+  },
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8EAE6',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 16,
+    marginRight: 16,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#E8EAE6',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  userTextContainer: {
+  avatarText: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  userDetails: {
     flex: 1,
   },
   userName: {
     fontSize: 16,
-    fontWeight: '700' as const,
-    color: '#1a1c1a',
+    fontWeight: '600' as const,
     marginBottom: 2,
   },
   userUsername: {
     fontSize: 14,
-    color: '#6B7280',
   },
-  actionButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#FFFFFF',
+  infoBox: {
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 16,
   },
-  actionButtonText: {
+  infoText: {
     fontSize: 14,
-    fontWeight: '500' as const,
-    color: '#1a1c1a',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 32,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: '#1a1c1a',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
+    lineHeight: 22,
   },
 });

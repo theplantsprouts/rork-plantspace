@@ -4,166 +4,126 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Switch,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft, Heart, MessageCircle, UserPlus, Sprout, Leaf, Megaphone } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
+import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, TrendingUp } from 'lucide-react-native';
+import { AnimatedButton } from '@/components/AnimatedPressable';
 import { useSettings } from '@/hooks/use-settings';
-
-interface NotificationSetting {
-  id: string;
-  title: string;
-  subtitle?: string;
-  icon: React.ComponentType<{ color: string; size: number }>;
-  enabled: boolean;
-}
-
-interface NotificationSection {
-  title: string;
-  items: NotificationSetting[];
-}
+import { useTheme } from '@/hooks/use-theme';
 
 export default function NotificationPreferencesScreen() {
-  const insets = useSafeAreaInsets();
   const { settings, updateNotificationSetting } = useSettings();
-  
-  const activitySettings: NotificationSetting[] = [
+  const { colors } = useTheme();
+
+  const notificationOptions = [
     {
       id: 'likes',
-      title: 'Likes on your posts',
+      title: 'Likes',
+      subtitle: 'When someone likes your post',
       icon: Heart,
-      enabled: settings.notifications.likes,
     },
     {
       id: 'comments',
-      title: 'Comments on your posts',
+      title: 'Comments',
+      subtitle: 'When someone comments on your post',
       icon: MessageCircle,
-      enabled: settings.notifications.comments,
     },
     {
-      id: 'followers',
+      id: 'follows',
       title: 'New Followers',
+      subtitle: 'When someone follows you',
       icon: UserPlus,
-      enabled: settings.notifications.followers,
-    },
-  ];
-
-  const messageSettings: NotificationSetting[] = [
-    {
-      id: 'directMessages',
-      title: 'Direct Sprouts (Messages)',
-      icon: Sprout,
-      enabled: settings.notifications.directMessages,
-    },
-  ];
-
-  const systemSettings: NotificationSetting[] = [
-    {
-      id: 'updates',
-      title: 'PlantSpace Updates',
-      subtitle: 'News about new features and updates',
-      icon: Leaf,
-      enabled: settings.notifications.updates,
     },
     {
-      id: 'promotions',
-      title: 'Promotions & Announcements',
-      icon: Megaphone,
-      enabled: settings.notifications.promotions,
+      id: 'mentions',
+      title: 'Mentions',
+      subtitle: 'When someone mentions you',
+      icon: Bell,
+    },
+    {
+      id: 'trending',
+      title: 'Trending',
+      subtitle: 'Updates about trending topics',
+      icon: TrendingUp,
     },
   ];
-
-  const toggleSetting = (
-    section: 'activity' | 'messages' | 'system',
-    id: string
-  ) => {
-    updateNotificationSetting(id as any, !settings.notifications[id as keyof typeof settings.notifications]);
-  };
-
-  const renderNotificationItem = (
-    item: NotificationSetting,
-    section: 'activity' | 'messages' | 'system'
-  ) => {
-    const IconComponent = item.icon;
-
-    return (
-      <View key={item.id} style={styles.notificationItem}>
-        <View style={styles.notificationLeft}>
-          <View style={styles.iconContainer}>
-            <IconComponent color="#424842" size={24} />
-          </View>
-          <View style={styles.textContainer}>
-            <Text style={styles.notificationTitle}>{item.title}</Text>
-            {item.subtitle && (
-              <Text style={styles.notificationSubtitle}>{item.subtitle}</Text>
-            )}
-          </View>
-        </View>
-        <Switch
-          value={item.enabled}
-          onValueChange={() => toggleSetting(section, item.id)}
-          trackColor={{
-            false: '#2E2E2E',
-            true: 'rgba(23, 207, 23, 0.3)',
-          }}
-          thumbColor={item.enabled ? PlantTheme.colors.primary : '#938F99'}
-          ios_backgroundColor="#2E2E2E"
-        />
-      </View>
-    );
-  };
-
-  const renderSection = (
-    title: string,
-    items: NotificationSetting[],
-    section: 'activity' | 'messages' | 'system'
-  ) => {
-    return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        <View style={styles.sectionCard}>
-          {items.map((item, index) => (
-            <View key={item.id}>
-              {renderNotificationItem(item, section)}
-              {index < items.length - 1 && <View style={styles.divider} />}
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Notifications</Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft color="#1a1c1a" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notification Preferences</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Push Notifications
+          </Text>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        {renderSection('Activity', activitySettings, 'activity')}
-        {renderSection('Messages', messageSettings, 'messages')}
-        {renderSection('System', systemSettings, 'system')}
-      </ScrollView>
+          {notificationOptions.map((option, index) => {
+            const IconComponent = option.icon;
+            const value = settings.notifications[option.id as keyof typeof settings.notifications];
+            
+            return (
+              <View
+                key={option.id}
+                style={[
+                  styles.settingCard,
+                  { backgroundColor: colors.surfaceContainer },
+                  index === notificationOptions.length - 1 && styles.lastCard,
+                ]}
+              >
+                <View style={styles.settingItemLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                    <IconComponent color={colors.primary} size={24} />
+                  </View>
+                  <View style={styles.textContainer}>
+                    <Text style={[styles.settingTitle, { color: colors.onSurface }]}>
+                      {option.title}
+                    </Text>
+                    <Text style={[styles.settingSubtitle, { color: colors.onSurfaceVariant }]}>
+                      {option.subtitle}
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={value}
+                  onValueChange={(newValue) => updateNotificationSetting(option.id as any, newValue)}
+                  trackColor={{
+                    false: colors.outlineVariant,
+                    true: `${colors.primary}4D`,
+                  }}
+                  thumbColor={value ? colors.primary : colors.outline}
+                  ios_backgroundColor={colors.outlineVariant}
+                />
+              </View>
+            );
+          })}
+
+          <View style={[styles.infoBox, { backgroundColor: colors.surfaceContainer }]}>
+            <Text style={[styles.infoText, { color: colors.onSurfaceVariant }]}>
+              🔔 You can customize which notifications you receive. Changes take effect immediately.
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -171,18 +131,20 @@ export default function NotificationPreferencesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
+    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -190,12 +152,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1a1c1a',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
   },
   scrollView: {
     flex: 1,
@@ -203,54 +164,60 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-  },
-  section: {
-    marginBottom: 24,
+    paddingBottom: 100,
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700' as const,
-    color: PlantTheme.colors.primary,
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingTop: 16,
+    paddingBottom: 12,
     textTransform: 'uppercase',
   },
-  sectionCard: {
-    backgroundColor: '#F0F4F0',
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  notificationItem: {
+  settingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
   },
-  notificationLeft: {
+  lastCard: {
+    marginBottom: 24,
+  },
+  settingItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     marginRight: 16,
   },
   iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 16,
   },
   textContainer: {
     flex: 1,
   },
-  notificationTitle: {
+  settingTitle: {
     fontSize: 16,
-    fontWeight: '500' as const,
-    color: '#1C1C1C',
-    marginBottom: 2,
+    fontWeight: '600' as const,
+    marginBottom: 4,
   },
-  notificationSubtitle: {
+  settingSubtitle: {
     fontSize: 14,
-    color: '#444844',
+    lineHeight: 20,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#E8EAE6',
-    marginLeft: 56,
+  infoBox: {
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 22,
   },
 });

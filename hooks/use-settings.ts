@@ -5,14 +5,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface NotificationSettings {
   likes: boolean;
   comments: boolean;
+  follows: boolean;
   followers: boolean;
   directMessages: boolean;
+  mentions: boolean;
+  trending: boolean;
   updates: boolean;
   promotions: boolean;
 }
 
 interface PrivacySettings {
   privateProfile: boolean;
+  privateAccount: boolean;
+  showOnlineStatus: boolean;
+  allowTagging: boolean;
+  shareLocation: boolean;
   messagePrivacy: 'everyone' | 'following' | 'none';
   personalizedAds: boolean;
 }
@@ -22,29 +29,50 @@ interface AppSettings {
   language: string;
 }
 
+interface AdSettings {
+  personalizedAds: boolean;
+  activityTracking: boolean;
+  socialAds: boolean;
+  shoppingAds: boolean;
+}
+
 interface Settings {
   notifications: NotificationSettings;
   privacy: PrivacySettings;
   app: AppSettings;
+  ads: AdSettings;
 }
 
 const DEFAULT_SETTINGS: Settings = {
   notifications: {
     likes: true,
     comments: true,
+    follows: true,
     followers: true,
     directMessages: false,
+    mentions: true,
+    trending: false,
     updates: true,
     promotions: false,
   },
   privacy: {
     privateProfile: true,
+    privateAccount: false,
+    showOnlineStatus: true,
+    allowTagging: true,
+    shareLocation: false,
     messagePrivacy: 'everyone',
     personalizedAds: false,
   },
   app: {
     darkMode: false,
     language: 'English',
+  },
+  ads: {
+    personalizedAds: false,
+    activityTracking: false,
+    socialAds: false,
+    shoppingAds: false,
   },
 };
 
@@ -120,11 +148,26 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
     saveSettings(newSettings);
   }, [settings]);
 
+  const updateAdPreference = useCallback(<K extends keyof AdSettings>(
+    key: K,
+    value: AdSettings[K]
+  ) => {
+    const newSettings = {
+      ...settings,
+      ads: {
+        ...settings.ads,
+        [key]: value,
+      },
+    };
+    saveSettings(newSettings);
+  }, [settings]);
+
   return useMemo(() => ({
     settings,
     isLoading,
     updateNotificationSetting,
     updatePrivacySetting,
     updateAppSetting,
-  }), [settings, isLoading, updateNotificationSetting, updatePrivacySetting, updateAppSetting]);
+    updateAdPreference,
+  }), [settings, isLoading, updateNotificationSetting, updatePrivacySetting, updateAppSetting, updateAdPreference]);
 });

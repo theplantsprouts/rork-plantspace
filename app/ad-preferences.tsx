@@ -1,114 +1,123 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Switch,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft, MousePointerClick } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
+import { ArrowLeft, Target, TrendingUp, Users, ShoppingBag } from 'lucide-react-native';
+import { AnimatedButton } from '@/components/AnimatedPressable';
+import { useSettings } from '@/hooks/use-settings';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function AdPreferencesScreen() {
-  const insets = useSafeAreaInsets();
-  const [personalizedAds, setPersonalizedAds] = useState(true);
+  const { settings, updateAdPreference } = useSettings();
+  const { colors } = useTheme();
+
+  const adOptions = [
+    {
+      id: 'personalizedAds',
+      title: 'Personalized Ads',
+      subtitle: 'See ads based on your interests and activity',
+      icon: Target,
+    },
+    {
+      id: 'activityTracking',
+      title: 'Activity Tracking',
+      subtitle: 'Allow tracking for better ad experience',
+      icon: TrendingUp,
+    },
+    {
+      id: 'socialAds',
+      title: 'Social Ads',
+      subtitle: 'See ads from brands your friends follow',
+      icon: Users,
+    },
+    {
+      id: 'shoppingAds',
+      title: 'Shopping Ads',
+      subtitle: 'See product recommendations',
+      icon: ShoppingBag,
+    },
+  ];
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Ad Preferences</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <ArrowLeft color="#191c19" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ad Preferences</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-      
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.iconContainer}>
-          <View style={styles.iconCircle}>
-            <MousePointerClick color={PlantTheme.colors.primary} size={48} />
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Advertising Controls
+          </Text>
+
+          {adOptions.map((option, index) => {
+            const IconComponent = option.icon;
+            const value = settings.ads[option.id as keyof typeof settings.ads];
+            
+            return (
+              <View
+                key={option.id}
+                style={[
+                  styles.settingCard,
+                  { backgroundColor: colors.surfaceContainer },
+                  index === adOptions.length - 1 && styles.lastCard,
+                ]}
+              >
+                <View style={styles.settingItemLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                    <IconComponent color={colors.primary} size={24} />
+                  </View>
+                  <View style={styles.textContainer}>
+                    <Text style={[styles.settingTitle, { color: colors.onSurface }]}>
+                      {option.title}
+                    </Text>
+                    <Text style={[styles.settingSubtitle, { color: colors.onSurfaceVariant }]}>
+                      {option.subtitle}
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={value}
+                  onValueChange={(newValue) => updateAdPreference(option.id as any, newValue)}
+                  trackColor={{
+                    false: colors.outlineVariant,
+                    true: `${colors.primary}4D`,
+                  }}
+                  thumbColor={value ? colors.primary : colors.outline}
+                  ios_backgroundColor={colors.outlineVariant}
+                />
+              </View>
+            );
+          })}
+
+          <View style={[styles.infoBox, { backgroundColor: colors.surfaceContainer }]}>
+            <Text style={[styles.infoText, { color: colors.onSurfaceVariant }]}>
+              📢 These settings control how ads are personalized for you. Disabling these options may result in less relevant ads, but you&apos;ll still see the same number of ads.
+            </Text>
           </View>
-        </View>
-
-        <Text style={styles.title}>Your Ad Garden</Text>
-        <Text style={styles.description}>
-          Manage how your ad experience grows. These settings help us show you more relevant content and support PlantSpace.
-        </Text>
-
-        <View style={styles.settingsContainer}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingTextContainer}>
-              <Text style={styles.settingTitle}>Personalized Ads</Text>
-              <Text style={styles.settingSubtitle}>
-                Allow us to use your activity to cultivate a personalized ad experience.
-              </Text>
-            </View>
-            <Switch
-              value={personalizedAds}
-              onValueChange={setPersonalizedAds}
-              trackColor={{
-                false: '#E8EAE6',
-                true: 'rgba(23, 207, 23, 0.3)',
-              }}
-              thumbColor={personalizedAds ? PlantTheme.colors.primary : '#C1C8C0'}
-              ios_backgroundColor="#E8EAE6"
-            />
-          </View>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity
-            style={styles.settingItem}
-            activeOpacity={0.7}
-          >
-            <View style={styles.settingTextContainer}>
-              <Text style={styles.settingTitle}>Ad Categories</Text>
-              <Text style={styles.settingSubtitle}>
-                See the topics we think you&apos;re interested in based on your activity.
-              </Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity
-            style={styles.settingItem}
-            activeOpacity={0.7}
-          >
-            <View style={styles.settingTextContainer}>
-              <Text style={styles.settingTitle}>Manage Ad Partners</Text>
-              <Text style={styles.settingSubtitle}>
-                Control which ad networks can show you ads on PlantSpace.
-              </Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.learnMoreButton} activeOpacity={0.7}>
-          <Text style={styles.learnMoreText}>Learn More About Our Ads</Text>
-        </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -116,18 +125,20 @@ export default function AdPreferencesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
+    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -135,92 +146,72 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#191c19',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 100,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(23, 207, 23, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
+  sectionTitle: {
+    fontSize: 12,
     fontWeight: '700' as const,
-    color: '#191c19',
-    textAlign: 'center',
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    textTransform: 'uppercase',
   },
-  description: {
-    fontSize: 16,
-    color: '#414941',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  settingsContainer: {
-    backgroundColor: '#F0F4F0',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 48,
-  },
-  settingItem: {
+  settingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
   },
-  settingTextContainer: {
+  lastCard: {
+    marginBottom: 24,
+  },
+  settingItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
     marginRight: 16,
   },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  textContainer: {
+    flex: 1,
+  },
   settingTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: '#191c19',
+    fontSize: 16,
+    fontWeight: '600' as const,
     marginBottom: 4,
   },
   settingSubtitle: {
     fontSize: 14,
-    color: '#414941',
     lineHeight: 20,
   },
-  chevron: {
-    fontSize: 24,
-    color: '#191c19',
-    fontWeight: '300' as const,
+  infoBox: {
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 8,
   },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(113, 121, 113, 0.3)',
-  },
-  learnMoreButton: {
-    backgroundColor: 'rgba(23, 207, 23, 0.2)',
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-  },
-  learnMoreText: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: PlantTheme.colors.primary,
+  infoText: {
+    fontSize: 14,
+    lineHeight: 22,
   },
 });

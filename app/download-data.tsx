@@ -4,85 +4,134 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft, DownloadCloud } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
+import { ArrowLeft, Download, FileText, Image, MessageCircle, Users } from 'lucide-react-native';
+import { AnimatedButton } from '@/components/AnimatedPressable';
+import { MaterialButton } from '@/components/MaterialButton';
+import { useAuth } from '@/hooks/use-auth';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function DownloadDataScreen() {
-  const insets = useSafeAreaInsets();
-  const [isRequesting, setIsRequesting] = useState(false);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { colors } = useTheme();
 
-  const handleRequestData = () => {
-    setIsRequesting(true);
+  const dataTypes = [
+    {
+      id: 'posts',
+      title: 'Posts',
+      subtitle: 'All your posts and captions',
+      icon: FileText,
+    },
+    {
+      id: 'photos',
+      title: 'Photos & Videos',
+      subtitle: 'All media you&apos;ve uploaded',
+      icon: Image,
+    },
+    {
+      id: 'comments',
+      title: 'Comments',
+      subtitle: 'All your comments and replies',
+      icon: MessageCircle,
+    },
+    {
+      id: 'connections',
+      title: 'Connections',
+      subtitle: 'Your followers and following list',
+      icon: Users,
+    },
+  ];
+
+  const handleDownloadData = async () => {
+    setLoading(true);
     
     setTimeout(() => {
-      setIsRequesting(false);
+      setLoading(false);
       Alert.alert(
-        '🌱 Request Received',
-        'We\'re preparing your data! You\'ll receive an email when your download is ready. This usually takes a few hours.',
-        [{ text: 'Got it', onPress: () => router.back() }]
+        'Request Received',
+        'Your data download request has been received. We&apos;ll send you an email with a download link within 48 hours.',
+        [{ text: 'OK' }]
       );
-    }, 1500);
+    }, 2000);
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ArrowLeft color="#191c19" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Download your data</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-      
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.iconContainer}>
-          <View style={styles.iconCircle}>
-            <DownloadCloud color={PlantTheme.colors.primary} size={48} />
-          </View>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Download Data</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        <Text style={styles.title}>Get a copy of your data</Text>
-        
-        <Text style={styles.description}>
-          You can request a file containing your profile information, posts, comments, and other activity within our community.
-        </Text>
-        
-        <Text style={styles.description}>
-          Once you request your data, we&apos;ll begin processing it. This may take a little while. When your download is ready, we&apos;ll send a notification to your registered email address.
-        </Text>
-
-        <TouchableOpacity
-          style={[styles.requestButton, isRequesting && styles.requestButtonDisabled]}
-          onPress={handleRequestData}
-          disabled={isRequesting}
-          activeOpacity={0.7}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.requestButtonText}>
-            {isRequesting ? 'Requesting...' : 'Request Data'}
+          <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+            <Download color={colors.primary} size={48} />
+          </View>
+
+          <Text style={[styles.title, { color: colors.onSurface }]}>
+            Download Your Data
           </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
+            Get a copy of all your data from PlantSpace
+          </Text>
+
+          <View style={[styles.infoBox, { backgroundColor: colors.surfaceContainer }]}>
+            <Text style={[styles.infoTitle, { color: colors.onSurface }]}>
+              What&apos;s included:
+            </Text>
+            {dataTypes.map((type) => {
+              const IconComponent = type.icon;
+              return (
+                <View key={type.id} style={styles.dataTypeItem}>
+                  <IconComponent color={colors.primary} size={20} />
+                  <View style={styles.dataTypeText}>
+                    <Text style={[styles.dataTypeTitle, { color: colors.onSurface }]}>
+                      {type.title}
+                    </Text>
+                    <Text style={[styles.dataTypeSubtitle, { color: colors.onSurfaceVariant }]}>
+                      {type.subtitle}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+
+          <View style={[styles.warningBox, { backgroundColor: colors.surfaceContainer }]}>
+            <Text style={[styles.warningText, { color: colors.onSurfaceVariant }]}>
+              ⏱️ Processing your data may take up to 48 hours. We&apos;ll send you an email at {user?.email} when your download is ready.
+            </Text>
+          </View>
+
+          <MaterialButton
+            title={loading ? 'Requesting...' : 'Request Data Download'}
+            onPress={handleDownloadData}
+            disabled={loading}
+            variant="filled"
+            size="large"
+            icon={<Download color="#FFFFFF" size={20} />}
+            testID="download-data-button"
+          />
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -90,18 +139,20 @@ export default function DownloadDataScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
+    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -109,59 +160,76 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#191c19',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 24,
+    paddingBottom: 100,
   },
   iconContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  iconCircle: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: 'rgba(23, 207, 23, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 24,
+    alignSelf: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: '700' as const,
-    color: '#191c19',
+    marginBottom: 12,
     textAlign: 'center',
-    marginBottom: 16,
   },
-  description: {
+  subtitle: {
     fontSize: 16,
-    color: '#414941',
     lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  infoBox: {
+    padding: 20,
+    borderRadius: 16,
     marginBottom: 16,
   },
-  requestButton: {
-    backgroundColor: PlantTheme.colors.primary,
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  requestButtonDisabled: {
-    opacity: 0.6,
-  },
-  requestButtonText: {
+  infoTitle: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  dataTypeItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  dataTypeText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  dataTypeTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    marginBottom: 2,
+  },
+  dataTypeSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  warningBox: {
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 24,
+  },
+  warningText: {
+    fontSize: 14,
+    lineHeight: 22,
   },
 });

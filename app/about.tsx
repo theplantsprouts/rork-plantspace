@@ -4,127 +4,168 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Alert,
   Linking,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft, Sprout, ChevronRight } from 'lucide-react-native';
-import { PlantTheme } from '@/constants/theme';
-
-interface AboutLink {
-  id: string;
-  title: string;
-  onPress: () => void;
-}
+import {
+  ArrowLeft,
+  Sprout,
+  Heart,
+  Users,
+  Globe,
+  Shield,
+  FileText,
+} from 'lucide-react-native';
+import { AnimatedButton } from '@/components/AnimatedPressable';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function AboutScreen() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
-  const aboutLinks: AboutLink[] = [
+  const links = [
     {
       id: 'terms',
       title: 'Terms of Service',
-      onPress: () => {
-        Alert.alert(
-          'Terms of Service',
-          'By using PlantSpace, you agree to our terms and conditions. Visit plantspace.app/terms for full details.'
-        );
-      },
+      icon: FileText,
+      onPress: () => Linking.openURL('https://plantspace.app/terms'),
     },
     {
       id: 'privacy',
       title: 'Privacy Policy',
-      onPress: () => {
-        Alert.alert(
-          'Privacy Policy',
-          'We respect your privacy. Learn more about how we protect your data at plantspace.app/privacy'
-        );
-      },
+      icon: Shield,
+      onPress: () => Linking.openURL('https://plantspace.app/privacy'),
     },
     {
-      id: 'licenses',
-      title: 'Open Source Licenses',
-      onPress: () => {
-        Alert.alert(
-          'Open Source Licenses',
-          'PlantSpace is built with open source software. View all licenses at plantspace.app/licenses'
-        );
-      },
+      id: 'website',
+      title: 'Visit Our Website',
+      icon: Globe,
+      onPress: () => Linking.openURL('https://plantspace.app'),
     },
   ];
 
-  const renderLink = (link: AboutLink, isLast: boolean) => {
-    return (
-      <View key={link.id}>
-        <TouchableOpacity
-          style={styles.linkItem}
-          onPress={link.onPress}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.linkText}>{link.title}</Text>
-          <ChevronRight color="#9CA3AF" size={20} />
-        </TouchableOpacity>
-        {!isLast && <View style={styles.divider} />}
-      </View>
-    );
-  };
-
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <AnimatedButton
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.surfaceContainer }]}
+            bounceEffect="subtle"
+            hapticFeedback="light"
+          >
+            <ArrowLeft color={colors.onSurface} size={24} />
+          </AnimatedButton>
+          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>About</Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft color="#1a1c1a" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>About</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.logoContainer, { backgroundColor: `${colors.primary}15` }]}>
+            <Sprout color={colors.primary} size={64} />
+          </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.logoSection}>
-          <View style={styles.logoOuter}>
-            <View style={styles.logoInner}>
-              <Sprout color="#FFFFFF" size={32} />
+          <Text style={[styles.appName, { color: colors.onSurface }]}>
+            PlantSpace
+          </Text>
+          <Text style={[styles.version, { color: colors.onSurfaceVariant }]}>
+            Version 1.0.0
+          </Text>
+
+          <View style={[styles.missionCard, { backgroundColor: colors.surfaceContainer }]}>
+            <Text style={[styles.missionTitle, { color: colors.onSurface }]}>
+              Our Mission
+            </Text>
+            <Text style={[styles.missionText, { color: colors.onSurfaceVariant }]}>
+              PlantSpace is a community-driven platform where plant enthusiasts connect, share, and grow together. We believe in fostering a sustainable future through the love of plants and nature.
+            </Text>
+          </View>
+
+          <View style={styles.featuresSection}>
+            <View style={styles.featureItem}>
+              <View style={[styles.featureIcon, { backgroundColor: `${colors.primary}15` }]}>
+                <Users color={colors.primary} size={28} />
+              </View>
+              <Text style={[styles.featureTitle, { color: colors.onSurface }]}>
+                Community
+              </Text>
+              <Text style={[styles.featureText, { color: colors.onSurfaceVariant }]}>
+                Connect with plant lovers worldwide
+              </Text>
+            </View>
+
+            <View style={styles.featureItem}>
+              <View style={[styles.featureIcon, { backgroundColor: `${colors.primary}15` }]}>
+                <Heart color={colors.primary} size={28} />
+              </View>
+              <Text style={[styles.featureTitle, { color: colors.onSurface }]}>
+                Passion
+              </Text>
+              <Text style={[styles.featureText, { color: colors.onSurfaceVariant }]}>
+                Share your love for plants
+              </Text>
+            </View>
+
+            <View style={styles.featureItem}>
+              <View style={[styles.featureIcon, { backgroundColor: `${colors.primary}15` }]}>
+                <Sprout color={colors.primary} size={28} />
+              </View>
+              <Text style={[styles.featureTitle, { color: colors.onSurface }]}>
+                Growth
+              </Text>
+              <Text style={[styles.featureText, { color: colors.onSurfaceVariant }]}>
+                Learn and grow together
+              </Text>
             </View>
           </View>
-          <Text style={styles.appName}>PlantSpace</Text>
-          <Text style={styles.version}>Version 1.0.0</Text>
-        </View>
 
-        <View style={styles.missionSection}>
-          <Text style={styles.missionTitle}>Our Mission</Text>
-          <Text style={styles.missionText}>
-            PlantSpace is dedicated to connecting plant enthusiasts worldwide,
-            fostering a vibrant community where knowledge, tips, and experiences are
-            shared to cultivate a greener planet.
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+            Legal & Information
           </Text>
-        </View>
 
-        <View style={styles.linksSection}>
-          {aboutLinks.map((link, index) =>
-            renderLink(link, index === aboutLinks.length - 1)
-          )}
-        </View>
+          {links.map((link, index) => {
+            const IconComponent = link.icon;
+            return (
+              <AnimatedButton
+                key={link.id}
+                onPress={link.onPress}
+                style={[
+                  styles.linkCard,
+                  { backgroundColor: colors.surfaceContainer },
+                  index === links.length - 1 && styles.lastCard,
+                ]}
+                bounceEffect="subtle"
+                hapticFeedback="light"
+              >
+                <View style={styles.linkLeft}>
+                  <View style={[styles.linkIcon, { backgroundColor: `${colors.primary}15` }]}>
+                    <IconComponent color={colors.primary} size={20} />
+                  </View>
+                  <Text style={[styles.linkText, { color: colors.onSurface }]}>
+                    {link.title}
+                  </Text>
+                </View>
+                <Text style={[styles.chevron, { color: colors.onSurfaceVariant }]}>›</Text>
+              </AnimatedButton>
+            );
+          })}
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Made with 🌱 for plant lovers</Text>
-          <Text style={styles.copyright}>© 2024 PlantSpace. All rights reserved.</Text>
-        </View>
-      </ScrollView>
+          <View style={[styles.footerCard, { backgroundColor: colors.surfaceContainer }]}>
+            <Text style={[styles.footerText, { color: colors.onSurfaceVariant }]}>
+              Made with 💚 by the PlantSpace Team
+            </Text>
+            <Text style={[styles.copyright, { color: colors.onSurfaceVariant }]}>
+              © 2025 PlantSpace. All rights reserved.
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -132,18 +173,20 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F8F6',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F6F8F6',
+    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -151,96 +194,138 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1a1c1a',
     textAlign: 'center',
-    marginRight: 40,
+    marginRight: 48,
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     paddingTop: 24,
-  },
-  logoSection: {
+    paddingBottom: 100,
     alignItems: 'center',
-    marginBottom: 32,
   },
-  logoOuter: {
-    padding: 12,
-    backgroundColor: 'rgba(23, 207, 23, 0.2)',
-    borderRadius: 9999,
-    marginBottom: 16,
-  },
-  logoInner: {
-    width: 64,
-    height: 64,
-    backgroundColor: PlantTheme.colors.primary,
-    borderRadius: 9999,
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 24,
   },
   appName: {
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: '700' as const,
-    color: '#1a1c1a',
-    marginBottom: 4,
-  },
-  version: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  missionSection: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-  },
-  missionTitle: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: '#1a1c1a',
     marginBottom: 8,
   },
+  version: {
+    fontSize: 16,
+    marginBottom: 32,
+  },
+  missionCard: {
+    width: '100%',
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 32,
+  },
+  missionTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    marginBottom: 12,
+  },
   missionText: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 26,
   },
-  linksSection: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 24,
+  featuresSection: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 32,
+    gap: 12,
   },
-  linkItem: {
+  featureItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  featureIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  featureText: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+    textTransform: 'uppercase',
+    alignSelf: 'flex-start',
+  },
+  linkCard: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  lastCard: {
+    marginBottom: 24,
+  },
+  linkLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  linkIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   linkText: {
     fontSize: 16,
-    color: '#1a1c1a',
+    fontWeight: '600' as const,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
+  chevron: {
+    fontSize: 24,
+    fontWeight: '300' as const,
   },
-  footer: {
+  footerCard: {
+    width: '100%',
+    padding: 20,
+    borderRadius: 16,
     alignItems: 'center',
-    paddingVertical: 24,
   },
   footerText: {
     fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   copyright: {
     fontSize: 12,
-    color: '#9CA3AF',
+    textAlign: 'center',
   },
 });
