@@ -13,6 +13,10 @@ export const sendMessageProcedure = protectedProcedure
   )
   .mutation(async ({ input, ctx }) => {
     try {
+      if (!ctx.user) {
+        throw new Error('User not authenticated');
+      }
+      
       if (!input.text && !input.imageUrl) {
         throw new Error('Message must contain text or image');
       }

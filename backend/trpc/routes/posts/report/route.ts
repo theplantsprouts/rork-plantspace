@@ -13,6 +13,11 @@ export const reportPostProcedure = protectedProcedure
   .mutation(async ({ input, ctx }) => {
     try {
       const { postId, reason } = input;
+      
+      if (!ctx.user) {
+        throw new Error('User not authenticated');
+      }
+      
       const userId = ctx.user.id;
 
       const reportData = {

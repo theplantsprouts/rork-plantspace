@@ -12,6 +12,11 @@ export const deletePostProcedure = protectedProcedure
   .mutation(async ({ input, ctx }) => {
     try {
       const { postId } = input;
+      
+      if (!ctx.user) {
+        throw new Error('User not authenticated');
+      }
+      
       const userId = ctx.user.id;
 
       const postRef = doc(db, "posts", postId);

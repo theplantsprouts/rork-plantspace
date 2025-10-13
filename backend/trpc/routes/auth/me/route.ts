@@ -2,7 +2,11 @@ import { protectedProcedure } from "../../../create-context";
 
 export const meProcedure = protectedProcedure
   .query(async ({ ctx }) => {
-    console.log('Getting current user from context:', ctx.user?.id);
+    if (!ctx.user) {
+      throw new Error('User not authenticated');
+    }
+    
+    console.log('Getting current user from context:', ctx.user.id);
     
     const response = {
       id: ctx.user.id,

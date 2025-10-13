@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure } from "../../../create-context";
 import { TRPCError } from "@trpc/server";
-import { updateProfile, getProfile } from "@/lib/firebase";
+import { updateProfile } from "@/lib/firebase";
 
 export const completeProfileProcedure = protectedProcedure
   .input(
@@ -14,6 +14,13 @@ export const completeProfileProcedure = protectedProcedure
   )
   .mutation(async ({ input, ctx }) => {
     try {
+      if (!ctx.user) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+      
       console.log('Profile completion attempt for user:', ctx.user.id);
       const { name, username, bio, avatar } = input;
       const userId = ctx.user.id;

@@ -4,6 +4,10 @@ import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebas
 
 export const getConversationsProcedure = protectedProcedure.query(async ({ ctx }) => {
   try {
+    if (!ctx.user) {
+      throw new Error('User not authenticated');
+    }
+    
     console.log('Getting conversations for user:', ctx.user.id);
     
     const messagesRef = collection(db, 'messages');

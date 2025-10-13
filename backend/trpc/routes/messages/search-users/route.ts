@@ -12,6 +12,10 @@ export const searchUsersProcedure = protectedProcedure
   )
   .query(async ({ input, ctx }) => {
     try {
+      if (!ctx.user) {
+        throw new Error('User not authenticated');
+      }
+      
       console.log('Searching users with query:', input.searchQuery);
       
       const searchLower = input.searchQuery.toLowerCase();

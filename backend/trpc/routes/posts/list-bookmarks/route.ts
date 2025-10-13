@@ -3,6 +3,10 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 
 export const listBookmarksProcedure = protectedProcedure.query(async ({ ctx }) => {
+  if (!ctx.user) {
+    throw new Error('User not authenticated');
+  }
+  
   const userId = ctx.user.id;
 
   try {

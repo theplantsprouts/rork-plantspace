@@ -11,6 +11,11 @@ export const checkLikeProcedure = protectedProcedure
   )
   .query(async ({ input, ctx }) => {
     const { postId } = input;
+    
+    if (!ctx.user) {
+      throw new Error('User not authenticated');
+    }
+    
     const userId = ctx.user.id;
 
     try {

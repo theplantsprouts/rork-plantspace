@@ -11,6 +11,10 @@ export const getMessagesProcedure = protectedProcedure
   )
   .query(async ({ input, ctx }) => {
     try {
+      if (!ctx.user) {
+        throw new Error('User not authenticated');
+      }
+      
       console.log('Getting messages between', ctx.user.id, 'and', input.otherUserId);
       
       const messagesRef = collection(db, 'messages');
