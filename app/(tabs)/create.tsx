@@ -26,6 +26,13 @@ export default function CreateScreen() {
   const [postText, setPostText] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+  const [showModerationResult, setShowModerationResult] = useState(false);
+  const [moderationResult, setModerationResult] = useState<{
+    status: 'approved' | 'pending' | 'rejected';
+    score: number;
+    reason?: string;
+    tags: string[];
+  } | null>(null);
   const { addPost } = usePosts();
   const { addNotification } = useAppContext();
   const { moderatePost } = useAIContent();
@@ -71,6 +78,14 @@ export default function CreateScreen() {
       
       const moderatedPost = await moderatePost(newPost);
       
+      setModerationResult({
+        status: moderatedPost.moderationStatus || 'approved',
+        score: moderatedPost.aiScore || 0,
+        reason: moderatedPost.moderationReason,
+        tags: moderatedPost.aiTags || [],
+      });
+      setShowModerationResult(true);
+      
       addNotification({
         id: Date.now(),
         type: 'post',
@@ -81,27 +96,13 @@ export default function CreateScreen() {
         time: 'now',
       });
       
-      const alertTitle = moderatedPost.moderationStatus === 'approved' ? 'Post Approved!' : 'Post Under Review';
-      const alertMessage = moderatedPost.moderationStatus === 'approved' 
-        ? `Your agriculture/environment post has been approved and shared! AI Score: ${(moderatedPost.aiScore || 0 * 100).toFixed(0)}%`
-        : 'Your post is being reviewed to ensure it meets our agriculture/environment community guidelines.';
-      
-      if (Platform.OS !== 'web') {
-        Alert.alert(alertTitle, alertMessage, [
-          {
-            text: 'OK',
-            onPress: () => {
-              setPostText('');
-              setSelectedImage(null);
-              router.push('/(tabs)/home');
-            }
-          }
-        ]);
-      } else {
+      setTimeout(() => {
         setPostText('');
         setSelectedImage(null);
+        setShowModerationResult(false);
+        setModerationResult(null);
         router.push('/(tabs)/home');
-      }
+      }, 4000);
     } catch (error) {
       console.error('Error posting:', error);
       if (Platform.OS !== 'web') {
@@ -166,6 +167,50 @@ export default function CreateScreen() {
             </View>
           )}
         </View>
+
+        {showModerationResult && moderationResult && (
+          <View style={[styles.moderationCard, {
+            backgroundColor: moderationResult.status === 'approved' 
+              ? 'rgba(76, 175, 80, 0.1)' 
+              : moderationResult.status === 'rejected' 
+              ? 'rgba(244, 67, 54, 0.1)' 
+              : 'rgba(255, 193, 7, 0.1)',
+            borderColor: moderationResult.status === 'approved' 
+              ? PlantTheme.colors.primary 
+              : moderationResult.status === 'rejected' 
+              ? '#f44336' 
+              : '#FFC107',
+          }]}>
+            <Text style={[styles.moderationTitle, {
+              color: moderationResult.status === 'approved' 
+                ? PlantTheme.colors.primary 
+                : moderationResult.status === 'rejected' 
+                ? '#f44336' 
+                : '#FFC107',
+            }]}>
+              {moderationResult.status === 'approved' && '✓ Post Approved!'}
+              {moderationResult.status === 'pending' && '⏳ Under Review'}
+              {moderationResult.status === 'rejected' && '✗ Not Approved'}
+            </Text>
+            <Text style={styles.moderationScore}>
+              AI Relevance Score: {(moderationResult.score * 100).toFixed(0)}%
+            </Text>
+            {moderationResult.tags.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {moderationResult.tags.slice(0, 3).map((tag, index) => (
+                  <View key={index} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {moderationResult.reason && (
+              <Text style={styles.moderationReason}>
+                {moderationResult.reason}
+              </Text>
+            )}
+          </View>
+        )}
 
         <View style={styles.actionsRow}>
           <TouchableOpacity 
@@ -301,5 +346,45 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '700' as const,
     fontSize: 16,
+  },
+  moderationCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+  },
+  moderationTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    marginBottom: 8,
+  },
+  moderationScore: {
+    fontSize: 14,
+    color: PlantTheme.colors.textSecondary,
+    marginBottom: 8,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  tag: {
+    backgroundColor: PlantTheme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  tagText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  moderationReason: {
+    fontSize: 13,
+    color: PlantTheme.colors.textSecondary,
+    marginTop: 8,
+    fontStyle: 'italic' as const,
   },
 });

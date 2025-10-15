@@ -767,6 +767,119 @@ export const subscribeToBookmarks = (
   });
 };
 
+export const subscribeToLikes = (
+  postId: string,
+  callback: (likeCount: number, userLikes: string[]) => void,
+  errorCallback?: (error: any) => void
+) => {
+  const likesRef = collection(db, 'likes');
+  const q = query(likesRef, where('postId', '==', postId));
+  
+  return onSnapshot(q, (snapshot) => {
+    try {
+      const userIds = snapshot.docs.map(doc => doc.data().userId);
+      callback(snapshot.docs.length, userIds);
+    } catch (error) {
+      console.error('Error processing likes snapshot:', error);
+      if (errorCallback) {
+        errorCallback(error);
+      } else {
+        callback(0, []);
+      }
+    }
+  }, (error) => {
+    console.error('Firestore likes subscription error:', error);
+    if (errorCallback) {
+      errorCallback(error);
+    } else {
+      callback(0, []);
+    }
+  });
+};
+
+export const subscribeToShares = (
+  postId: string,
+  callback: (shareCount: number) => void,
+  errorCallback?: (error: any) => void
+) => {
+  const sharesRef = collection(db, 'shares');
+  const q = query(sharesRef, where('postId', '==', postId));
+  
+  return onSnapshot(q, (snapshot) => {
+    try {
+      callback(snapshot.docs.length);
+    } catch (error) {
+      console.error('Error processing shares snapshot:', error);
+      if (errorCallback) {
+        errorCallback(error);
+      } else {
+        callback(0);
+      }
+    }
+  }, (error) => {
+    console.error('Firestore shares subscription error:', error);
+    if (errorCallback) {
+      errorCallback(error);
+    } else {
+      callback(0);
+    }
+  });
+};
+
+export const subscribeToPostInteractions = (
+  postId: string,
+  callback: (interactions: { likes: number; comments: number; shares: number; userLiked: boolean; userShared: boolean; }) => void,
+  userId?: string,
+  errorCallback?: (error: any) => void
+) => {
+  let likesData = { count: 0, userIds: [] as string[] };
+  let commentsCount = 0;
+  let sharesCount = 0;
+  
+  const updateCallback = () => {
+    callback({
+      likes: likesData.count,
+      comments: commentsCount,
+      shares: sharesCount,
+      userLiked: userId ? likesData.userIds.includes(userId) : false,
+      userShared: false,
+    });
+  };
+  
+  const likesRef = collection(db, 'likes');
+  const likesQuery = query(likesRef, where('postId', '==', postId));
+  
+  const commentsRef = collection(db, 'comments');
+  const commentsQuery = query(commentsRef, where('postId', '==', postId));
+  
+  const sharesRef = collection(db, 'shares');
+  const sharesQuery = query(sharesRef, where('postId', '==', postId));
+  
+  const unsubscribeLikes = onSnapshot(likesQuery, (snapshot) => {
+    likesData = {
+      count: snapshot.docs.length,
+      userIds: snapshot.docs.map(doc => doc.data().userId),
+    };
+    updateCallback();
+  }, errorCallback);
+  
+  const unsubscribeComments = onSnapshot(commentsQuery, (snapshot) => {
+    commentsCount = snapshot.docs.length;
+    updateCallback();
+  }, errorCallback);
+  
+  const unsubscribeShares = onSnapshot(sharesQuery, (snapshot) => {
+    sharesCount = snapshot.docs.length;
+    updateCallback();
+  }, errorCallback);
+  
+  return () => {
+    unsubscribeLikes();
+    unsubscribeComments();
+    unsubscribeShares();
+  };
+};
+
 export const subscribeToMessages = (
   userId: string,
   otherUserId: string,

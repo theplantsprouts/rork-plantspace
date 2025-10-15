@@ -1,4 +1,4 @@
-import { logAnalyticsEvent } from '@/lib/firebase';
+import { logAnalyticsEvent, analytics } from '@/lib/firebase';
 import { Platform } from 'react-native';
 
 export interface AnalyticsEvent {
@@ -161,4 +161,45 @@ export const trackCustomEvent = (eventName: string, parameters?: Record<string, 
     timestamp: new Date().toISOString(),
     ...parameters,
   });
+};
+
+// Analytics verification
+export const verifyAnalytics = (): { enabled: boolean; platform: string; message: string } => {
+  const isWeb = Platform.OS === 'web';
+  const isEnabled = isWeb ? !!analytics : true;
+  
+  if (isWeb && !analytics) {
+    return {
+      enabled: false,
+      platform: 'web',
+      message: 'Firebase Analytics is not available on web. Check Firebase configuration.',
+    };
+  }
+  
+  if (isWeb && analytics) {
+    return {
+      enabled: true,
+      platform: 'web',
+      message: 'Firebase Analytics is enabled and tracking events.',
+    };
+  }
+  
+  return {
+    enabled: true,
+    platform: Platform.OS,
+    message: `Analytics tracking is enabled on ${Platform.OS}. Events are being logged to console.`,
+  };
+};
+
+// Test analytics with a verification event
+export const testAnalytics = () => {
+  const verification = verifyAnalytics();
+  console.log('Analytics Verification:', verification);
+  
+  trackCustomEvent('analytics_test', {
+    test_timestamp: new Date().toISOString(),
+    verification_status: verification.enabled,
+  });
+  
+  return verification;
 };

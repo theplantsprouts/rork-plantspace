@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAIContent } from './use-ai-content';
 import { useAuth } from './use-auth';
 import { useRealTimePosts } from './use-realtime';
+import { useOffline } from './use-offline';
 import { createPost, uploadImage, Post as FirebasePost, toggleBookmark, subscribeToBookmarks, toggleLike as firebaseToggleLike, isPostLiked, addComment as firebaseAddComment, toggleShare as firebaseToggleShare } from '@/lib/firebase';
 import { trackPostCreated, trackPostViewed, trackPostLiked, trackPostShared } from '@/lib/analytics';
 
@@ -40,6 +41,7 @@ export interface Post {
   aiScore?: number;
   isAgricultureRelated?: boolean;
   moderationStatus?: 'approved' | 'pending' | 'rejected';
+  moderationReason?: string;
   aiTags?: string[];
   recommendationScore?: number;
 }
@@ -65,8 +67,8 @@ export function usePosts() {
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
   const { getRecommendations, getContentInsights } = useAIContent();
   const { user } = useAuth();
+  const { isOnline, cachedPosts, cachePost, getCachedPosts } = useOffline();
   
-  // Use real-time posts hook
   const { posts: realTimePosts, loading: isLoading, error, refresh } = useRealTimePosts();
 
   // Subscribe to real-time bookmark updates
@@ -86,7 +88,14 @@ export function usePosts() {
     return () => unsubscribe();
   }, [user?.id]);
   
-  // Convert Firebase posts to our Post interface
+  useEffect(() => {
+    if (realTimePosts.length > 0) {
+      realTimePosts.forEach(post => {
+        cachePost(post);
+      });
+    }
+  }, [realTimePosts, cachePost]);
+
   const firebasePosts = realTimePosts.map((firebasePost: FirebasePost): Post => ({
     id: firebasePost.id,
     user: {
@@ -114,8 +123,34 @@ export function usePosts() {
     recommendationScore: 0.8,
   }));
   
-  // Use only Firebase posts
-  const allPosts: Post[] = firebasePosts;
+  const allPosts: Post[] = isOnline ? firebasePosts : (
+    getCachedPosts().map((cachedPost: any): Post => ({
+      id: cachedPost.id,
+      user: {
+        id: cachedPost.author?.id || cachedPost.author_id,
+        name: cachedPost.author?.name || 'Unknown User',
+        username: cachedPost.author?.username || '@unknown',
+        avatar: cachedPost.author?.avatar,
+        followers: cachedPost.author?.followers || 0,
+        following: cachedPost.author?.following || 0,
+      },
+      content: cachedPost.content,
+      image: cachedPost.image,
+      timestamp: formatTimestamp(cachedPost.created_at),
+      likes: cachedPost.likes || 0,
+      comments: cachedPost.comments || 0,
+      shares: cachedPost.shares || 0,
+      isLiked: false,
+      isShared: false,
+      isBookmarked: false,
+      postComments: [],
+      moderationStatus: 'approved' as 'approved' | 'pending' | 'rejected',
+      isAgricultureRelated: true,
+      aiScore: 0.9,
+      aiTags: [],
+      recommendationScore: 0.8,
+    }))
+  );
 
   const toggleLike = async (postId: string) => {
     if (!user?.id) return;

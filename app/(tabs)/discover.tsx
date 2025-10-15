@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,35 +9,65 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, X } from 'lucide-react-native';
+import { Search, X, Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/hooks/use-theme';
 import { usePosts } from '@/hooks/use-posts';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { GlassCard } from '@/components/GlassContainer';
 import { AnimatedIconButton } from '@/components/AnimatedPressable';
+import { trackSearch } from '@/lib/analytics';
 
 
 
 export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [showRecommendations, setShowRecommendations] = useState(true);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { posts, isLoading } = usePosts();
+  const { posts, isLoading, recommendedPosts, getSmartRecommendations } = usePosts();
   
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      if (!searchQuery && recommendedPosts.length === 0) {
+        setLoadingRecommendations(true);
+        try {
+          await getSmartRecommendations(
+            ['agriculture', 'farming', 'sustainability', 'environment'],
+            []
+          );
+        } catch (error) {
+          console.error('Error loading recommendations:', error);
+        } finally {
+          setLoadingRecommendations(false);
+        }
+      }
+    };
+    loadRecommendations();
+  }, [searchQuery]);
+
   const filteredPosts = useMemo(() => {
     if (!searchQuery.trim()) return [];
     
     const query = searchQuery.toLowerCase().trim();
-    return posts.filter(post => 
+    const results = posts.filter(post => 
       post.content.toLowerCase().includes(query) ||
       post.user.name.toLowerCase().includes(query) ||
-      post.user.username?.toLowerCase().includes(query)
+      post.user.username?.toLowerCase().includes(query) ||
+      post.aiTags?.some(tag => tag.toLowerCase().includes(query))
     );
+    
+    if (searchQuery.trim()) {
+      trackSearch(searchQuery, results.length);
+    }
+    
+    return results;
   }, [posts, searchQuery]);
   
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setShowRecommendations(!query.trim());
   };
   
   const clearSearch = () => {
@@ -79,11 +109,97 @@ export default function DiscoverScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
       >
-        {!searchQuery.trim() ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyStateTitle, { color: colors.onSurface }]}>Explore Garden</Text>
-            <Text style={[styles.emptyStateText, { color: colors.onSurfaceVariant }]}>Discover trending topics, popular gardeners, and content tailored for you.</Text>
-            <Text style={[styles.emptyStateSubtext, { color: colors.outline }]}>Start by searching or browsing the garden!</Text>
+        {!searchQuery.trim() && showRecommendations ? (
+          <View>
+            <View style={styles.recommendationHeader}>
+              <Sparkles color={colors.primary} size={24} />
+              <Text style={[styles.recommendationTitle, { color: colors.onSurface }]}>Recommended for You</Text>
+            </View>
+            <Text style={[styles.recommendationSubtext, { color: colors.onSurfaceVariant }]}>
+              AI-powered content based on your interests
+            </Text>
+            {loadingRecommendations ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loadingText, { color: colors.onSurfaceVariant }]}>Finding best content...</Text>
+              </View>
+            ) : recommendedPosts.length > 0 ? (
+              <View style={styles.resultsContainer}>
+                {recommendedPosts.map((post) => (
+                  <TouchableOpacity
+                    key={post.id}
+                    onPress={() => router.push(`/post-detail?postId=${post.id}`)}
+                    activeOpacity={0.7}
+                  >
+                    <GlassCard style={[styles.postCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                      <View style={styles.postHeader}>
+                        <View style={styles.postAvatar}>
+                          {post.user.avatar ? (
+                            <Image
+                              source={{ uri: post.user.avatar }}
+                              style={styles.postAvatarImage}
+                              contentFit="cover"
+                              cachePolicy="memory-disk"
+                              transition={100}
+                            />
+                          ) : (
+                            <Text style={[styles.postAvatarText, { color: colors.primary }]}>
+                              {post.user.name.charAt(0).toUpperCase()}
+                            </Text>
+                          )}
+                        </View>
+                        <View style={styles.postUserInfo}>
+                          <Text style={[styles.postUsername, { color: colors.onSurface }]}>{post.user.name}</Text>
+                          <View style={styles.postMetaRow}>
+                            <Text style={[styles.postTimestamp, { color: colors.onSurfaceVariant }]}>{post.timestamp}</Text>
+                            {post.aiScore && post.aiScore > 0.7 && (
+                              <View style={[styles.qualityBadge, { backgroundColor: `${colors.primary}20` }]}>
+                                <Sparkles size={12} color={colors.primary} />
+                                <Text style={[styles.qualityText, { color: colors.primary }]}>
+                                  {(post.aiScore * 100).toFixed(0)}%
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+                      </View>
+                      <Text style={[styles.postContent, { color: colors.onSurfaceVariant }]} numberOfLines={3}>
+                        {post.content}
+                      </Text>
+                      {post.aiTags && post.aiTags.length > 0 && (
+                        <View style={styles.tagsRow}>
+                          {post.aiTags.slice(0, 3).map((tag, idx) => (
+                            <View key={idx} style={[styles.tagPill, { backgroundColor: `${colors.primary}15` }]}>
+                              <Text style={[styles.tagText, { color: colors.primary }]}>#{tag}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                      {post.image && (
+                        <Image
+                          source={{ uri: post.image }}
+                          style={styles.postImage}
+                          contentFit="cover"
+                          cachePolicy="memory-disk"
+                          transition={100}
+                        />
+                      )}
+                      <View style={styles.postStats}>
+                        <Text style={[styles.postStatsText, { color: colors.onSurfaceVariant }]}>
+                          {post.likes} likes • {post.comments} comments
+                        </Text>
+                      </View>
+                    </GlassCard>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={[styles.emptyStateTitle, { color: colors.onSurface }]}>Explore Garden</Text>
+                <Text style={[styles.emptyStateText, { color: colors.onSurfaceVariant }]}>Discover trending topics, popular gardeners, and content tailored for you.</Text>
+                <Text style={[styles.emptyStateSubtext, { color: colors.outline }]}>Start by searching or browsing the garden!</Text>
+              </View>
+            )}
           </View>
         ) : isLoading ? (
           <View style={styles.loadingContainer}>
@@ -290,5 +406,55 @@ const styles = StyleSheet.create({
   },
   postStatsText: {
     fontSize: 13,
+  },
+  recommendationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 8,
+  },
+  recommendationTitle: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+  },
+  recommendationSubtext: {
+    fontSize: 14,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  postMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  qualityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  qualityText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  tagPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
   },
 });
