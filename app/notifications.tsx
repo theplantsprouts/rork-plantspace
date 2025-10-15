@@ -77,7 +77,7 @@ export default function NotificationsScreen() {
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         >
           {notifications.length === 0 ? (
             <View style={styles.emptyState}>
@@ -155,7 +155,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
   },
   notificationItem: {
     flexDirection: 'row',

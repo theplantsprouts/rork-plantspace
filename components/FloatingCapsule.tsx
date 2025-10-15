@@ -7,6 +7,7 @@ import {
   Animated,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Plus, Menu, Bell, Bookmark, Settings } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -20,6 +21,7 @@ interface FloatingCapsuleProps {
 
 export function FloatingCapsule({ hideNotifications = false }: FloatingCapsuleProps) {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -110,7 +112,7 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
         </TouchableOpacity>
       )}
 
-      <View style={styles.container} pointerEvents="box-none">
+      <View style={[styles.container, { bottom: insets.bottom + 24 }]} pointerEvents="box-none">
         {menuItems.map((item, index) => {
           const itemTranslateY = menuAnim.interpolate({
             inputRange: [0, 1],
@@ -255,7 +257,6 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 32 : 24,
     right: 16,
     zIndex: 999,
     alignItems: 'flex-end',

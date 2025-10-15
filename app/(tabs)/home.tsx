@@ -9,6 +9,7 @@ import {
   Share,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Sprout, Leaf, Heading, Bookmark } from 'lucide-react-native';
 import { usePosts, type Post } from '@/hooks/use-posts';
@@ -20,6 +21,7 @@ import { AnimatedIconButton, AnimatedButton } from '@/components/AnimatedPressab
 export default function HomeScreen() {
   const { posts, toggleLike, togglePostBookmark, toggleShare, addComment, isLoading, error, refresh } = usePosts();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const handleLike = useCallback(async (postId: string) => {
     toggleLike(postId);
@@ -33,7 +35,7 @@ export default function HomeScreen() {
     <View style={[styles.container, { backgroundColor: colors.backgroundStart }]}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
         {isLoading ? (
@@ -229,7 +231,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 120,
   },
   postCard: {
     borderRadius: borderRadius.card,

@@ -184,7 +184,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 24,
   },
   emptyState: {
     flex: 1,

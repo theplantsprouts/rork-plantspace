@@ -175,7 +175,7 @@ export default function PostDetailScreen() {
         
         <ScrollView 
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
         >
           <GlassCard style={styles.postCard}>
@@ -377,7 +377,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
   },
   postCard: {
     padding: 20,

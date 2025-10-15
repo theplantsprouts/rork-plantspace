@@ -8,6 +8,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -23,6 +24,7 @@ export default function ProfileScreen() {
   const { currentUser } = useAppContext();
   const { posts } = usePosts();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'seeds' | 'gardeners' | 'tending'>('seeds');
 
 
@@ -251,7 +253,7 @@ export default function ProfileScreen() {
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
           removeClippedSubviews={true}
         >
           {/* Cover Image */}
@@ -414,7 +416,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
   },
   coverImageContainer: {
     height: 192,

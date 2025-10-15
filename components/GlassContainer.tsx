@@ -49,6 +49,7 @@ export function GlassContainer({
             borderColor: colors.glassBorder,
             borderWidth: 1.5,
           }, 
+          elevation.level2,
           style
         ]}
       >
@@ -128,6 +129,7 @@ export function GlassCard({
             borderColor: colors.glassBorder,
             borderWidth: 1.5,
           },
+          elevation.level3,
           style
         ]}
       >

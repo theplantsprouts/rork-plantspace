@@ -150,7 +150,7 @@ export default function SavedContentScreen() {
           <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
           >
             {savedPosts.length === 0 ? (
               <View style={styles.emptyContainer}>
@@ -259,7 +259,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
   },
   postsGrid: {
     padding: 16,
