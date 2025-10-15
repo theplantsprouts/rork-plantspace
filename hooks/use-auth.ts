@@ -10,6 +10,7 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import { validateEmail, validatePassword, sanitizeEmail } from '@/lib/validation';
+import { mapFirebaseError } from '@/lib/error-handler';
 import { 
   doc, 
   getDoc, 
@@ -263,37 +264,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
       
-      // Handle specific Firebase auth errors with more detailed messages
-      if (error.code === 'auth/user-not-found') {
-        throw new Error('No account found with this email address. Please check your email or create a new account.');
-      }
-      
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        throw new Error('Incorrect password. Please check your password and try again.');
-      }
-      
-      if (error.code === 'auth/invalid-email') {
-        throw new Error('Invalid email format. Please enter a valid email address.');
-      }
-      
-      if (error.code === 'auth/user-disabled') {
-        throw new Error('This account has been disabled. Please contact support.');
-      }
-      
-      if (error.code === 'auth/too-many-requests') {
-        throw new Error('Too many failed login attempts. Please wait a few minutes and try again.');
-      }
-      
-      if (error.code === 'auth/network-request-failed') {
-        throw new Error('Network error. Please check your internet connection and try again.');
-      }
-      
-      if (error.code === 'auth/operation-not-allowed') {
-        throw new Error('Email/password authentication is not enabled. Please contact support.');
-      }
-      
-      // Generic error with more helpful message
-      throw new Error(`Login failed: ${error.message || 'Please check your credentials and try again.'}`);
+      throw new Error(mapFirebaseError(error));
     }
   }, []);
 
@@ -340,24 +311,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     } catch (error: any) {
       console.error('Registration error:', error);
       
-      // Handle specific Firebase auth errors
-      if (error.code === 'auth/email-already-in-use') {
-        throw new Error('An account with this email already exists. Please try logging in instead.');
-      }
-      
-      if (error.code === 'auth/weak-password') {
-        throw new Error('Password must be at least 6 characters long.');
-      }
-      
-      if (error.code === 'auth/invalid-email') {
-        throw new Error('Please enter a valid email address.');
-      }
-      
-      if (error.code === 'auth/network-request-failed') {
-        throw new Error('Network error. Please check your connection and try again.');
-      }
-      
-      throw new Error('Registration failed. Please try again.');
+      throw new Error(mapFirebaseError(error));
     }
   }, []);
 
@@ -437,11 +391,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
       
-      if (error.code === 'permission-denied') {
-        throw new Error('Permission denied. Please try logging out and back in.');
-      }
-      
-      throw new Error(error?.message || 'Failed to complete profile. Please try again.');
+      throw new Error(mapFirebaseError(error));
     }
   }, []);
 

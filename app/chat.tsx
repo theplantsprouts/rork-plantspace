@@ -17,6 +17,7 @@ import { ArrowLeft, Send, ImagePlus, X } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { PlantTheme } from '@/constants/theme';
+import { ScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/hooks/use-auth';
@@ -32,7 +33,7 @@ type Message = {
   read: boolean;
 };
 
-export default function ChatScreen() {
+function ChatScreenContent() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -511,5 +512,13 @@ function isSameDay(date1: Date, date2: Date): boolean {
     date1.getFullYear() === date2.getFullYear() &&
     date1.getMonth() === date2.getMonth() &&
     date1.getDate() === date2.getDate()
+  );
+}
+
+export default function ChatScreen() {
+  return (
+    <ScreenErrorBoundary screenName="Chat">
+      <ChatScreenContent />
+    </ScreenErrorBoundary>
   );
 }

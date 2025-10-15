@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { withErrorHandling } from '@/lib/error-handler';
 import { useAIContent } from './use-ai-content';
 import { useAuth } from './use-auth';
 import { useRealTimePosts } from './use-realtime';
@@ -157,25 +158,27 @@ export function usePosts() {
   const toggleLike = async (postId: string) => {
     if (!user?.id) return;
 
-    try {
-      const isLiked = await firebaseToggleLike(user.id, postId);
-      trackPostLiked(postId, user.id);
-      refresh();
-    } catch (error) {
-      console.error('Error toggling like:', error);
-    }
+    await withErrorHandling(
+      async () => {
+        const isLiked = await firebaseToggleLike(user.id, postId);
+        trackPostLiked(postId, user.id);
+        refresh();
+      },
+      { context: 'Toggle Like', showToast: true }
+    );
   };
 
   const toggleShare = async (postId: string) => {
     if (!user?.id) return;
 
-    try {
-      const isShared = await firebaseToggleShare(user.id, postId);
-      trackPostShared(postId, 'app_share');
-      refresh();
-    } catch (error) {
-      console.error('Error sharing post:', error);
-    }
+    await withErrorHandling(
+      async () => {
+        const isShared = await firebaseToggleShare(user.id, postId);
+        trackPostShared(postId, 'app_share');
+        refresh();
+      },
+      { context: 'Share Post', showToast: true }
+    );
   };
 
   const trackPostView = (postId: string, authorId: string) => {
@@ -238,22 +241,24 @@ export function usePosts() {
   const togglePostBookmark = async (postId: string) => {
     if (!user?.id) return;
 
-    try {
-      await toggleBookmark(user.id, postId);
-    } catch (error) {
-      console.error('Error toggling bookmark:', error);
-    }
+    await withErrorHandling(
+      async () => {
+        await toggleBookmark(user.id, postId);
+      },
+      { context: 'Toggle Bookmark', showToast: true }
+    );
   };
 
   const addComment = async (postId: string, content: string) => {
     if (!user?.id || !content.trim()) return;
 
-    try {
-      await firebaseAddComment(user.id, postId, content.trim());
-      refresh();
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    }
+    await withErrorHandling(
+      async () => {
+        await firebaseAddComment(user.id, postId, content.trim());
+        refresh();
+      },
+      { context: 'Add Comment', showToast: true }
+    );
   };
 
   const getSmartRecommendations = async (userInterests: string[] = [], followedUsers: string[] = []) => {

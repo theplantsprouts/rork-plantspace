@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { ScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import {
   View,
   Text,
@@ -19,7 +20,7 @@ import { borderRadius, shadows } from '@/constants/theme';
 import { AnimatedIconButton, AnimatedButton } from '@/components/AnimatedPressable';
 
 
-export default function HomeScreen() {
+function HomeScreenContent() {
   const { posts, toggleLike, togglePostBookmark, toggleShare, addComment, isLoading, error, refresh, loadMore, hasMore } = usePosts();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -406,3 +407,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export default function HomeScreen() {
+  return (
+    <ScreenErrorBoundary screenName="Home">
+      <HomeScreenContent />
+    </ScreenErrorBoundary>
+  );
+}

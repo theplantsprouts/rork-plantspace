@@ -21,10 +21,11 @@ import { PlantTheme, PlantTerminology } from '@/constants/theme';
 import { GlassCard } from '@/components/GlassContainer';
 import { usePosts } from '@/hooks/use-posts';
 import { AnimatedIconButton } from '@/components/AnimatedPressable';
+import { ScreenErrorBoundary } from '@/components/ScreenErrorBoundary';
 import * as Haptics from 'expo-haptics';
 import { subscribeToComments, type Comment } from '@/lib/firebase';
 
-export default function PostDetailScreen() {
+function PostDetailScreenContent() {
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const { posts, toggleLike, toggleShare, addComment, isLoading } = usePosts();
   const insets = useSafeAreaInsets();
@@ -604,3 +605,11 @@ const styles = StyleSheet.create({
     color: PlantTheme.colors.textPrimary,
   },
 });
+
+export default function PostDetailScreen() {
+  return (
+    <ScreenErrorBoundary screenName="PostDetail">
+      <PostDetailScreenContent />
+    </ScreenErrorBoundary>
+  );
+}
