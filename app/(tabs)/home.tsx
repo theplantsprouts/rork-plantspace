@@ -4,10 +4,11 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  ScrollView,
+  FlatList,
   Alert,
   Share,
   Platform,
+  ListRenderItem,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -19,7 +20,7 @@ import { AnimatedIconButton, AnimatedButton } from '@/components/AnimatedPressab
 
 
 export default function HomeScreen() {
-  const { posts, toggleLike, togglePostBookmark, toggleShare, addComment, isLoading, error, refresh } = usePosts();
+  const { posts, toggleLike, togglePostBookmark, toggleShare, addComment, isLoading, error, refresh, loadMore, hasMore } = usePosts();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -31,90 +32,127 @@ export default function HomeScreen() {
     return posts;
   }, [posts]);
 
+  const renderPost: ListRenderItem<Post> = useCallback(({ item: post }) => (
+    <PostCard 
+      post={post}
+      colors={colors}
+      onLike={() => handleLike(post.id)}
+      onBookmark={() => togglePostBookmark(post.id)}
+      onComment={() => {
+        Alert.alert(
+          '🌱 Add Roots',
+          'Share your thoughts and grow the conversation.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Add Comment', 
+              onPress: () => {
+                addComment(post.id, 'Great post!');
+              }
+            },
+          ]
+        );
+      }}
+      onShare={async () => {
+        try {
+          const shareMessage = `Check out this post from ${post.user.name}:\n\n${post.content}`;
+          const shareUrl = `plantspace://post/${post.id}`;
+          
+          if (Platform.OS === 'web') {
+            if (navigator.share) {
+              await navigator.share({
+                title: `Post by ${post.user.name}`,
+                text: shareMessage,
+                url: shareUrl,
+              });
+            } else {
+              await navigator.clipboard.writeText(`${shareMessage}\n${shareUrl}`);
+              Alert.alert('✨ Copied!', 'Post link copied to clipboard.');
+            }
+          } else {
+            await Share.share({
+              message: `${shareMessage}\n${shareUrl}`,
+              title: `Post by ${post.user.name}`,
+            });
+          }
+          
+          await toggleShare(post.id);
+        } catch (error: any) {
+          if (error.message !== 'User did not share') {
+            console.error('Share error:', error);
+          }
+        }
+      }}
+    />
+  ), [colors, handleLike, togglePostBookmark, addComment, toggleShare]);
+
+  const renderEmpty = useCallback(() => {
+    if (isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Watering your garden...</Text>
+        </View>
+      );
+    }
+    
+    if (error) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>🌱 Connection Issue</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{error}</Text>
+          <AnimatedButton style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={() => {
+            refresh();
+          }}>
+            <Text style={[styles.retryButtonText, { color: colors.white }]}>Try Again</Text>
+          </AnimatedButton>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>🌿 Welcome to Your Garden!</Text>
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Your community garden is ready to grow. Start by planting your first seed!</Text>
+      </View>
+    );
+  }, [isLoading, error, colors, refresh]);
+
+  const keyExtractor = useCallback((item: Post) => item.id, []);
+
+  const handleEndReached = useCallback(() => {
+    if (hasMore && !isLoading) {
+      loadMore();
+    }
+  }, [hasMore, isLoading, loadMore]);
+
+  const renderFooter = useCallback(() => {
+    if (!hasMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={colors.primary} />
+      </View>
+    );
+  }, [hasMore, colors.primary]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundStart }]}>
-      <ScrollView
-        style={styles.scrollView}
+      <FlatList
+        data={memoizedPosts}
+        renderItem={renderPost}
+        keyExtractor={keyExtractor}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
-      >
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Watering your garden...</Text>
-          </View>
-        ) : error ? (
-          <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>🌱 Connection Issue</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{error}</Text>
-            <AnimatedButton style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={() => {
-              refresh();
-            }}>
-              <Text style={[styles.retryButtonText, { color: colors.white }]}>Try Again</Text>
-            </AnimatedButton>
-          </View>
-        ) : memoizedPosts.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>🌿 Welcome to Your Garden!</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Your community garden is ready to grow. Start by planting your first seed!</Text>
-          </View>
-        ) : (
-          memoizedPosts.map((post) => (
-            <PostCard 
-              key={post.id} 
-              post={post}
-              colors={colors}
-              onLike={() => handleLike(post.id)}
-              onBookmark={() => togglePostBookmark(post.id)}
-              onComment={() => {
-                Alert.alert(
-                  '🌱 Add Roots',
-                  'Share your thoughts and grow the conversation.',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { 
-                      text: 'Add Comment', 
-                      onPress: () => {
-                        addComment(post.id, 'Great post!');
-                      }
-                    },
-                  ]
-                );
-              }}
-              onShare={async () => {
-                try {
-                  const shareMessage = `Check out this post from ${post.user.name}:\n\n${post.content}`;
-                  const shareUrl = `plantspace://post/${post.id}`;
-                  
-                  if (Platform.OS === 'web') {
-                    if (navigator.share) {
-                      await navigator.share({
-                        title: `Post by ${post.user.name}`,
-                        text: shareMessage,
-                        url: shareUrl,
-                      });
-                    } else {
-                      await navigator.clipboard.writeText(`${shareMessage}\n${shareUrl}`);
-                      Alert.alert('✨ Copied!', 'Post link copied to clipboard.');
-                    }
-                  } else {
-                    await Share.share({
-                      message: `${shareMessage}\n${shareUrl}`,
-                      title: `Post by ${post.user.name}`,
-                    });
-                  }
-                  
-                  await toggleShare(post.id);
-                } catch (error: any) {
-                  if (error.message !== 'User did not share') {
-                    console.error('Share error:', error);
-                  }
-                }
-              }}
-            />
-          ))
-        )}
-      </ScrollView>
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={5}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={5}
+        windowSize={10}
+      />
     </View>
   );
 }
@@ -225,9 +263,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  scrollView: {
-    flex: 1,
-  },
+
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -363,5 +399,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     textAlign: 'center',
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

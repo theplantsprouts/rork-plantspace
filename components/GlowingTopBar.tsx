@@ -28,7 +28,7 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
   }).current;
 
   useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
           toValue: 1,
@@ -41,7 +41,12 @@ export function GlowingTopBar({ activeTab }: GlowingTopBarProps) {
           useNativeDriver: false,
         }),
       ])
-    ).start();
+    );
+    animation.start();
+    
+    return () => {
+      animation.stop();
+    };
   }, [glowAnim]);
 
   useEffect(() => {

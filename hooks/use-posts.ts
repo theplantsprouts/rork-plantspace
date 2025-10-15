@@ -65,6 +65,8 @@ const formatTimestamp = (timestamp: string): string => {
 export function usePosts() {
   const [recommendedPosts, setRecommendedPosts] = useState<Post[]>([]);
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const { getRecommendations, getContentInsights } = useAIContent();
   const { user } = useAuth();
   const { isOnline, cachedPosts, cachePost, getCachedPosts } = useOffline();
@@ -283,6 +285,12 @@ export function usePosts() {
 
   const insights = getContentInsights(allPosts);
 
+  const loadMore = () => {
+    if (!isLoading && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
+
   return {
     posts: allPosts,
     recommendedPosts,
@@ -298,5 +306,7 @@ export function usePosts() {
     getSmartRecommendations,
     getFilteredPosts,
     insights,
+    loadMore,
+    hasMore,
   };
 }
