@@ -1,5 +1,5 @@
-import { Stack, usePathname, useSegments } from "expo-router";
-import React, { useMemo, useCallback, useEffect, useState } from "react";
+import { Stack, usePathname } from "expo-router";
+import React, { useMemo, useCallback } from "react";
 import { View, StyleSheet } from "react-native";
 import createContextHook from '@nkzw/create-context-hook';
 import { GlowingTopBar } from "@/components/GlowingTopBar";
@@ -25,29 +25,18 @@ export default function TabLayout() {
 
 function TabLayoutContent() {
   const pathname = usePathname();
-  const segments = useSegments();
-  const [showTopBar, setShowTopBar] = useState(true);
   
   const activeTab = useMemo(() => {
     if (pathname.includes('/home')) return 'home';
     if (pathname.includes('/discover')) return 'discover';
     if (pathname.includes('/leaves')) return 'leaves';
     if (pathname.includes('/profile')) return 'profile';
-    if (pathname.includes('/create')) return 'create';
     return 'home';
   }, [pathname]);
-
-  const isCreatePage = useMemo(() => {
-    return segments[segments.length - 1] === 'create';
-  }, [segments]);
   
-  useEffect(() => {
-    setShowTopBar(!isCreatePage);
-  }, [isCreatePage]);
-
   return (
     <View style={styles.container}>
-      {showTopBar && <GlowingTopBar activeTab={activeTab} />}
+      <GlowingTopBar activeTab={activeTab} />
       
       <Stack
         screenOptions={{
@@ -80,15 +69,9 @@ function TabLayoutContent() {
             title: 'My Grove',
           }}
         />
-        <Stack.Screen
-          name="create"
-          options={{
-            title: 'Plant Seed',
-          }}
-        />
       </Stack>
       
-      {showTopBar && <FloatingCapsule />}
+      <FloatingCapsule />
     </View>
   );
 }

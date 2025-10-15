@@ -266,9 +266,19 @@ export default function ChatScreen() {
           {selectedImage && (
             <View style={styles.imagePreviewContainer}>
               <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+              {isUploadingImage && (
+                <View style={styles.uploadingOverlay}>
+                  <ActivityIndicator size="large" color="#fff" />
+                  <Text style={styles.uploadingText}>Uploading...</Text>
+                </View>
+              )}
               <TouchableOpacity
                 style={styles.removeImageButton}
-                onPress={() => setSelectedImage(null)}
+                onPress={() => {
+                  setSelectedImage(null);
+                  setSelectedImageBase64(null);
+                }}
+                disabled={isUploadingImage}
               >
                 <X size={16} color="#fff" />
               </TouchableOpacity>
@@ -420,6 +430,19 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 12,
+  },
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadingText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 8,
   },
   removeImageButton: {
     position: 'absolute',

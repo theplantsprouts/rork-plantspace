@@ -16,7 +16,7 @@ export const toggleLikeProcedure = likeProcedure
       throw new Error('User not authenticated');
     }
     
-    const userId = ctx.user.id;
+    const userId = ctx.user!.id;
 
     try {
       const likeRef = doc(db, 'likes', `${userId}_${postId}`);

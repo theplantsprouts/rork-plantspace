@@ -52,7 +52,7 @@ export function FloatingCapsule({ hideNotifications = false }: FloatingCapsulePr
   };
 
   const handleCreatePress = () => {
-    router.push('/(tabs)/create');
+    router.push('/create-post');
   };
 
   const menuRotation = rotateAnim.interpolate({

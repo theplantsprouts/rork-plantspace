@@ -18,7 +18,7 @@ export const addCommentProcedure = commentProcedure
       throw new Error('User not authenticated');
     }
     
-    const userId = ctx.user.id;
+    const userId = ctx.user!.id;
 
     try {
       const sanitizedContent = sanitizeInput(content);
