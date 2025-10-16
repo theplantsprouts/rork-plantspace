@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ export default function DiscoverScreen() {
   const [debouncedQuery, setDebouncedQuery] = useState(params.search || '');
   const [showRecommendations, setShowRecommendations] = useState(!params.search);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const recommendationsLoadedRef = useRef(false);
   const searchType = 'all' as const;
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -61,7 +62,8 @@ export default function DiscoverScreen() {
   
   useEffect(() => {
     const loadRecommendations = async () => {
-      if (!searchQuery && recommendedPosts.length === 0) {
+      if (!searchQuery && recommendedPosts.length === 0 && !recommendationsLoadedRef.current) {
+        recommendationsLoadedRef.current = true;
         setLoadingRecommendations(true);
         try {
           await getSmartRecommendations(
