@@ -35,57 +35,46 @@ export const searchProcedure = protectedProcedure
 
       if (input.type === 'all' || input.type === 'users') {
         const profilesRef = collection(db, 'profiles');
-        
-        const usernameQuery = query(
-          profilesRef,
-          where('username', '>=', searchLower),
-          where('username', '<=', searchLower + '\uf8ff'),
-          firestoreLimit(input.limit)
-        );
-        
-        const nameQuery = query(
-          profilesRef,
-          where('name', '>=', searchLower),
-          where('name', '<=', searchLower + '\uf8ff'),
-          firestoreLimit(input.limit)
-        );
-        
-        const [usernameSnapshot, nameSnapshot] = await Promise.all([
-          getDocs(usernameQuery),
-          getDocs(nameQuery)
-        ]);
+        const profilesSnapshot = await getDocs(profilesRef);
         
         const usersMap = new Map();
         
-        usernameSnapshot.forEach((doc) => {
-          const data = doc.data();
-          usersMap.set(doc.id, {
-            id: doc.id,
-            username: data.username || '',
-            name: data.name || '',
-            avatar: data.avatar || '',
-            bio: data.bio || '',
-            followers: data.followers || 0,
-            following: data.following || 0,
-          });
-        });
-        
-        nameSnapshot.forEach((doc) => {
-          if (!usersMap.has(doc.id)) {
+        profilesSnapshot.forEach((doc) => {
+          if (doc.id !== ctx.user.id) {
             const data = doc.data();
-            usersMap.set(doc.id, {
-              id: doc.id,
-              username: data.username || '',
-              name: data.name || '',
-              avatar: data.avatar || '',
-              bio: data.bio || '',
-              followers: data.followers || 0,
-              following: data.following || 0,
-            });
+            const username = (data.username || '').toLowerCase();
+            const name = (data.name || '').toLowerCase();
+            const bio = (data.bio || '').toLowerCase();
+            
+            if (username.includes(searchLower) || name.includes(searchLower) || bio.includes(searchLower)) {
+              usersMap.set(doc.id, {
+                id: doc.id,
+                username: data.username || '',
+                name: data.name || '',
+                avatar: data.avatar || '',
+                bio: data.bio || '',
+                followers: data.followers || 0,
+                following: data.following || 0,
+              });
+            }
           }
         });
         
-        results.users = Array.from(usersMap.values()).slice(0, input.limit);
+        results.users = Array.from(usersMap.values())
+          .sort((a, b) => {
+            const aUsernameMatch = a.username.toLowerCase().startsWith(searchLower);
+            const bUsernameMatch = b.username.toLowerCase().startsWith(searchLower);
+            const aNameMatch = a.name.toLowerCase().startsWith(searchLower);
+            const bNameMatch = b.name.toLowerCase().startsWith(searchLower);
+            
+            if (aUsernameMatch && !bUsernameMatch) return -1;
+            if (!aUsernameMatch && bUsernameMatch) return 1;
+            if (aNameMatch && !bNameMatch) return -1;
+            if (!aNameMatch && bNameMatch) return 1;
+            
+            return a.name.localeCompare(b.name);
+          })
+          .slice(0, input.limit);
         console.log(`Found ${results.users.length} users`);
       }
 
