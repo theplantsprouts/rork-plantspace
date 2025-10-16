@@ -219,10 +219,12 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
             style={styles.menuButton}
             onPress={handleMenuPress}
             testID={`menu-button-${post.id}`}
+            bounceEffect="medium"
           >
             <MoreVertical 
-              size={24} 
-              color={PlantTheme.colors.primary}
+              size={20} 
+              color={PlantTheme.colors.onSurface}
+              strokeWidth={2.5}
             />
           </AnimatedIconButton>
         </View>
@@ -370,13 +372,18 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 0,
   },
   bookmarkButton: {
     padding: 8,
+    borderRadius: PlantTheme.borderRadius.full,
   },
   menuButton: {
     padding: 8,
+    marginLeft: 4,
+    backgroundColor: PlantTheme.colors.surfaceVariant,
+    borderRadius: PlantTheme.borderRadius.full,
+    ...PlantTheme.shadows.sm,
   },
   username: {
     fontSize: 16,
