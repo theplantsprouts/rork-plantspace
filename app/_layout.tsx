@@ -86,6 +86,7 @@ function RootLayoutNav() {
       <Stack.Screen name="settings" options={{ title: "Settings" }} />
       <Stack.Screen name="notifications" options={{ title: "Notifications", headerShown: false }} />
       <Stack.Screen name="saved-content" options={{ title: "Saved Content" }} />
+      <Stack.Screen name="user-profile" options={{ headerShown: false }} />
       
       {/* Password Reset Flow */}
       <Stack.Screen name="forgot-password" options={{ title: "Forgot Password" }} />

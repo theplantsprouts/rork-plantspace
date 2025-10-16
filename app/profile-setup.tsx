@@ -8,12 +8,15 @@ import {
   ScrollView,
   Image,
   Animated,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { User, Sprout, Camera, Leaf, UserCheck, AtSign, FileText } from "lucide-react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
+import * as ImagePicker from 'expo-image-picker';
+import { uploadImage } from '@/lib/firebase';
 import { validateName, validateUsername, validateBio, sanitizeInput } from "@/lib/validation";
 
 import { PlantTheme, PlantTerminology } from "@/constants/theme";
@@ -121,6 +124,106 @@ export default function ProfileSetupScreen() {
     setAvatar(avatarUrl);
   };
 
+  const uploadProfilePicture = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'We need camera roll permissions to upload your profile picture.');
+        return;
+      }
+    }
+
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Upload Profile Picture',
+        'Choose an option',
+        [
+          { text: 'Photo Library', onPress: openImagePicker },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Upload Profile Picture',
+        'Choose an option',
+        [
+          { text: 'Camera', onPress: openCamera },
+          { text: 'Photo Library', onPress: openImagePicker },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    }
+  };
+
+  const openCamera = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not supported', 'Camera is not supported on web. Please use photo library.');
+      return;
+    }
+
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'We need camera permissions to take a photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setLoading(true);
+      try {
+        console.log('Uploading profile picture from camera:', result.assets[0].uri);
+        const imageUrl = await uploadImage(result.assets[0].uri, 'avatars');
+        
+        if (imageUrl) {
+          setAvatar(imageUrl);
+          console.log('Profile picture uploaded successfully:', imageUrl);
+        } else {
+          throw new Error('Failed to upload image');
+        }
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        Alert.alert('Error', 'Failed to upload profile picture. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const openImagePicker = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setLoading(true);
+      try {
+        console.log('Uploading profile picture from library:', result.assets[0].uri);
+        const imageUrl = await uploadImage(result.assets[0].uri, 'avatars');
+        
+        if (imageUrl) {
+          setAvatar(imageUrl);
+          console.log('Profile picture uploaded successfully:', imageUrl);
+        } else {
+          throw new Error('Failed to upload image');
+        }
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        Alert.alert('Error', 'Failed to upload profile picture. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -164,16 +267,28 @@ export default function ProfileSetupScreen() {
                   )}
                   <AnimatedIconButton
                     style={styles.avatarButton}
-                    onPress={generateAvatar}
-                    testID="generate-avatar-button"
+                    onPress={uploadProfilePicture}
+                    testID="upload-avatar-button"
                     bounceEffect="medium"
                   >
                     <Camera color={PlantTheme.colors.primary} size={20} />
                   </AnimatedIconButton>
                 </View>
-                <Text style={styles.avatarHint}>
-                  Tap the camera to generate an avatar
-                </Text>
+                <View style={styles.avatarActions}>
+                  <Text 
+                    style={styles.avatarActionLink} 
+                    onPress={uploadProfilePicture}
+                  >
+                    Upload Photo
+                  </Text>
+                  <Text style={styles.avatarActionSeparator}>·</Text>
+                  <Text 
+                    style={styles.avatarActionLink} 
+                    onPress={generateAvatar}
+                  >
+                    Generate Avatar
+                  </Text>
+                </View>
               </View>
 
               <MaterialInput
@@ -327,6 +442,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: PlantTheme.colors.textSecondary,
     textAlign: "center",
+  },
+  avatarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    gap: 8,
+  },
+  avatarActionLink: {
+    fontSize: 14,
+    color: PlantTheme.colors.primary,
+    fontWeight: '600' as const,
+  },
+  avatarActionSeparator: {
+    fontSize: 14,
+    color: PlantTheme.colors.textSecondary,
   },
   inputContainer: {
     marginBottom: 20,

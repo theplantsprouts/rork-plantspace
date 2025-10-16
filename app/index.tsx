@@ -1,13 +1,13 @@
 import React, { useMemo, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth, isProfileComplete } from '@/hooks/use-auth';
 import { PlantTheme, PlantTypography } from '@/constants/theme';
-import { Sprout } from 'lucide-react-native';
+import { Sprout, AlertCircle } from 'lucide-react-native';
 
 export default function Index() {
-  const { user, isLoading } = useAuth();
+  const { user, firebaseUser, isLoading } = useAuth();
 
   const profileComplete = useMemo(() => {
     return user ? isProfileComplete(user) : false;
@@ -25,6 +25,11 @@ export default function Index() {
 
   useEffect(() => {
     if (!isLoading) {
+      if (firebaseUser && !firebaseUser.emailVerified) {
+        console.log('Index.tsx - Email not verified, staying on landing');
+        return;
+      }
+      
       if (user && profileComplete) {
         console.log('Index.tsx - Navigating to home');
         router.replace('/(tabs)/home');
@@ -33,10 +38,35 @@ export default function Index() {
         router.replace('/profile-setup');
       }
     }
-  }, [user, isLoading, profileComplete]);
+  }, [user, firebaseUser, isLoading, profileComplete]);
 
   if (isLoading) {
-    return null;
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={PlantTheme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (firebaseUser && !firebaseUser.emailVerified) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+          <View style={styles.verificationContainer}>
+            <View style={styles.iconContainer}>
+              <AlertCircle color={PlantTheme.colors.primary} size={64} />
+            </View>
+            <Text style={styles.verificationTitle}>Verify Your Email</Text>
+            <Text style={styles.verificationMessage}>
+              We&apos;ve sent a verification link to {firebaseUser.email}. Please check your inbox and click the link to verify your account.
+            </Text>
+            <Text style={styles.verificationNote}>
+              After verifying, please close and reopen the app to continue.
+            </Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
   }
 
   if (user) {
@@ -178,5 +208,42 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: PlantTheme.colors.primary,
     ...PlantTypography.title,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  verificationContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  iconContainer: {
+    marginBottom: 24,
+    padding: 20,
+    backgroundColor: PlantTheme.colors.glassBackground,
+    borderRadius: PlantTheme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: PlantTheme.colors.glassBorder,
+  },
+  verificationTitle: {
+    ...PlantTypography.headline,
+    color: PlantTheme.colors.onSurface,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  verificationMessage: {
+    ...PlantTypography.body,
+    color: PlantTheme.colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  verificationNote: {
+    ...PlantTypography.label,
+    color: PlantTheme.colors.onSurfaceVariant,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

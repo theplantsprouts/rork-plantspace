@@ -13,7 +13,7 @@ import { Camera } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { useAppContext } from '@/hooks/use-app-context';
+import { useAuth } from '@/hooks/use-auth';
 import { usePosts } from '@/hooks/use-posts';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -21,15 +21,14 @@ import { useTheme } from '@/hooks/use-theme';
 
 
 export default function ProfileScreen() {
-  const { currentUser } = useAppContext();
+  const { user } = useAuth();
   const { posts } = usePosts();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'seeds' | 'gardeners' | 'tending'>('seeds');
 
-
   
-  const userPosts = posts.filter(post => post.user.id === currentUser?.id);
+  const userPosts = posts.filter(post => post.user.id === user?.id);
 
   const handleEditBackgroundImage = async () => {
     if (Platform.OS !== 'web') {
@@ -88,9 +87,9 @@ export default function ProfileScreen() {
         const { uploadImage } = await import('@/lib/firebase');
         const imageUrl = await uploadImage(result.assets[0].uri, 'backgrounds');
         
-        if (imageUrl && currentUser) {
+        if (imageUrl && user) {
           const { updateProfile } = await import('@/lib/firebase');
-          await updateProfile(currentUser.id, { backgroundImage: imageUrl } as any);
+          await updateProfile(user.id, { backgroundImage: imageUrl } as any);
           
           Alert.alert('Success', 'Background image updated successfully!');
         } else {
@@ -118,9 +117,9 @@ export default function ProfileScreen() {
         const { uploadImage } = await import('@/lib/firebase');
         const imageUrl = await uploadImage(result.assets[0].uri, 'backgrounds');
         
-        if (imageUrl && currentUser) {
+        if (imageUrl && user) {
           const { updateProfile } = await import('@/lib/firebase');
-          await updateProfile(currentUser.id, { backgroundImage: imageUrl } as any);
+          await updateProfile(user.id, { backgroundImage: imageUrl } as any);
           
           Alert.alert('Success', 'Background image updated successfully!');
         } else {
@@ -143,7 +142,6 @@ export default function ProfileScreen() {
     }
 
     if (Platform.OS === 'web') {
-      // On web, only show photo library option
       Alert.alert(
         'Change Profile Picture',
         'Choose an option',
@@ -171,7 +169,7 @@ export default function ProfileScreen() {
       return;
     }
 
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status} = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'We need camera permissions to take a photo.');
       return;
@@ -188,14 +186,12 @@ export default function ProfileScreen() {
       try {
         console.log('New profile picture from camera:', result.assets[0].uri);
         
-        // Upload the image to Firebase Storage
         const { uploadImage } = await import('@/lib/firebase');
         const imageUrl = await uploadImage(result.assets[0].uri, 'avatars');
         
-        if (imageUrl && currentUser) {
-          // Update the user's profile with the new avatar URL
+        if (imageUrl && user) {
           const { updateProfile } = await import('@/lib/firebase');
-          await updateProfile(currentUser.id, { avatar: imageUrl });
+          await updateProfile(user.id, { avatar: imageUrl });
           
           Alert.alert('Success', 'Profile picture updated successfully!');
         } else {
@@ -220,14 +216,12 @@ export default function ProfileScreen() {
       try {
         console.log('New profile picture from library:', result.assets[0].uri);
         
-        // Upload the image to Firebase Storage
         const { uploadImage } = await import('@/lib/firebase');
         const imageUrl = await uploadImage(result.assets[0].uri, 'avatars');
         
-        if (imageUrl && currentUser) {
-          // Update the user's profile with the new avatar URL
+        if (imageUrl && user) {
           const { updateProfile } = await import('@/lib/firebase');
-          await updateProfile(currentUser.id, { avatar: imageUrl });
+          await updateProfile(user.id, { avatar: imageUrl });
           
           Alert.alert('Success', 'Profile picture updated successfully!');
         } else {
@@ -263,7 +257,7 @@ export default function ProfileScreen() {
             activeOpacity={0.9}
           >
             <Image 
-              source={{ uri: (currentUser as any)?.backgroundImage || 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&h=400&fit=crop' }} 
+              source={{ uri: (user as any)?.backgroundImage || 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&h=400&fit=crop' }} 
               style={styles.coverImage}
               cachePolicy="memory-disk"
               contentFit="cover"
@@ -283,7 +277,7 @@ export default function ProfileScreen() {
               activeOpacity={0.8}
             >
               <Image 
-                source={{ uri: currentUser?.avatar || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=200&h=200&fit=crop&crop=face' }} 
+                source={{ uri: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/png?seed=default&backgroundColor=c0aede' }} 
                 style={styles.profilePicture}
                 cachePolicy="memory-disk"
                 contentFit="cover"
@@ -293,15 +287,12 @@ export default function ProfileScreen() {
 
           {/* Profile Info */}
           <View style={styles.profileInfo}>
-            <Text style={[styles.profileName, { color: colors.onSurface }]}>{currentUser?.name || 'Flora Green'}</Text>
-            <Text style={[styles.profileHandle, { color: colors.onSurfaceVariant }]}>@{currentUser?.username || 'floragreen'}</Text>
+            <Text style={[styles.profileName, { color: colors.onSurface }]}>{user?.name || 'User'}</Text>
+            <Text style={[styles.profileHandle, { color: colors.onSurfaceVariant }]}>@{user?.username || 'username'}</Text>
             <Text style={[styles.profileBio, { color: colors.onSurface }]}>
-              {currentUser?.bio || 'Plant enthusiast | Nature lover'}
+              {user?.bio || 'Welcome to my profile!'}
             </Text>
           </View>
-
-          {/* Action Buttons - Only show for other users' profiles */}
-          {/* For now, this is the current user's profile, so we don't show these buttons */}
 
           {/* Stats */}
           <View style={styles.statsContainer}>
@@ -310,11 +301,11 @@ export default function ProfileScreen() {
               <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>Seeds</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: colors.onSurface }]}>{currentUser?.followers || 0}</Text>
+              <Text style={[styles.statNumber, { color: colors.onSurface }]}>{user?.followers || 0}</Text>
               <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>Garden Friends</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: colors.onSurface }]}>{currentUser?.following || 0}</Text>
+              <Text style={[styles.statNumber, { color: colors.onSurface }]}>{user?.following || 0}</Text>
               <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>Tending</Text>
             </View>
           </View>

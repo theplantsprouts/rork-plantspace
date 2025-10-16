@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useState } from "react";
-import { View, Text, StyleSheet, Alert, Modal, Pressable } from "react-native";
+import { View, Text, StyleSheet, Alert, Modal, Pressable, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
+import { router } from "expo-router";
 import { Sprout, Leaf, Heading, Bookmark, MoreVertical, Trash2, Flag } from "lucide-react-native";
 import { PlantTheme } from "@/constants/theme";
 import { GlassCard } from "@/components/GlassContainer";
@@ -25,6 +26,14 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
   const { user } = useAuth();
   
   const isOwnPost = user?.id === post.user.id;
+  
+  const handleUserPress = useCallback(() => {
+    if (post.user.id && post.user.id !== user?.id) {
+      router.push(`/user-profile?userId=${post.user.id}`);
+    } else if (post.user.id === user?.id) {
+      router.push('/(tabs)/profile');
+    }
+  }, [post.user.id, user?.id]);
   const handleLike = useCallback(async () => {
     console.log('Sunshine pressed for post:', post.id);
     onLike?.();
@@ -137,7 +146,11 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
   return (
     <GlassCard style={styles.container} testID={testID}>
       <View style={styles.header}>
-        <View style={styles.avatar}>
+        <TouchableOpacity 
+          style={styles.avatar}
+          onPress={handleUserPress}
+          activeOpacity={0.7}
+        >
           {post.user.avatar ? (
             <Image
               source={{ uri: post.user.avatar }}
@@ -153,11 +166,15 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
               {post.user.name.charAt(0).toUpperCase()}
             </Text>
           )}
-        </View>
-        <View style={styles.userInfo}>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.userInfo}
+          onPress={handleUserPress}
+          activeOpacity={0.7}
+        >
           <Text style={styles.username}>{post.user.name}</Text>
           <Text style={styles.timestamp}>{post.timestamp}</Text>
-        </View>
+        </TouchableOpacity>
         <View style={styles.headerActions}>
           <AnimatedIconButton
             style={styles.bookmarkButton}
