@@ -1,7 +1,7 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Production-ready security rules
     
     // Helper functions
     function isAuthenticated() {
@@ -12,99 +12,244 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    function isValidProfile() {
-      return request.resource.data.keys().hasAll(['email']) &&
-             request.resource.data.email is string;
+    function isValidString(text, minLen, maxLen) {
+      return text is string && text.size() >= minLen && text.size() <= maxLen;
     }
     
-    function isValidPost() {
-      return request.resource.data.keys().hasAll(['content', 'author_id']) &&
-             request.resource.data.content is string &&
-             request.resource.data.author_id == request.auth.uid;
+    function isValidTimestamp(value) {
+      return value is timestamp || value is string;
     }
     
-    // User profiles - Temporary very permissive rules for debugging
+    // Profiles collection
     match /profiles/{userId} {
-      // Anyone can read profiles (for social features)
-      allow read: if true;
+      // Anyone can read profiles
+      allow read: if isAuthenticated();
       
-      // Temporary: Allow any authenticated user to create profiles
-      // This is to debug the permission denied issue
-      allow create: if request.auth != null;
+      // Only user can create their own profile
+      allow create: if isAuthenticated() 
+                    && request.auth.uid == userId
+                    && request.resource.data.email is string
+                    && request.resource.data.followers is int
+                    && request.resource.data.following is int;
       
-      // Users can only update their own profile
-      allow update: if request.auth != null && request.auth.uid == userId;
+      // Only user can update their own profile
+      allow update: if isOwner(userId)
+                    && (!('email' in request.resource.data) || request.resource.data.email == resource.data.email)
+                    && (!('username' in request.resource.data) || isValidString(request.resource.data.username, 3, 30))
+                    && (!('name' in request.resource.data) || isValidString(request.resource.data.name, 1, 100))
+                    && (!('bio' in request.resource.data) || isValidString(request.resource.data.bio, 0, 500));
       
-      // Users can delete their own profile
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      // Users cannot delete their own profile (admin only)
+      allow delete: if false;
     }
     
-    // Posts
+    // Posts collection
     match /posts/{postId} {
       // Anyone authenticated can read posts
       allow read: if isAuthenticated();
       
-      // Users can create posts with proper validation
-      allow create: if isAuthenticated() && isValidPost();
+      // Only authenticated users can create posts
+      allow create: if isAuthenticated()
+                    && request.resource.data.author_id == request.auth.uid
+                    && isValidString(request.resource.data.content, 1, 2000)
+                    && request.resource.data.likes == 0
+                    && request.resource.data.comments == 0
+                    && request.resource.data.shares == 0
+                    && isValidTimestamp(request.resource.data.created_at);
       
-      // Users can only update/delete their own posts
-      allow update, delete: if isAuthenticated() && 
-                            resource.data.author_id == request.auth.uid;
+      // Post author can update (for edit feature if needed)
+      allow update: if isAuthenticated()
+                    && resource.data.author_id == request.auth.uid
+                    && request.resource.data.author_id == resource.data.author_id
+                    && request.resource.data.created_at == resource.data.created_at;
+      
+      // Post author can delete their own posts
+      allow delete: if isAuthenticated() && resource.data.author_id == request.auth.uid;
     }
     
-    // Push notification tokens
-    match /push_tokens/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-    
-    // Comments on posts
+    // Comments collection
     match /comments/{commentId} {
+      // Anyone authenticated can read comments
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated();
+      
+      // Only authenticated users can create comments
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid
+                    && isValidString(request.resource.data.content, 1, 1000)
+                    && isValidString(request.resource.data.postId, 1, 100)
+                    && request.resource.data.likes == 0;
+      
+      // Comment author can update their comment
+      allow update: if isAuthenticated()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.postId == resource.data.postId;
+      
+      // Comment author can delete their own comments
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
     
-    // Likes/reactions
+    // Likes collection (composite key: userId_postId)
     match /likes/{likeId} {
+      // Anyone authenticated can read likes
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow delete: if isAuthenticated();
-      allow update: if isAuthenticated();
+      
+      // Users can only like as themselves
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid
+                    && isValidString(request.resource.data.postId, 1, 100);
+      
+      // Users can only unlike their own likes
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Likes cannot be updated
+      allow update: if false;
     }
     
-    // User notifications
-    match /notifications/{notificationId} {
-      allow read, update: if isAuthenticated() && 
-                          resource.data.user_id == request.auth.uid;
-      allow create: if isAuthenticated();
-    }
-    
-    // Analytics events (write-only)
-    match /analytics/{eventId} {
-      allow create: if isAuthenticated();
-    }
-    
-    // Bookmarks
+    // Bookmarks collection (composite key: userId_postId)
     match /bookmarks/{bookmarkId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow delete: if isAuthenticated();
-      allow update: if isAuthenticated();
+      // Users can only read their own bookmarks
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can only bookmark as themselves
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid
+                    && isValidString(request.resource.data.postId, 1, 100);
+      
+      // Users can only remove their own bookmarks
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Bookmarks cannot be updated
+      allow update: if false;
     }
     
-    // Shares
+    // Shares collection (composite key: userId_postId)
     match /shares/{shareId} {
+      // Anyone authenticated can read shares
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow delete: if isAuthenticated();
-      allow update: if isAuthenticated();
+      
+      // Users can only share as themselves
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid
+                    && isValidString(request.resource.data.postId, 1, 100);
+      
+      // Users can only unshare their own shares
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Shares cannot be updated
+      allow update: if false;
     }
     
-    // Reports
+    // Follows collection (composite key: followerId_followingId)
+    match /follows/{followId} {
+      // Anyone authenticated can read follows
+      allow read: if isAuthenticated();
+      
+      // Users can only follow as themselves
+      allow create: if isAuthenticated()
+                    && request.resource.data.followerId == request.auth.uid
+                    && request.resource.data.followerId != request.resource.data.followingId
+                    && isValidString(request.resource.data.followingId, 1, 100);
+      
+      // Users can only unfollow their own follows
+      allow delete: if isAuthenticated() && resource.data.followerId == request.auth.uid;
+      
+      // Follows cannot be updated
+      allow update: if false;
+    }
+    
+    // Messages collection
+    match /messages/{messageId} {
+      // Users can read messages they sent or received
+      allow read: if isAuthenticated() 
+                  && (resource.data.senderId == request.auth.uid 
+                      || resource.data.receiverId == request.auth.uid);
+      
+      // Users can only send messages as themselves
+      allow create: if isAuthenticated()
+                    && request.resource.data.senderId == request.auth.uid
+                    && isValidString(request.resource.data.receiverId, 1, 100)
+                    && request.resource.data.senderId != request.resource.data.receiverId
+                    && (request.resource.data.text is string || request.resource.data.imageUrl is string)
+                    && request.resource.data.read == false;
+      
+      // Only receiver can mark message as read
+      allow update: if isAuthenticated()
+                    && resource.data.receiverId == request.auth.uid
+                    && request.resource.data.senderId == resource.data.senderId
+                    && request.resource.data.receiverId == resource.data.receiverId
+                    && request.resource.data.read is bool;
+      
+      // Sender can delete their sent messages
+      allow delete: if isAuthenticated() && resource.data.senderId == request.auth.uid;
+    }
+    
+    // Reports collection
     match /reports/{reportId} {
-      allow read: if false;
-      allow create: if isAuthenticated();
+      // Only the reporter can read their own reports
+      allow read: if isAuthenticated() && resource.data.reported_by == request.auth.uid;
+      
+      // Users can report posts
+      allow create: if isAuthenticated()
+                    && request.resource.data.reported_by == request.auth.uid
+                    && isValidString(request.resource.data.post_id, 1, 100)
+                    && isValidString(request.resource.data.reason, 1, 500)
+                    && request.resource.data.status == 'pending';
+      
+      // Reports cannot be updated or deleted by users
       allow update, delete: if false;
+    }
+    
+    // Push tokens collection
+    match /push_tokens/{userId} {
+      // Users can only read their own push token
+      allow read: if isAuthenticated() && userId == request.auth.uid;
+      
+      // Users can only set their own push token
+      allow write: if isAuthenticated() && userId == request.auth.uid;
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // System can create notifications
+      allow create: if isAuthenticated();
+      
+      // Users can mark their notifications as read
+      allow update: if isAuthenticated() 
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId;
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // User search index (for username/profile searches)
+    match /user_search/{userId} {
+      // Anyone authenticated can search users
+      allow read: if isAuthenticated();
+      
+      // Only user can update their search index
+      allow write: if isAuthenticated() && userId == request.auth.uid;
+    }
+    
+    // Hashtags collection (for trending and search)
+    match /hashtags/{hashtagId} {
+      // Anyone authenticated can read hashtags
+      allow read: if isAuthenticated();
+      
+      // System can create/update hashtags
+      allow create, update: if isAuthenticated();
+      
+      // Hashtags cannot be deleted by users
+      allow delete: if false;
+    }
+    
+    // Block all other collections by default
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
