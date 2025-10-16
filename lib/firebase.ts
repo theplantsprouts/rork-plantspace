@@ -951,4 +951,116 @@ export const subscribeToMessages = (
   };
 };
 
+export const followUser = async (currentUserId: string, targetUserId: string): Promise<void> => {
+  try {
+    if (currentUserId === targetUserId) {
+      throw new Error('Cannot follow yourself');
+    }
+    
+    const followRef = doc(db, 'follows', `${currentUserId}_${targetUserId}`);
+    const followSnap = await getDoc(followRef);
+    
+    if (followSnap.exists()) {
+      throw new Error('Already following this user');
+    }
+    
+    await setDoc(followRef, {
+      followerId: currentUserId,
+      followingId: targetUserId,
+      created_at: new Date().toISOString(),
+    });
+    
+    const currentUserRef = doc(db, 'profiles', currentUserId);
+    const targetUserRef = doc(db, 'profiles', targetUserId);
+    
+    const currentUserSnap = await getDoc(currentUserRef);
+    const targetUserSnap = await getDoc(targetUserRef);
+    
+    await updateDoc(currentUserRef, {
+      following: (currentUserSnap.data()?.following || 0) + 1,
+    });
+    
+    await updateDoc(targetUserRef, {
+      followers: (targetUserSnap.data()?.followers || 0) + 1,
+    });
+  } catch (error: any) {
+    console.error('Error following user:', error);
+    throw new Error(error.message || 'Failed to follow user');
+  }
+};
+
+export const unfollowUser = async (currentUserId: string, targetUserId: string): Promise<void> => {
+  try {
+    if (currentUserId === targetUserId) {
+      throw new Error('Cannot unfollow yourself');
+    }
+    
+    const followRef = doc(db, 'follows', `${currentUserId}_${targetUserId}`);
+    const followSnap = await getDoc(followRef);
+    
+    if (!followSnap.exists()) {
+      throw new Error('Not following this user');
+    }
+    
+    await deleteDoc(followRef);
+    
+    const currentUserRef = doc(db, 'profiles', currentUserId);
+    const targetUserRef = doc(db, 'profiles', targetUserId);
+    
+    const currentUserSnap = await getDoc(currentUserRef);
+    const targetUserSnap = await getDoc(targetUserRef);
+    
+    await updateDoc(currentUserRef, {
+      following: Math.max((currentUserSnap.data()?.following || 0) - 1, 0),
+    });
+    
+    await updateDoc(targetUserRef, {
+      followers: Math.max((targetUserSnap.data()?.followers || 0) - 1, 0),
+    });
+  } catch (error: any) {
+    console.error('Error unfollowing user:', error);
+    throw new Error(error.message || 'Failed to unfollow user');
+  }
+};
+
+export const isFollowing = async (currentUserId: string, targetUserId: string): Promise<boolean> => {
+  try {
+    const followRef = doc(db, 'follows', `${currentUserId}_${targetUserId}`);
+    const followSnap = await getDoc(followRef);
+    return followSnap.exists();
+  } catch (error) {
+    console.error('Error checking follow status:', error);
+    return false;
+  }
+};
+
+export const subscribeToFollowStatus = (
+  currentUserId: string,
+  targetUserId: string,
+  callback: (isFollowing: boolean) => void,
+  errorCallback?: (error: any) => void
+) => {
+  const followRef = doc(db, 'follows', `${currentUserId}_${targetUserId}`);
+  
+  return onSnapshot(followRef, (snapshot) => {
+    try {
+      callback(snapshot.exists());
+    } catch (error) {
+      console.error('Error processing follow status:', error);
+      if (errorCallback) {
+        errorCallback(error);
+      } else {
+        callback(false);
+      }
+    }
+  }, (error) => {
+    console.error('Firestore follow status subscription error:', error);
+    if (errorCallback) {
+      errorCallback(error);
+    } else {
+      callback(false);
+    }
+  });
+};
+
 export default app;

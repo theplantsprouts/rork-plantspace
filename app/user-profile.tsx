@@ -14,7 +14,7 @@ import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { useAuth } from '@/hooks/use-auth';
 import { usePosts } from '@/hooks/use-posts';
 import { useTheme } from '@/hooks/use-theme';
-import { getProfile, type Profile } from '@/lib/firebase';
+import { getProfile, type Profile, subscribeToFollowStatus, followUser, unfollowUser } from '@/lib/firebase';
 import { PlantTheme } from '@/constants/theme';
 
 export default function UserProfileScreen() {
@@ -27,6 +27,7 @@ export default function UserProfileScreen() {
   const [profileUser, setProfileUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -46,10 +47,40 @@ export default function UserProfileScreen() {
     loadProfile();
   }, [userId]);
   
+  useEffect(() => {
+    if (!currentUser?.id || !userId || currentUser.id === userId) return;
+    
+    const unsubscribe = subscribeToFollowStatus(
+      currentUser.id,
+      userId,
+      (following) => {
+        setIsFollowing(following);
+      },
+      (error) => {
+        console.error('Error subscribing to follow status:', error);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, [currentUser?.id, userId]);
+  
   const userPosts = posts.filter(post => post.user.id === userId);
 
-  const handleFollowToggle = () => {
-    setIsFollowing(!isFollowing);
+  const handleFollowToggle = async () => {
+    if (!currentUser?.id || !userId) return;
+    
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await unfollowUser(currentUser.id, userId);
+      } else {
+        await followUser(currentUser.id, userId);
+      }
+    } catch (error: any) {
+      console.error('Error toggling follow:', error);
+    } finally {
+      setFollowLoading(false);
+    }
   };
 
   const handlePostPress = useCallback((post: any) => {
@@ -175,12 +206,16 @@ export default function UserProfileScreen() {
                   { 
                     backgroundColor: isFollowing ? colors.surfaceVariant : colors.primary,
                     borderColor: isFollowing ? colors.outline : colors.primary,
+                    opacity: followLoading ? 0.6 : 1,
                   }
                 ]}
                 onPress={handleFollowToggle}
                 activeOpacity={0.8}
+                disabled={followLoading}
               >
-                {isFollowing ? (
+                {followLoading ? (
+                  <Text style={[styles.followButtonText, { color: isFollowing ? colors.onSurface : colors.white }]}>Loading...</Text>
+                ) : isFollowing ? (
                   <>
                     <UserMinus size={18} color={colors.onSurface} />
                     <Text style={[styles.followButtonText, { color: colors.onSurface }]}>Tending</Text>
