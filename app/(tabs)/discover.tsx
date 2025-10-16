@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, X, Sparkles } from 'lucide-react-native';
+import { Search, X, Sparkles, User } from 'lucide-react-native';
 import { useTheme } from '@/hooks/use-theme';
 import { usePosts } from '@/hooks/use-posts';
 import { Image } from 'expo-image';
@@ -17,16 +17,38 @@ import { router } from 'expo-router';
 import { GlassCard } from '@/components/GlassContainer';
 import { AnimatedIconButton } from '@/components/AnimatedPressable';
 import { trackSearch } from '@/lib/analytics';
+import { trpc } from '@/lib/trpc';
 
 
 
 export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [showRecommendations, setShowRecommendations] = useState(true);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const searchType = 'all' as const;
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { posts, isLoading, recommendedPosts, getSmartRecommendations } = usePosts();
+  const { recommendedPosts, getSmartRecommendations } = usePosts();
+  
+  const searchQuery_trpc = trpc.posts.search.useQuery(
+    { 
+      searchQuery: debouncedQuery,
+      type: searchType,
+      limit: 20 
+    },
+    { 
+      enabled: debouncedQuery.length > 0,
+      refetchOnWindowFocus: false,
+    }
+  );
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   
   useEffect(() => {
     const loadRecommendations = async () => {
@@ -45,25 +67,23 @@ export default function DiscoverScreen() {
       }
     };
     loadRecommendations();
-  }, [searchQuery]);
+  }, [searchQuery, recommendedPosts.length, getSmartRecommendations]);
 
-  const filteredPosts = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    
-    const query = searchQuery.toLowerCase().trim();
-    const results = posts.filter(post => 
-      post.content.toLowerCase().includes(query) ||
-      post.user.name.toLowerCase().includes(query) ||
-      post.user.username?.toLowerCase().includes(query) ||
-      post.aiTags?.some(tag => tag.toLowerCase().includes(query))
-    );
-    
-    if (searchQuery.trim()) {
-      trackSearch(searchQuery, results.length);
+  const searchResults = useMemo(() => {
+    if (!debouncedQuery || !searchQuery_trpc.data) {
+      return { users: [], posts: [], hashtags: [] };
     }
     
-    return results;
-  }, [posts, searchQuery]);
+    if (searchQuery.trim()) {
+      const totalResults = 
+        (searchQuery_trpc.data.users?.length || 0) + 
+        (searchQuery_trpc.data.posts?.length || 0) + 
+        (searchQuery_trpc.data.hashtags?.length || 0);
+      trackSearch(searchQuery, totalResults);
+    }
+    
+    return searchQuery_trpc.data;
+  }, [searchQuery_trpc.data, debouncedQuery, searchQuery]);
   
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -201,12 +221,12 @@ export default function DiscoverScreen() {
               </View>
             )}
           </View>
-        ) : isLoading ? (
+        ) : (searchQuery_trpc.isLoading || searchQuery_trpc.isFetching) ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.onSurfaceVariant }]}>Searching...</Text>
           </View>
-        ) : filteredPosts.length === 0 ? (
+        ) : (searchResults.users.length === 0 && searchResults.posts.length === 0 && searchResults.hashtags.length === 0) ? (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyStateTitle, { color: colors.onSurface }]}>No Results Found</Text>
             <Text style={[styles.emptyStateText, { color: colors.onSurfaceVariant }]}>We could not find any posts matching &quot;{searchQuery}&quot;</Text>
@@ -214,10 +234,82 @@ export default function DiscoverScreen() {
           </View>
         ) : (
           <View style={styles.resultsContainer}>
-            <Text style={[styles.resultsTitle, { color: colors.onSurface }]}>
-              {filteredPosts.length} {filteredPosts.length === 1 ? 'Result' : 'Results'}
-            </Text>
-            {filteredPosts.map((post) => (
+            {searchResults.users.length > 0 && (
+              <View>
+                <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
+                  Users ({searchResults.users.length})
+                </Text>
+                {searchResults.users.map((user: any) => (
+                  <TouchableOpacity
+                    key={user.id}
+                    onPress={() => router.push(`/user-profile?userId=${user.id}`)}
+                    activeOpacity={0.7}
+                  >
+                    <GlassCard style={[styles.userCard, { backgroundColor: colors.glassBackground, borderColor: colors.glassBorder }]}>
+                      <View style={styles.userCardContent}>
+                        {user.avatar ? (
+                          <Image
+                            source={{ uri: user.avatar }}
+                            style={styles.userAvatar}
+                            contentFit="cover"
+                            cachePolicy="memory-disk"
+                            transition={100}
+                          />
+                        ) : (
+                          <View style={[styles.userAvatar, { backgroundColor: `${colors.primary}20` }]}>
+                            <User color={colors.primary} size={24} />
+                          </View>
+                        )}
+                        <View style={styles.userInfo}>
+                          <Text style={[styles.userDisplayName, { color: colors.onSurface }]}>
+                            {user.name}
+                          </Text>
+                          <Text style={[styles.userUsername, { color: colors.onSurfaceVariant }]}>
+                            @{user.username}
+                          </Text>
+                          {user.bio && (
+                            <Text 
+                              style={[styles.userBio, { color: colors.onSurfaceVariant }]} 
+                              numberOfLines={2}
+                            >
+                              {user.bio}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                    </GlassCard>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            
+            {searchResults.hashtags.length > 0 && (
+              <View>
+                <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
+                  Hashtags ({searchResults.hashtags.length})
+                </Text>
+                <View style={styles.hashtagsContainer}>
+                  {searchResults.hashtags.map((tag: string, idx: number) => (
+                    <TouchableOpacity
+                      key={idx}
+                      onPress={() => setSearchQuery(`#${tag}`)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.hashtagPill, { backgroundColor: `${colors.primary}15`, borderColor: colors.primary }]}>
+                        <Text style={[styles.hashtagText, { color: colors.primary }]}>#{tag}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+            
+            {searchResults.posts.length > 0 && (
+              <View>
+                <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
+                  Posts ({searchResults.posts.length})
+                </Text>
+                {searchResults.posts.map((post: any) => (
               <TouchableOpacity
                 key={post.id}
                 onPress={() => router.push(`/post-detail?postId=${post.id}`)}
@@ -263,8 +355,10 @@ export default function DiscoverScreen() {
                     </Text>
                   </View>
                 </GlassCard>
-              </TouchableOpacity>
-            ))}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         )}
       </ScrollView>
@@ -455,6 +549,62 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  userCard: {
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  userCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  userAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userDisplayName: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginBottom: 2,
+  },
+  userUsername: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  userBio: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  hashtagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  hashtagPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1.5,
+  },
+  hashtagText: {
+    fontSize: 14,
     fontWeight: '600' as const,
   },
 });

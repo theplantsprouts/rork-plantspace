@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Search } from 'lucide-react-native';
 import { Image } from 'expo-image';
@@ -39,6 +40,7 @@ type SearchUser = {
 type TabType = 'previous' | 'new';
 
 export default function LeavesScreen() {
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('previous');
@@ -50,7 +52,10 @@ export default function LeavesScreen() {
 
   const searchUsersQuery = trpc.messages.searchUsers.useQuery(
     { searchQuery: debouncedSearch },
-    { enabled: activeTab === 'new' && debouncedSearch.length > 0 }
+    { 
+      enabled: activeTab === 'new' && debouncedSearch.length > 0,
+      refetchOnWindowFocus: false,
+    }
   );
 
   useEffect(() => {
@@ -70,7 +75,7 @@ export default function LeavesScreen() {
         style={StyleSheet.absoluteFillObject}
       />
       
-      <View style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <View style={[styles.searchContainer, { backgroundColor: colors.surfaceVariant }]}>
             <Search size={20} color={colors.primary} style={styles.searchIcon} />
@@ -133,7 +138,7 @@ export default function LeavesScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           {activeTab === 'previous' ? (
-            conversationsQuery.isLoading ? (
+            (conversationsQuery.isLoading && !conversationsQuery.data) ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primary} />
               </View>
@@ -189,7 +194,7 @@ export default function LeavesScreen() {
                 ))
             )
           ) : (
-            searchUsersQuery.isLoading ? (
+            (searchUsersQuery.isLoading && !searchUsersQuery.data) ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primary} />
               </View>
@@ -282,7 +287,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
   },
   conversationItem: {
     flexDirection: 'row',

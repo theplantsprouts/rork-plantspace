@@ -1,7 +1,7 @@
 import { protectedProcedure } from "../../../create-context";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 
 export const searchUsersProcedure = protectedProcedure
   .input(
@@ -21,55 +21,43 @@ export const searchUsersProcedure = protectedProcedure
       const searchLower = input.searchQuery.toLowerCase();
       
       const profilesRef = collection(db, 'profiles');
-      
-      const usernameQuery = query(
-        profilesRef,
-        where('username', '>=', searchLower),
-        where('username', '<=', searchLower + '\uf8ff'),
-        limit(input.limit)
-      );
-      
-      const nameQuery = query(
-        profilesRef,
-        where('name', '>=', searchLower),
-        where('name', '<=', searchLower + '\uf8ff'),
-        limit(input.limit)
-      );
-      
-      const [usernameSnapshot, nameSnapshot] = await Promise.all([
-        getDocs(usernameQuery),
-        getDocs(nameQuery)
-      ]);
+      const profilesSnapshot = await getDocs(profilesRef);
       
       const usersMap = new Map();
       
-      usernameSnapshot.forEach((doc) => {
+      profilesSnapshot.forEach((doc) => {
         if (doc.id !== ctx.user.id) {
           const data = doc.data();
-          usersMap.set(doc.id, {
-            id: doc.id,
-            username: data.username || '',
-            name: data.name || '',
-            avatar: data.avatar || '',
-            bio: data.bio || '',
-          });
+          const username = (data.username || '').toLowerCase();
+          const name = (data.name || '').toLowerCase();
+          
+          if (username.includes(searchLower) || name.includes(searchLower)) {
+            usersMap.set(doc.id, {
+              id: doc.id,
+              username: data.username || '',
+              name: data.name || '',
+              avatar: data.avatar || '',
+              bio: data.bio || '',
+            });
+          }
         }
       });
       
-      nameSnapshot.forEach((doc) => {
-        if (doc.id !== ctx.user.id && !usersMap.has(doc.id)) {
-          const data = doc.data();
-          usersMap.set(doc.id, {
-            id: doc.id,
-            username: data.username || '',
-            name: data.name || '',
-            avatar: data.avatar || '',
-            bio: data.bio || '',
-          });
-        }
-      });
-      
-      const users = Array.from(usersMap.values()).slice(0, input.limit);
+      const users = Array.from(usersMap.values())
+        .sort((a, b) => {
+          const aUsernameMatch = a.username.toLowerCase().startsWith(searchLower);
+          const bUsernameMatch = b.username.toLowerCase().startsWith(searchLower);
+          const aNameMatch = a.name.toLowerCase().startsWith(searchLower);
+          const bNameMatch = b.name.toLowerCase().startsWith(searchLower);
+          
+          if (aUsernameMatch && !bUsernameMatch) return -1;
+          if (!aUsernameMatch && bUsernameMatch) return 1;
+          if (aNameMatch && !bNameMatch) return -1;
+          if (!aNameMatch && bNameMatch) return 1;
+          
+          return a.name.localeCompare(b.name);
+        })
+        .slice(0, input.limit);
       
       console.log(`Found ${users.length} users matching query`);
       
