@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { Image as ImageIcon, X } from "lucide-react-native";
+import { Image as ImageIcon, X, Hash } from "lucide-react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { usePosts } from "@/hooks/use-posts";
 import { router } from "expo-router";
@@ -24,6 +24,7 @@ export default function CreatePostScreen() {
   const [content, setContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hashtags, setHashtags] = useState<string[]>([]);
   const { colors } = useTheme();
   
   const { user } = useAuth();
@@ -56,6 +57,20 @@ export default function CreatePostScreen() {
     setSelectedImage(null);
   }, []);
 
+  const handleContentChange = useCallback((text: string) => {
+    setContent(text);
+    
+    const hashtagMatches = text.match(/#\w+/g) || [];
+    const uniqueHashtags = [...new Set(hashtagMatches.map(tag => tag.substring(1)))];
+    setHashtags(uniqueHashtags);
+  }, []);
+  
+  const removeHashtag = useCallback((tag: string) => {
+    const newContent = content.replace(new RegExp(`#${tag}\\b`, 'g'), '').trim();
+    setContent(newContent);
+    setHashtags(hashtags.filter(h => h !== tag));
+  }, [content, hashtags]);
+
   const handleSubmit = useCallback(async () => {
     if (!content.trim()) {
       if (Platform.OS !== 'web') {
@@ -74,15 +89,12 @@ export default function CreatePostScreen() {
     setLoading(true);
     try {
       await addPost(content.trim(), selectedImage || undefined);
-
-      if (Platform.OS !== 'web') {
-        Alert.alert("Success", "Your post has been created! 🌱");
-      }
       
       setContent("");
       setSelectedImage(null);
+      setHashtags([]);
       
-      router.back();
+      router.replace('/(tabs)/home');
     } catch (error: any) {
       console.error('Error creating post:', error);
       if (Platform.OS !== 'web') {
@@ -123,8 +135,8 @@ export default function CreatePostScreen() {
                     }
                   ]}
                   value={content}
-                  onChangeText={setContent}
-                  placeholder="What's growing?"
+                  onChangeText={handleContentChange}
+                  placeholder="What's growing? Use #hashtags"
                   placeholderTextColor={colors.onSurfaceVariant}
                   multiline
                   textAlignVertical="top"
@@ -132,6 +144,25 @@ export default function CreatePostScreen() {
                 />
               </View>
             </View>
+
+            {hashtags.length > 0 && (
+              <View style={styles.hashtagsContainer}>
+                <View style={styles.hashtagsHeader}>
+                  <Hash size={16} color={colors.primary} />
+                  <Text style={[styles.hashtagsTitle, { color: colors.onSurface }]}>Hashtags</Text>
+                </View>
+                <View style={styles.hashtagsList}>
+                  {hashtags.map((tag) => (
+                    <View key={tag} style={[styles.hashtagChip, { backgroundColor: `${colors.primary}20`, borderColor: colors.primary }]}>
+                      <Text style={[styles.hashtagText, { color: colors.primary }]}>#{tag}</Text>
+                      <TouchableOpacity onPress={() => removeHashtag(tag)} style={styles.hashtagRemove}>
+                        <X size={14} color={colors.primary} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
 
             {selectedImage && (
               <View style={styles.imagePreviewContainer}>
@@ -278,5 +309,39 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontWeight: '700' as const,
+  },
+  hashtagsContainer: {
+    marginBottom: 16,
+  },
+  hashtagsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  hashtagsTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  hashtagsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  hashtagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    gap: 6,
+  },
+  hashtagText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  hashtagRemove: {
+    padding: 2,
   },
 });

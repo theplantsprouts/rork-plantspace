@@ -13,7 +13,7 @@ import { Search, X, Sparkles, User } from 'lucide-react-native';
 import { useTheme } from '@/hooks/use-theme';
 import { usePosts } from '@/hooks/use-posts';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { GlassCard } from '@/components/GlassContainer';
 import { AnimatedIconButton } from '@/components/AnimatedPressable';
 import { trackSearch } from '@/lib/analytics';
@@ -22,14 +22,23 @@ import { trpc } from '@/lib/trpc';
 
 
 export default function DiscoverScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [showRecommendations, setShowRecommendations] = useState(true);
+  const params = useLocalSearchParams<{ search?: string }>();
+  const [searchQuery, setSearchQuery] = useState(params.search || '');
+  const [debouncedQuery, setDebouncedQuery] = useState(params.search || '');
+  const [showRecommendations, setShowRecommendations] = useState(!params.search);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const searchType = 'all' as const;
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { recommendedPosts, getSmartRecommendations } = usePosts();
+  
+  useEffect(() => {
+    if (params.search) {
+      setSearchQuery(params.search);
+      setDebouncedQuery(params.search);
+      setShowRecommendations(false);
+    }
+  }, [params.search]);
   
   const searchQuery_trpc = trpc.posts.search.useQuery(
     { 

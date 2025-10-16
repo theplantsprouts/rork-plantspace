@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useState } from "react";
-import { View, Text, StyleSheet, Alert, Modal, Pressable, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Alert, Modal, Pressable, TouchableOpacity, Platform, Share } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Sprout, Leaf, Heading, Bookmark, MoreVertical, Trash2, Flag } from "lucide-react-native";
@@ -41,13 +41,41 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
   
   const handleComment = useCallback(() => {
     console.log('Roots pressed for post:', post.id);
+    router.push(`/post-detail?postId=${post.id}`);
     onComment?.();
   }, [onComment, post.id]);
   
-  const handleShare = useCallback(() => {
+  const handleShare = useCallback(async () => {
     console.log('Spread Seeds pressed for post:', post.id);
-    onShare?.();
-  }, [onShare, post.id]);
+    try {
+      const shareMessage = `Check out this post from ${post.user.name}:\n\n${post.content}`;
+      const shareUrl = `plantspace://post/${post.id}`;
+      
+      if (Platform.OS === 'web') {
+        if (navigator.share) {
+          await navigator.share({
+            title: `Post by ${post.user.name}`,
+            text: shareMessage,
+            url: shareUrl,
+          });
+        } else {
+          await navigator.clipboard.writeText(`${shareMessage}\n${shareUrl}`);
+          Alert.alert('✨ Copied!', 'Post link copied to clipboard.');
+        }
+      } else {
+        await Share.share({
+          message: `${shareMessage}\n${shareUrl}`,
+          title: `Post by ${post.user.name}`,
+        });
+      }
+      
+      onShare?.();
+    } catch (error: any) {
+      if (error.message !== 'User did not share') {
+        console.error('Share error:', error);
+      }
+    }
+  }, [onShare, post.id, post.user.name, post.content]);
   
   const handleBookmark = useCallback(async () => {
     console.log('Harvest pressed for post:', post.id);
@@ -194,13 +222,30 @@ function PostItem({ post, onLike, onComment, onShare, onBookmark, onDelete, test
           >
             <MoreVertical 
               size={24} 
-              color={PlantTheme.colors.textPrimary}
+              color={PlantTheme.colors.primary}
             />
           </AnimatedIconButton>
         </View>
       </View>
 
-      <Text style={styles.content}>{post.content}</Text>
+      <Text style={styles.content}>
+        {post.content.split(/\s+/).map((word, index) => {
+          if (word.startsWith('#')) {
+            return (
+              <Text
+                key={index}
+                style={styles.hashtagInContent}
+                onPress={() => {
+                  router.push(`/(tabs)/discover?search=${encodeURIComponent(word)}`);
+                }}
+              >
+                {word}{' '}
+              </Text>
+            );
+          }
+          return word + ' ';
+        })}
+      </Text>
 
       {post.image && (
         <Image
@@ -348,6 +393,10 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: PlantTheme.colors.textPrimary,
     marginBottom: 12,
+  },
+  hashtagInContent: {
+    color: PlantTheme.colors.primary,
+    fontWeight: '600' as const,
   },
   image: {
     width: "100%",
