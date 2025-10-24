@@ -3,8 +3,12 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const supabaseUrl = 'https://onezxiwfxqxgpzdeflho.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uZXp4aXdmeHF4Z3B6ZGVmbGhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMTI5MTYsImV4cCI6MjA3Mzc4ODkxNn0.XEYuHxn_HTOTrLnOfoRVzl7GJPRazB0kfxCHRaw8F1Y';
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase URL or Anon Key is missing. Please check your .env file.');
+}
 
 // Custom storage adapter for Supabase
 const ExpoSecureStoreAdapter = {
